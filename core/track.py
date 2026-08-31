@@ -11,6 +11,7 @@ from numpy.typing import NDArray
 class Track:
     centerline: NDArray[np.float64]
     closed: bool = True
+    width: float = 2.0
 
     def __post_init__(self) -> None:
         points = np.asarray(self.centerline, dtype=float)
@@ -25,6 +26,8 @@ class Track:
             raise ValueError("adjacent centerline points must be distinct")
         if self.closed and np.linalg.norm(points[-1] - points[0]) == 0.0:
             raise ValueError("closed centerline must not repeat its first point")
+        if not math.isfinite(self.width) or self.width <= 0.0:
+            raise ValueError("track width must be positive and finite")
         points = points.copy()
         points.setflags(write=False)
         object.__setattr__(self, "centerline", points)
@@ -35,6 +38,7 @@ class Track:
         semi_major_axis: float,
         semi_minor_axis: float,
         point_count: int,
+        width: float = 2.0,
     ) -> "Track":
         """Create a true ellipse sampled uniformly by parameter angle."""
         if not math.isfinite(semi_major_axis) or semi_major_axis <= 0.0:
@@ -49,7 +53,7 @@ class Track:
         points = np.column_stack(
             (semi_major_axis * np.cos(angles), semi_minor_axis * np.sin(angles))
         )
-        return cls(points, closed=True)
+        return cls(points, closed=True, width=width)
 
     def point(self, index: int) -> NDArray[np.float64]:
         return self.centerline[self._normalize_index(index)].copy()

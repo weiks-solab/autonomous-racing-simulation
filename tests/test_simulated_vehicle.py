@@ -75,6 +75,9 @@ class SimulatedVehicleTests(unittest.TestCase):
                 self.assertEqual(
                     len({id(v.trajectory) for v in vehicles}), vehicle_count
                 )
+                self.assertEqual(
+                    len({id(v.geometry) for v in vehicles}), vehicle_count
+                )
                 self.assertEqual(len({id(v.state) for v in vehicles}), vehicle_count)
 
                 for vehicle in vehicles:

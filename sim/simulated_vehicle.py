@@ -1,10 +1,12 @@
 """Per-vehicle runtime state for an independent simulation participant."""
 
 from dataclasses import dataclass, field
+from itertools import combinations
 from typing import Iterable
 
 from core.pure_pursuit import PurePursuitController, PursuitTarget
 from core.track import Track
+from core.vehicle_geometry import VehicleGeometry, rectangles_overlap
 from core.vehicle_model import KinematicBicycleModel
 from core.vehicle_state import ControlCommand, VehicleState
 
@@ -17,6 +19,13 @@ class SimulatedVehicle:
     state: VehicleState
     model: KinematicBicycleModel
     controller: PurePursuitController
+    geometry: VehicleGeometry = field(
+        default_factory=lambda: VehicleGeometry(
+            length=0.5,
+            width=0.3,
+            rear_axle_to_center=0.1,
+        )
+    )
     trajectory: list[VehicleState] = field(default_factory=list, init=False)
     current_target: PursuitTarget | None = field(default=None, init=False)
 
@@ -49,3 +58,21 @@ def validate_unique_vehicle_ids(vehicles: Iterable[SimulatedVehicle]) -> None:
     if duplicates:
         duplicate_list = ", ".join(sorted(duplicates))
         raise ValueError(f"duplicate vehicle IDs: {duplicate_list}")
+
+
+def find_vehicle_collisions(
+    vehicles: Iterable[SimulatedVehicle],
+) -> set[tuple[str, str]]:
+    """Return overlapping ID pairs without changing any vehicle behavior."""
+    vehicle_list = list(vehicles)
+    validate_unique_vehicle_ids(vehicle_list)
+    collisions: set[tuple[str, str]] = set()
+    for first, second in combinations(vehicle_list, 2):
+        if rectangles_overlap(
+            first.state,
+            first.geometry,
+            second.state,
+            second.geometry,
+        ):
+            collisions.add(tuple(sorted((first.vehicle_id, second.vehicle_id))))
+    return collisions
