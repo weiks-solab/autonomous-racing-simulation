@@ -2,9 +2,10 @@
 
 from dataclasses import dataclass
 import math
-from typing import Sequence
+from typing import Mapping, Sequence
 
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 
 from core.pure_pursuit import PursuitTarget
 from core.track import Track
@@ -21,6 +22,14 @@ class VisualizationConfig:
     def __post_init__(self) -> None:
         if not math.isfinite(self.pause_seconds) or self.pause_seconds < 0.0:
             raise ValueError("pause_seconds must be non-negative and finite")
+
+
+@dataclass(frozen=True)
+class _VehicleArtists:
+    trajectory: Line2D
+    marker: Line2D
+    target: Line2D
+    heading: Line2D
 
 
 class SimulationVisualizer:
@@ -40,18 +49,7 @@ class SimulationVisualizer:
         closing_y = (track.centerline[-1, 1], track.centerline[0, 1])
         if track.closed:
             self.axes.plot(closing_x, closing_y, "--", color="0.5")
-        (self.trajectory_line,) = self.axes.plot(
-            [], [], color="tab:blue", label="trajectory"
-        )
-        (self.vehicle_marker,) = self.axes.plot(
-            [], [], "o", color="tab:red", label="vehicle"
-        )
-        (self.target_marker,) = self.axes.plot(
-            [], [], "x", color="tab:green", label="target"
-        )
-        (self.heading_artist,) = self.axes.plot(
-            [], [], color="tab:red", linewidth=2.0, label="heading"
-        )
+        self._vehicle_artists: dict[str, _VehicleArtists] = {}
         if config.equal_axis:
             self.axes.set_aspect("equal", adjustable="box")
         x_min = float(track.centerline[:, 0].min())
@@ -72,27 +70,63 @@ class SimulationVisualizer:
         trajectory: Sequence[VehicleState],
         target: PursuitTarget | None = None,
     ) -> None:
-        self.trajectory_line.set_data(
-            [sample.x for sample in trajectory], [sample.y for sample in trajectory]
+        """Preserve the Milestone 1 single-vehicle update API."""
+        self.update_vehicles(
+            states={"vehicle": state},
+            trajectories={"vehicle": trajectory},
+            targets={"vehicle": target},
         )
-        self.vehicle_marker.set_data([state.x], [state.y])
-        if target is not None:
-            self.target_marker.set_data([target.x], [target.y])
-        else:
-            self.target_marker.set_data([], [])
-        if self.config.show_vehicle_heading:
-            heading_length = 1.0
-            self.heading_artist.set_data(
-                [state.x, state.x + heading_length * math.cos(state.yaw)],
-                [state.y, state.y + heading_length * math.sin(state.yaw)],
+
+    def update_vehicles(
+        self,
+        states: Mapping[str, VehicleState],
+        trajectories: Mapping[str, Sequence[VehicleState]],
+        targets: Mapping[str, PursuitTarget | None],
+    ) -> None:
+        """Update reusable artists for an arbitrary vehicle collection."""
+        vehicle_ids = set(states)
+        if set(trajectories) != vehicle_ids or set(targets) != vehicle_ids:
+            raise ValueError("states, trajectories, and targets must have matching IDs")
+
+        for vehicle_id, state in states.items():
+            artists = self._vehicle_artists.get(vehicle_id)
+            if artists is None:
+                artists = self._create_vehicle_artists(vehicle_id)
+                self._vehicle_artists[vehicle_id] = artists
+
+            trajectory = trajectories[vehicle_id]
+            artists.trajectory.set_data(
+                [sample.x for sample in trajectory],
+                [sample.y for sample in trajectory],
             )
-        else:
-            self.heading_artist.set_data([], [])
+            artists.marker.set_data([state.x], [state.y])
+            target = targets[vehicle_id]
+            if target is None:
+                artists.target.set_data([], [])
+            else:
+                artists.target.set_data([target.x], [target.y])
+            if self.config.show_vehicle_heading:
+                heading_length = 1.0
+                artists.heading.set_data(
+                    [state.x, state.x + heading_length * math.cos(state.yaw)],
+                    [state.y, state.y + heading_length * math.sin(state.yaw)],
+                )
+            else:
+                artists.heading.set_data([], [])
 
         if self.config.realtime:
             self.figure.canvas.draw_idle()
             self.figure.canvas.flush_events()
             plt.pause(self.config.pause_seconds)
+
+    def _create_vehicle_artists(self, vehicle_id: str) -> _VehicleArtists:
+        color = plt.get_cmap("tab10")(len(self._vehicle_artists) % 10)
+        (trajectory,) = self.axes.plot([], [], color=color, label=vehicle_id)
+        (marker,) = self.axes.plot([], [], "o", color=color)
+        (target,) = self.axes.plot([], [], "x", color=color)
+        (heading,) = self.axes.plot([], [], color=color, linewidth=2.0)
+        self.axes.legend()
+        return _VehicleArtists(trajectory, marker, target, heading)
 
     def show(self) -> None:
         self.figure.tight_layout()

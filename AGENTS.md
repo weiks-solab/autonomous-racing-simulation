@@ -19,6 +19,50 @@ and a kinematic bicycle model.
 Do not implement overtaking, defense, multiple vehicles, ROS2,
 reinforcement learning, or game theory yet.
 
+## Current milestone: Milestone 2
+
+Extend the simulator from one vehicle to an arbitrary number of independently
+simulated vehicles.
+
+Demonstrate exactly three vehicles in `main.py`, but implementation must not be
+hard-coded for exactly three vehicles.
+
+Each vehicle must have:
+
+- a unique identifier
+- an independent `VehicleState`
+- an independent vehicle model
+- an independent Pure Pursuit controller
+- an independent target speed
+- an independent trajectory history
+
+All vehicles follow the same elliptical centerline during this milestone.
+
+### Milestone 2 exclusions
+
+Do not implement:
+
+- overtaking decisions
+- defensive behavior
+- collision avoidance
+- collision response
+- race rules
+- ROS2
+- reinforcement learning
+- game theory
+- sensors
+- opponent prediction
+
+Vehicles may pass through or overlap each other during this milestone because
+interaction logic has not yet been implemented.
+
+### Compatibility
+
+- Preserve all Milestone 1 core behavior.
+- Existing tests must continue to pass.
+- `core/` must remain independent from Matplotlib and ROS2.
+- Avoid abstractions that assume exactly two or three vehicles.
+
 ## Technical requirements
 
 - Use Python 3.
