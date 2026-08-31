@@ -11,6 +11,7 @@ from core.track_geometry import (
     signed_longitudinal_gap,
     track_boundaries,
     track_length,
+    track_to_world,
     world_to_track,
 )
 from core.vehicle_geometry import (
@@ -41,5 +42,6 @@ __all__ = [
     "signed_longitudinal_gap",
     "track_boundaries",
     "track_length",
+    "track_to_world",
     "world_to_track",
 ]

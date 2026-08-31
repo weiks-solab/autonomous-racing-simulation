@@ -31,6 +31,8 @@ class VisualizationConfig:
     show_trajectories: bool = True
     show_pursuit_targets: bool = True
     show_collision_status: bool = True
+    show_strategy_status: bool = True
+    show_temporary_paths: bool = True
 
     def __post_init__(self) -> None:
         if not math.isfinite(self.pause_seconds) or self.pause_seconds < 0.0:
@@ -46,6 +48,8 @@ class _VehicleArtists:
     footprint: Polygon
     track_position_text: Text
     collision_text: Text
+    strategy_text: Text
+    temporary_path: Line2D
     color: tuple[float, float, float, float]
 
 
@@ -116,6 +120,8 @@ class SimulationVisualizer:
         geometries: Mapping[str, VehicleGeometry] | None = None,
         track_positions: Mapping[str, TrackPosition] | None = None,
         collision_pairs: Collection[tuple[str, str]] | None = None,
+        strategy_labels: Mapping[str, str] | None = None,
+        temporary_paths: Mapping[str, Track] | None = None,
     ) -> None:
         """Update reusable artists for an arbitrary vehicle collection."""
         vehicle_ids = set(states)
@@ -125,6 +131,10 @@ class SimulationVisualizer:
             raise ValueError("geometries must have the same vehicle IDs as states")
         if track_positions is not None and set(track_positions) != vehicle_ids:
             raise ValueError("track_positions must have the same vehicle IDs as states")
+        if strategy_labels is not None and not set(strategy_labels) <= vehicle_ids:
+            raise ValueError("strategy_labels contain an unknown vehicle ID")
+        if temporary_paths is not None and not set(temporary_paths) <= vehicle_ids:
+            raise ValueError("temporary_paths contain an unknown vehicle ID")
         colliding_ids: set[str] = set()
         for first_id, second_id in collision_pairs or ():
             if first_id not in vehicle_ids or second_id not in vehicle_ids:
@@ -202,6 +212,29 @@ class SimulationVisualizer:
             else:
                 artists.collision_text.set_visible(False)
 
+            strategy_label = (
+                None if strategy_labels is None else strategy_labels.get(vehicle_id)
+            )
+            if self.config.show_strategy_status and strategy_label is not None:
+                artists.strategy_text.set_position((state.x, state.y + 0.9))
+                artists.strategy_text.set_text(strategy_label)
+                artists.strategy_text.set_visible(True)
+            else:
+                artists.strategy_text.set_visible(False)
+
+            temporary_path = (
+                None if temporary_paths is None else temporary_paths.get(vehicle_id)
+            )
+            if self.config.show_temporary_paths and temporary_path is not None:
+                artists.temporary_path.set_data(
+                    temporary_path.centerline[:, 0],
+                    temporary_path.centerline[:, 1],
+                )
+                artists.temporary_path.set_visible(True)
+            else:
+                artists.temporary_path.set_data([], [])
+                artists.temporary_path.set_visible(False)
+
         if self.config.realtime:
             self.figure.canvas.draw_idle()
             self.figure.canvas.flush_events()
@@ -240,6 +273,24 @@ class SimulationVisualizer:
             visible=False,
             zorder=10,
         )
+        strategy_text = self.axes.text(
+            0.0,
+            0.0,
+            "",
+            color=color,
+            fontsize=8,
+            horizontalalignment="center",
+            visible=False,
+            zorder=9,
+        )
+        (temporary_path,) = self.axes.plot(
+            [],
+            [],
+            linestyle=":",
+            linewidth=1.5,
+            color=color,
+            visible=False,
+        )
         self.axes.legend()
         return _VehicleArtists(
             trajectory,
@@ -249,6 +300,8 @@ class SimulationVisualizer:
             footprint,
             track_position_text,
             collision_text,
+            strategy_text,
+            temporary_path,
             color,
         )
 

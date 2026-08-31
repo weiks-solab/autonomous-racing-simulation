@@ -107,6 +107,32 @@ def world_to_track(state: VehicleState, track: Track) -> TrackPosition:
     return TrackPosition(s=s, d=d, centerline_index=segment_index)
 
 
+def track_to_world(s: float, d: float, track: Track) -> NDArray[np.float64]:
+    """Convert generic track-relative coordinates to an x/y world point."""
+    if not math.isfinite(s) or not math.isfinite(d):
+        raise ValueError("s and d must be finite")
+    starts, vectors, lengths = _segments(track)
+    cumulative_lengths = np.concatenate(([0.0], np.cumsum(lengths)))
+    total_length = float(cumulative_lengths[-1])
+    if track.closed:
+        normalized_s = s % total_length
+    else:
+        if not 0.0 <= s <= total_length:
+            raise ValueError("s must lie within an open track")
+        normalized_s = s
+
+    segment_index = int(
+        np.searchsorted(cumulative_lengths, normalized_s, side="right") - 1
+    )
+    segment_index = min(max(segment_index, 0), len(lengths) - 1)
+    distance_on_segment = normalized_s - cumulative_lengths[segment_index]
+    ratio = distance_on_segment / lengths[segment_index]
+    center_point = starts[segment_index] + ratio * vectors[segment_index]
+    tangent = vectors[segment_index] / lengths[segment_index]
+    left_normal = np.array((-tangent[1], tangent[0]))
+    return center_point + d * left_normal
+
+
 def signed_longitudinal_gap(
     reference: TrackPosition,
     other: TrackPosition,

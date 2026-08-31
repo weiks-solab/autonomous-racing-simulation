@@ -87,6 +87,28 @@ class SimulationVisualizerTests(unittest.TestCase):
             artists_before,
         )
 
+    def test_strategy_status_and_temporary_path_are_optional(self) -> None:
+        visualizer = SimulationVisualizer(self.track, VisualizationConfig())
+        temporary = Track(
+            self.track.centerline[:10],
+            closed=False,
+            width=self.track.width,
+        )
+        self._update(visualizer)
+        artists = visualizer._vehicle_artists["vehicle"]
+        self.assertFalse(artists.strategy_text.get_visible())
+        self.assertFalse(artists.temporary_path.get_visible())
+
+        visualizer.update_vehicles(
+            states={"vehicle": self.state},
+            trajectories={"vehicle": [self.state]},
+            targets={"vehicle": self.target},
+            strategy_labels={"vehicle": "OVERTAKE\nside=LEFT"},
+            temporary_paths={"vehicle": temporary},
+        )
+        self.assertTrue(artists.strategy_text.get_visible())
+        self.assertTrue(artists.temporary_path.get_visible())
+
     def test_single_vehicle_update_api_remains_compatible(self) -> None:
         visualizer = SimulationVisualizer(self.track, VisualizationConfig())
         visualizer.update(self.state, [self.state], self.target)

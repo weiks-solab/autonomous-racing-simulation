@@ -12,6 +12,7 @@ from core.track_geometry import (
     signed_longitudinal_gap,
     track_boundaries,
     track_length,
+    track_to_world,
     world_to_track,
 )
 from core.vehicle_state import VehicleState
@@ -101,6 +102,15 @@ class TrackGeometryTests(unittest.TestCase):
             Track.create_oval(4.0, 2.0, 100, width=0.0)
         with self.assertRaises(ValueError):
             Track.create_oval(4.0, 2.0, 100, width=math.inf)
+
+    def test_track_to_world_round_trip(self) -> None:
+        point = track_to_world(3.0, 1.25, self.square)
+        position = world_to_track(
+            VehicleState(float(point[0]), float(point[1]), 0.0, 0.0),
+            self.square,
+        )
+        self.assertAlmostEqual(position.s, 3.0)
+        self.assertAlmostEqual(position.d, 1.25)
 
 
 if __name__ == "__main__":

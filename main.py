@@ -1,11 +1,16 @@
-"""Assemble and run the Milestone 3 N-vehicle simulation."""
+"""Assemble and run the Milestone 4 rule-based overtaking simulation."""
 
 import argparse
 import math
 
 from core.pure_pursuit import PurePursuitConfig, PurePursuitController
 from core.track import Track
-from core.track_geometry import TrackPosition, world_to_track
+from core.track_geometry import (
+    TrackPosition,
+    track_length,
+    track_to_world,
+    world_to_track,
+)
 from core.vehicle_geometry import VehicleGeometry
 from core.vehicle_model import KinematicBicycleModel, VehicleModelConfig
 from core.vehicle_state import VehicleState
@@ -15,6 +20,15 @@ from sim.simulated_vehicle import (
     validate_unique_vehicle_ids,
 )
 from sim.visualizer import SimulationVisualizer, VisualizationConfig
+from strategy.observations import VehicleObservation, create_vehicle_observation
+from strategy.offset_path import OffsetPathConfig, generate_offset_track
+from strategy.overtaking import (
+    OvertakingConfig,
+    OvertakingDecision,
+    OvertakingMode,
+    OvertakingSide,
+    RuleBasedOvertakingStrategy,
+)
 
 
 def create_display_options(realtime: bool) -> VisualizationConfig:
@@ -31,6 +45,8 @@ def create_display_options(realtime: bool) -> VisualizationConfig:
         show_vehicle_footprints=True,
         show_vehicle_heading=False,
         show_collision_status=True,
+        show_strategy_status=True,
+        show_temporary_paths=True,
 
         # Controller and history information
         show_trajectories=False,
@@ -41,20 +57,19 @@ def create_display_options(realtime: bool) -> VisualizationConfig:
 
 def _create_vehicle(
     vehicle_id: str,
-    ellipse_angle: float,
+    start_s: float,
     target_speed: float,
     model_config: VehicleModelConfig,
+    track: Track,
 ) -> SimulatedVehicle:
-    semi_major_axis = 10.0
-    semi_minor_axis = 5.0
-    x = semi_major_axis * math.cos(ellipse_angle)
-    y = semi_minor_axis * math.sin(ellipse_angle)
+    point = track_to_world(start_s, 0.0, track)
+    point_ahead = track_to_world(start_s + 0.05, 0.0, track)
     tangent_yaw = math.atan2(
-        semi_minor_axis * math.cos(ellipse_angle),
-        -semi_major_axis * math.sin(ellipse_angle),
+        point_ahead[1] - point[1],
+        point_ahead[0] - point[0],
     )
     controller_config = PurePursuitConfig(
-        lookahead_distance=6.0,
+        lookahead_distance=3,
         target_speed=target_speed,
         speed_gain=1.5,
         max_acceleration=3.0,
@@ -62,7 +77,12 @@ def _create_vehicle(
     )
     return SimulatedVehicle(
         vehicle_id=vehicle_id,
-        state=VehicleState(x=x, y=y, yaw=tangent_yaw, velocity=0.0),
+        state=VehicleState(
+            x=float(point[0]),
+            y=float(point[1]),
+            yaw=tangent_yaw,
+            velocity=0.0,
+        ),
         model=KinematicBicycleModel(model_config),
         controller=PurePursuitController(controller_config),
         geometry=VehicleGeometry(
@@ -78,6 +98,9 @@ def _visualize_vehicles(
     vehicles: list[SimulatedVehicle],
     track: Track,
     collision_pairs: set[tuple[str, str]],
+    ego_id: str,
+    decision: OvertakingDecision,
+    temporary_track: Track | None,
 ) -> None:
     track_positions: dict[str, TrackPosition] = {
         vehicle.vehicle_id: world_to_track(vehicle.state, track)
@@ -96,7 +119,26 @@ def _visualize_vehicles(
         },
         track_positions=track_positions,
         collision_pairs=collision_pairs,
+        strategy_labels={ego_id: decision.display_text},
+        temporary_paths=(
+            {ego_id: temporary_track} if temporary_track is not None else None
+        ),
     )
+
+
+def _create_observations(
+    vehicles: list[SimulatedVehicle],
+    track: Track,
+) -> dict[str, VehicleObservation]:
+    return {
+        vehicle.vehicle_id: create_vehicle_observation(
+            vehicle.vehicle_id,
+            vehicle.state,
+            vehicle.geometry,
+            track,
+        )
+        for vehicle in vehicles
+    }
 
 
 def run_simulation(realtime: bool = False) -> None:
@@ -113,27 +155,81 @@ def run_simulation(realtime: bool = False) -> None:
         min_velocity=0.0,
         max_velocity=10.0,
     )
+    ego_id = "vehicle-1"
+    base_length = track_length(track)
     vehicle_specs = (
-        ("vehicle-1", 0.0, 15),
-        ("vehicle-2", 2.0 * math.pi / 3.0, 10),
-        ("vehicle-3", 4.0 * math.pi / 3.0, 7.0),
+        (ego_id, 0.0, 10.0),
+        ("vehicle-2", 3.0, 3.0),
+        ("vehicle-3", base_length - 20.0, 4.0),
     )
     vehicles = [
-        _create_vehicle(vehicle_id, angle, target_speed, model_config)
-        for vehicle_id, angle, target_speed in vehicle_specs
+        _create_vehicle(vehicle_id, start_s, target_speed, model_config, track)
+        for vehicle_id, start_s, target_speed in vehicle_specs
     ]
     validate_unique_vehicle_ids(vehicles)
     visualizer = SimulationVisualizer(
         track,
         create_display_options(realtime),
     )
-    # Forty seconds comfortably covers more than two laps at the target speed.
-    step_count = int(40.0 / model_config.time_step)
+    strategy = RuleBasedOvertakingStrategy(OvertakingConfig())
+    offset_path_config = OffsetPathConfig(sample_spacing=0.2, path_length=18.0)
+    decision = OvertakingDecision(
+        mode=OvertakingMode.FOLLOW,
+        target_d=0.0,
+        target_vehicle_id=None,
+        side=None,
+        reason="simulation initialized",
+    )
+    temporary_track: Track | None = None
+    transition_events = [(0.0, OvertakingMode.FOLLOW)]
+    selected_side: OvertakingSide | None = None
+    selected_candidate_summary = "not evaluated"
+
+    # Twenty-one seconds covers two laps without reaching the third vehicle.
+    step_count = int(21.0 / model_config.time_step)
     detected_collisions: set[tuple[str, str]] = set()
     current_collisions: set[tuple[str, str]] = set()
-    for _ in range(step_count):
+    for step_index in range(step_count):
+        observations = _create_observations(vehicles, track)
+        ego_observation = observations[ego_id]
+        decision = strategy.update(
+            ego_observation,
+            tuple(
+                observation
+                for vehicle_id, observation in observations.items()
+                if vehicle_id != ego_id
+            ),
+            track,
+        )
+        if decision.mode is not transition_events[-1][1]:
+            transition_events.append(
+                (step_index * model_config.time_step, decision.mode)
+            )
+        if decision.mode is OvertakingMode.OVERTAKE:
+            selected_side = decision.side
+            if strategy.last_candidate_evaluations:
+                selected_candidate_summary = ", ".join(
+                    f"{evaluation.side.name}={evaluation.reason}"
+                    for evaluation in strategy.last_candidate_evaluations
+                )
+
+        if decision.maneuver is not None:
+            temporary_track = generate_offset_track(
+                track,
+                ego_observation.track_position,
+                decision.maneuver,
+                offset_path_config,
+            )
+        else:
+            temporary_track = None
+
         for vehicle in vehicles:
-            vehicle.step(track)
+            tracking_track = (
+                temporary_track
+                if vehicle.vehicle_id == ego_id and temporary_track is not None
+                else track
+            )
+            vehicle.step(tracking_track)
         current_collisions = find_vehicle_collisions(vehicles)
         detected_collisions.update(current_collisions)
         if realtime:
@@ -142,6 +238,9 @@ def run_simulation(realtime: bool = False) -> None:
                 vehicles,
                 track,
                 current_collisions,
+                ego_id,
+                decision,
+                temporary_track,
             )
 
     if not realtime:
@@ -150,7 +249,41 @@ def run_simulation(realtime: bool = False) -> None:
             vehicles,
             track,
             current_collisions,
+            ego_id,
+            decision,
+            temporary_track,
         )
+    print(
+        "Strategy transitions: "
+        + " -> ".join(
+            f"{time_seconds:.2f}s {mode.name}"
+            for time_seconds, mode in transition_events
+        )
+    )
+    print(
+        "Selected overtaking side: "
+        + (selected_side.name if selected_side is not None else "none")
+    )
+    print(f"Candidate evaluations: {selected_candidate_summary}")
+    final_ego_position = world_to_track(
+        next(vehicle.state for vehicle in vehicles if vehicle.vehicle_id == ego_id),
+        track,
+    )
+    print(f"Final ego d: {final_ego_position.d:+.3f} m")
+    transitioned_modes = [mode for _, mode in transition_events]
+    print(
+        "Pass completed: "
+        + ("yes" if OvertakingMode.RETURN in transitioned_modes else "no")
+    )
+    print(
+        "Return completed: "
+        + (
+            "yes"
+            if OvertakingMode.RETURN in transitioned_modes
+            and transition_events[-1][1] is OvertakingMode.FOLLOW
+            else "no"
+        )
+    )
     if detected_collisions:
         formatted_pairs = ", ".join(
             f"{first}/{second}" for first, second in sorted(detected_collisions)
