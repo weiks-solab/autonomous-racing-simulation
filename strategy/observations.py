@@ -6,6 +6,7 @@ from core.track import Track
 from core.track_geometry import TrackPosition, world_to_track
 from core.vehicle_geometry import VehicleGeometry
 from core.vehicle_state import VehicleState
+from strategy.offset_path import LateralManeuver
 
 
 @dataclass(frozen=True)
@@ -14,6 +15,7 @@ class VehicleObservation:
     state: VehicleState
     track_position: TrackPosition
     geometry: VehicleGeometry
+    maneuver: LateralManeuver | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.vehicle_id, str) or not self.vehicle_id.strip():
@@ -25,6 +27,7 @@ def create_vehicle_observation(
     state: VehicleState,
     geometry: VehicleGeometry,
     track: Track,
+    maneuver: LateralManeuver | None = None,
 ) -> VehicleObservation:
     """Build an observation without exposing simulator runtime objects."""
     return VehicleObservation(
@@ -32,4 +35,5 @@ def create_vehicle_observation(
         state=state,
         track_position=world_to_track(state, track),
         geometry=geometry,
+        maneuver=maneuver,
     )

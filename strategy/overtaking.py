@@ -15,6 +15,7 @@ from core.vehicle_geometry import rectangles_overlap
 from core.vehicle_state import VehicleState
 from strategy.observations import VehicleObservation
 from strategy.offset_path import LateralManeuver, lateral_offset_at_distance
+from strategy.prediction import predict_vehicle_state
 
 
 class OvertakingMode(Enum):
@@ -113,8 +114,9 @@ def evaluate_candidate(
     does not prove that every corner of the oriented body remains in bounds.
 
     Prediction is geometric in track coordinates, not a vehicle-model rollout:
-    opponents keep constant speed and d, while ego follows the prescribed
-    smooth d(s). No bicycle dynamics, steering, or physics are integrated.
+    opponents keep constant speed and follow their supplied maneuver (or keep
+    d when none is supplied). Ego follows the prescribed smooth d(s).
+    No bicycle dynamics, steering, or physics are integrated.
     """
     target_d = side.value * config.lateral_offset
     maximum_d = (
@@ -343,13 +345,7 @@ def _candidate_has_predicted_collision(
             d_ahead=ego_d_ahead,
         )
         for other in others:
-            other_distance = max(other.state.velocity, 0.0) * time
-            predicted_other = _state_from_track_coordinates(
-                other.track_position.s + other_distance,
-                other.track_position.d,
-                other.state.velocity,
-                track,
-            )
+            predicted_other = predict_vehicle_state(other, time, track)
             if rectangles_overlap(
                 predicted_ego,
                 ego.geometry,

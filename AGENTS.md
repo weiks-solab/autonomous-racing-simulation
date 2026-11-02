@@ -9,18 +9,30 @@ The simulator must eventually support an arbitrary number of vehicles
 and allow the algorithm core to be reused in ROS2 Humble on a real
 F1TENTH-style vehicle.
 
-## Current milestone: Milestone 4
+## Current milestone: Milestone 4 plus a cost-based defense extension
 
-Add one simple rule-based overtaking strategy for a designated ego vehicle.
+Provide a simple rule-based overtaking strategy for vehicles assigned to attack.
 Strategy code must live in `strategy/` and emit high-level lateral targets,
 never steering commands. Pure Pursuit continues to provide low-level control.
 
-All non-ego vehicles continue independently following the shared centerline.
+Assign strategies per vehicle through STRATEGY_ASSIGNMENTS in main.py.
+Keep strategy implementations separate in strategy/ and use a shared update
+interface with explicit observations, track data and simulation time.
+Each assigned vehicle must own independent strategy state, even when multiple
+vehicles use the same strategy type. The default scene has one attacker,
+one defender and one centerline follower.
+Vehicles assigned to defend may choose defensive lateral targets by comparing
+a small set of smooth paths with a lateral-alignment cost.
+Unassigned vehicles continue independently following the shared centerline.
+Disabling defense must preserve the passive-opponent overtaking mode.
 Preserve arbitrary N-vehicle support and all Milestone 1-3 behavior.
 
-Do not implement defense, active blocking, game theory, Nash, Stackelberg,
+Do not implement game theory, Nash, Stackelberg,
 reinforcement learning, MPC, ROS2, race rules, collision response, dynamic
-vehicle physics, sensors, or multi-agent strategic interaction.
+vehicle physics, sensors, or multi-agent strategic optimization.
+
+Keep tunable demo parameters together near the top of main.py. Use short,
+plain comments to explain the defense decisions and cost calculation.
 
 ## Technical requirements
 

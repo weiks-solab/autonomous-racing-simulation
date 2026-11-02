@@ -1,3 +1,4 @@
+from dataclasses import replace
 import unittest
 
 import numpy as np
@@ -7,6 +8,7 @@ from core.track_geometry import TrackPosition, track_to_world
 from core.vehicle_geometry import VehicleGeometry
 from core.vehicle_state import VehicleState
 from strategy.observations import VehicleObservation
+from strategy.offset_path import LateralManeuver
 from strategy.overtaking import (
     OvertakingConfig,
     OvertakingMode,
@@ -162,6 +164,19 @@ class OvertakingStrategyTests(unittest.TestCase):
             self.track,
         )
         self.assertIs(centered.mode, OvertakingMode.FOLLOW)
+
+    def test_candidate_check_uses_defenders_supplied_maneuver(self) -> None:
+        ego = _observation("ego", 5.0, 0.0, 5.0, self.track)
+        defender = _observation("defender", 8.0, 0.0, 3.0, self.track)
+        passive = evaluate_candidate(
+            ego, (defender,), self.track, OvertakingSide.LEFT, self.config
+        )
+        defending = replace(defender, maneuver=LateralManeuver(8.0, 0.0, 0.8, 2.0))
+        active = evaluate_candidate(
+            ego, (defending,), self.track, OvertakingSide.LEFT, self.config
+        )
+        self.assertTrue(passive.feasible)
+        self.assertFalse(active.feasible)
 
     def test_deterministic_selection_prefers_left_on_tie(self) -> None:
         strategy = RuleBasedOvertakingStrategy(self.config)
