@@ -10,6 +10,7 @@ from core.vehicle_geometry import VehicleGeometry
 from core.vehicle_state import VehicleState
 from strategy.assignment import StrategyAssignment, StrategyManager
 from strategy.base import StrategyDecision
+from strategy.centerline import CenterlineStrategy
 from strategy.defending import CostBasedDefenseStrategy, DefenseConfig
 from strategy.observations import create_vehicle_observation
 from strategy.offset_path import LateralManeuver
@@ -91,10 +92,14 @@ class StrategyAssignmentTests(unittest.TestCase):
         decisions = manager.update(self.observations, self.track, 0.0)
         self.assertEqual(decisions["blue"].mode, "centerline")
 
-    def test_defender_receives_current_attack_plan_while_attacker_sees_previous_plan(self) -> None:
-        # 即使車輛排列先放 blue，資訊順序也不應改變。
+    def test_defender_receives_no_other_plans_in_either_update_order(self) -> None:
+        for order in (("blue", "red", "green"), ("red", "green", "blue")):
+            with self.subTest(order=order):
+                self.check_plan_visibility(order)
+
+    def check_plan_visibility(self, order: tuple[str, ...]) -> None:
         manager = StrategyManager(
-            ("blue", "red", "green"),
+            order,
             {"blue": StrategyAssignment("defend", target_vehicle_id="red"),
              "red": StrategyAssignment("overtake")},
             self.overtaking_config, self.defense_config,
@@ -103,6 +108,11 @@ class StrategyAssignmentTests(unittest.TestCase):
         new_attack = LateralManeuver(0.0, 0.0, 0.6, 6.0)
         observations = dict(self.observations)
         observations["blue"] = replace(observations["blue"], maneuver=previous)
+        previous_attack = LateralManeuver(0.0, 0.0, -0.6, 6.0)
+        observations["red"] = replace(observations["red"], maneuver=previous_attack)
+        observations["green"] = replace(
+            observations["green"], maneuver=LateralManeuver(15.0, 0.0, 0.3, 3.0),
+        )
         attacker = Mock()
         attacker.update.return_value = StrategyDecision("overtake", 0.6, maneuver=new_attack)
         defender = Mock()
@@ -114,9 +124,12 @@ class StrategyAssignmentTests(unittest.TestCase):
         seen_by_attacker = {other.vehicle_id: other for other in attacker.update.call_args.args[1]}
         seen_by_defender = {other.vehicle_id: other for other in defender.update.call_args.args[1]}
         self.assertEqual(seen_by_attacker["blue"].maneuver, previous)
-        self.assertEqual(seen_by_defender["red"].maneuver, new_attack)
+        for vehicle_id, other in seen_by_defender.items():
+            self.assertIsNone(other.maneuver)
+            self.assertEqual(other.state, observations[vehicle_id].state)
+            self.assertEqual(other.track_position, observations[vehicle_id].track_position)
         self.assertEqual(observations["blue"].maneuver, previous)
-        self.assertIsNone(observations["red"].maneuver)
+        self.assertEqual(observations["red"].maneuver, previous_attack)
 
     def test_defense_adapter_preserves_original_algorithm(self) -> None:
         manager = self.manager({"blue": StrategyAssignment("defend", target_vehicle_id="red")})
@@ -130,18 +143,31 @@ class StrategyAssignmentTests(unittest.TestCase):
         self.assertEqual(actual.reason, expected.reason)
 
     def test_invalid_assignments_are_rejected_before_running(self) -> None:
-        for kwargs in ({"name": "unknown"}, {"name": "defend"},
+        for kwargs in ({"name": ""}, {"name": "defend"},
                        {"name": "defend", "target_vehicle_id": ""},
                        {"name": "centerline", "target_vehicle_id": "red"}):
             with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
                 StrategyAssignment(**kwargs)
         for assignments in (
             {"missing": StrategyAssignment("overtake")},
+            {"red": StrategyAssignment("unknown")},
             {"blue": StrategyAssignment("defend", target_vehicle_id="blue")},
             {"blue": StrategyAssignment("defend", target_vehicle_id="missing")},
         ):
             with self.subTest(assignments=assignments), self.assertRaises(ValueError):
                 self.manager(assignments)
+
+    def test_registered_strategy_factory_creates_independent_instances(self) -> None:
+        factory = Mock(side_effect=lambda vehicle_id: CenterlineStrategy())
+        manager = StrategyManager(
+            tuple(self.observations),
+            {"red": StrategyAssignment("custom"), "green": StrategyAssignment("custom")},
+            self.overtaking_config, self.defense_config,
+            strategy_factories={"custom": factory},
+        )
+        self.assertEqual([call.args[0] for call in factory.call_args_list], ["red", "green"])
+        self.assertIsNot(manager.strategies["red"], manager.strategies["green"])
+        self.assertEqual(manager.update(self.observations, self.track, 0.0)["red"].mode, "centerline")
 
     def test_missing_or_mismatched_observations_are_rejected(self) -> None:
         manager = self.manager({})

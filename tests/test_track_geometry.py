@@ -13,6 +13,7 @@ from core.track_geometry import (
     track_boundaries,
     track_length,
     track_to_world,
+    track_to_world_points,
     world_to_track,
 )
 from core.vehicle_state import VehicleState
@@ -33,6 +34,25 @@ class TrackGeometryTests(unittest.TestCase):
         self.assertAlmostEqual(start.d, 0.0, places=10)
         self.assertAlmostEqual(opposite.s, track_length(ellipse) / 2.0, places=10)
         self.assertAlmostEqual(opposite.d, 0.0, places=10)
+
+    def test_batched_coordinates_match_scalar_queries_across_finish_and_corners(self) -> None:
+        distances = np.array((-0.3, 0.0, 9.9, 10.0, 39.9, 40.0, 80.0))
+        offsets = np.array((0.2, -0.3, 0.0, 0.6, -0.6, 0.1, 0.0))
+        expected = np.array([track_to_world(float(s), float(d), self.square)
+                             for s, d in zip(distances, offsets)])
+        np.testing.assert_allclose(track_to_world_points(distances, offsets, self.square), expected)
+
+    def test_batched_open_track_and_invalid_inputs(self) -> None:
+        track = Track(self.square.centerline, closed=False)
+        distances, offsets = np.array((0.0, 15.0, 30.0)), np.array((0.2, -0.2, 0.0))
+        expected = np.array([track_to_world(float(s), float(d), track)
+                             for s, d in zip(distances, offsets)])
+        np.testing.assert_allclose(track_to_world_points(distances, offsets, track), expected)
+        for s, d in ((np.array((-0.1,)), np.zeros(1)),
+                     (np.array((float("nan"),)), np.zeros(1)),
+                     (np.zeros(2), np.zeros(1)), (np.zeros((1, 2)), np.zeros((1, 2)))):
+            with self.subTest(s=s, d=d), self.assertRaises(ValueError):
+                track_to_world_points(s, d, track)
 
     def test_signed_lateral_offset_uses_left_positive(self) -> None:
         left = world_to_track(VehicleState(2.0, 1.0, 0.0, 0.0), self.square)

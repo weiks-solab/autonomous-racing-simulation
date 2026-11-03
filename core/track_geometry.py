@@ -133,6 +133,33 @@ def track_to_world(s: float, d: float, track: Track) -> NDArray[np.float64]:
     return center_point + d * left_normal
 
 
+def track_to_world_points(
+    s: NDArray[np.float64],
+    d: NDArray[np.float64],
+    track: Track,
+) -> NDArray[np.float64]:
+    """Convert a batch of track coordinates without repeating track preparation."""
+    distances = np.asarray(s, dtype=float)
+    offsets = np.asarray(d, dtype=float)
+    if distances.ndim != 1 or offsets.shape != distances.shape:
+        raise ValueError("s and d must be matching one-dimensional arrays")
+    if not np.all(np.isfinite(distances)) or not np.all(np.isfinite(offsets)):
+        raise ValueError("s and d must be finite")
+    starts, vectors, lengths = _segments(track)
+    cumulative = np.concatenate(([0.0], np.cumsum(lengths)))
+    if track.closed:
+        distances = distances % cumulative[-1]
+    elif np.any((distances < 0.0) | (distances > cumulative[-1])):
+        raise ValueError("s must lie within an open track")
+    indices = np.searchsorted(cumulative, distances, side="right") - 1
+    indices = np.clip(indices, 0, len(lengths) - 1)
+    ratios = (distances - cumulative[indices]) / lengths[indices]
+    tangents = vectors[indices] / lengths[indices, np.newaxis]
+    normals = np.column_stack((-tangents[:, 1], tangents[:, 0]))
+    return (starts[indices] + ratios[:, np.newaxis] * vectors[indices]
+            + offsets[:, np.newaxis] * normals)
+
+
 def signed_longitudinal_gap(
     reference: TrackPosition,
     other: TrackPosition,

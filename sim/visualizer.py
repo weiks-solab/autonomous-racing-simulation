@@ -7,7 +7,7 @@ from typing import Collection, Mapping, Sequence
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Polygon
-from matplotlib.text import Text
+from matplotlib.text import Annotation, Text
 import numpy as np
 
 from core.pure_pursuit import PursuitTarget
@@ -15,6 +15,8 @@ from core.track import Track
 from core.track_geometry import TrackPosition, track_boundaries
 from core.vehicle_geometry import VehicleGeometry, oriented_rectangle_corners
 from core.vehicle_state import VehicleState
+from sim.candidate_paths import candidate_path_label, candidate_path_points
+from strategy.base import CandidateSnapshot
 
 
 @dataclass(frozen=True)
@@ -33,10 +35,18 @@ class VisualizationConfig:
     show_collision_status: bool = True
     show_strategy_status: bool = True
     show_temporary_paths: bool = True
+    show_candidate_paths: bool = True
+    show_candidate_labels: bool = True
 
     def __post_init__(self) -> None:
         if not math.isfinite(self.pause_seconds) or self.pause_seconds < 0.0:
             raise ValueError("pause_seconds must be non-negative and finite")
+
+
+@dataclass(frozen=True)
+class _CandidateArtists:
+    line: Line2D
+    label: Annotation
 
 
 @dataclass(frozen=True)
@@ -50,15 +60,18 @@ class _VehicleArtists:
     collision_text: Text
     strategy_text: Text
     temporary_path: Line2D
+    candidate_paths: list[_CandidateArtists]
+    candidate_time: Text
     color: tuple[float, float, float, float]
 
 
 class SimulationVisualizer:
     def __init__(self, track: Track, config: VisualizationConfig) -> None:
         self.config = config
+        self.track = track
         if config.realtime:
             plt.ion()
-        self.figure, self.axes = plt.subplots()
+        self.figure, self.axes = plt.subplots(figsize=(10, 7))
         if config.show_centerline:
             self._plot_closed_line(
                 track.centerline,
@@ -84,11 +97,13 @@ class SimulationVisualizer:
                 closed=track.closed,
             )
         self._vehicle_artists: dict[str, _VehicleArtists] = {}
+        self._candidate_snapshots: dict[str, CandidateSnapshot] = {}
         if config.equal_axis:
             self.axes.set_aspect("equal", adjustable="box")
         displayed_track = np.vstack((left_boundary, right_boundary))
         x_min = float(displayed_track[:, 0].min())
         x_max = float(displayed_track[:, 0].max())
+        self._label_mid_x = (x_min + x_max) / 2.0
         y_min = float(displayed_track[:, 1].min())
         y_max = float(displayed_track[:, 1].max())
         margin = 0.1 * max(x_max - x_min, y_max - y_min)
@@ -97,7 +112,7 @@ class SimulationVisualizer:
         self.axes.set_xlabel("x [m]")
         self.axes.set_ylabel("y [m]")
         self.axes.set_title("Pure Pursuit on an Ellipse")
-        self.axes.legend()
+        self._update_legend()
 
     def update(
         self,
@@ -122,6 +137,7 @@ class SimulationVisualizer:
         collision_pairs: Collection[tuple[str, str]] | None = None,
         strategy_labels: Mapping[str, str] | None = None,
         temporary_paths: Mapping[str, Track] | None = None,
+        candidate_snapshots: Mapping[str, CandidateSnapshot] | None = None,
     ) -> None:
         """Update reusable artists for an arbitrary vehicle collection."""
         vehicle_ids = set(states)
@@ -135,6 +151,8 @@ class SimulationVisualizer:
             raise ValueError("strategy_labels contain an unknown vehicle ID")
         if temporary_paths is not None and not set(temporary_paths) <= vehicle_ids:
             raise ValueError("temporary_paths contain an unknown vehicle ID")
+        if candidate_snapshots is not None and not set(candidate_snapshots) <= vehicle_ids:
+            raise ValueError("candidate_snapshots contain an unknown vehicle ID")
         colliding_ids: set[str] = set()
         for first_id, second_id in collision_pairs or ():
             if first_id not in vehicle_ids or second_id not in vehicle_ids:
@@ -235,6 +253,11 @@ class SimulationVisualizer:
                 artists.temporary_path.set_data([], [])
                 artists.temporary_path.set_visible(False)
 
+            snapshot = (
+                None if candidate_snapshots is None else candidate_snapshots.get(vehicle_id)
+            )
+            self._update_candidate_artists(vehicle_id, artists, snapshot, state)
+
         if self.config.realtime:
             self.figure.canvas.draw_idle()
             self.figure.canvas.flush_events()
@@ -242,7 +265,9 @@ class SimulationVisualizer:
 
     def _create_vehicle_artists(self, vehicle_id: str) -> _VehicleArtists:
         color = plt.get_cmap("tab10")(len(self._vehicle_artists) % 10)
-        (trajectory,) = self.axes.plot([], [], color=color, label=vehicle_id)
+        (trajectory,) = self.axes.plot(
+            [], [], color=color, label=vehicle_id, linewidth=1.0, alpha=0.45,
+        )
         (marker,) = self.axes.plot([], [], "o", color=color)
         (target,) = self.axes.plot([], [], "x", color=color)
         (heading,) = self.axes.plot([], [], color=color, linewidth=2.0)
@@ -286,12 +311,18 @@ class SimulationVisualizer:
         (temporary_path,) = self.axes.plot(
             [],
             [],
-            linestyle=":",
-            linewidth=1.5,
+            linestyle="-",
+            linewidth=2.5,
             color=color,
             visible=False,
+            zorder=4,
         )
-        self.axes.legend()
+        candidate_time = self.axes.text(
+            0.0, 0.0, "", color=color, fontsize=7,
+            horizontalalignment="center", visible=False,
+            bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.75},
+        )
+        self._update_legend()
         return _VehicleArtists(
             trajectory,
             marker,
@@ -302,8 +333,83 @@ class SimulationVisualizer:
             collision_text,
             strategy_text,
             temporary_path,
+            [],
+            candidate_time,
             color,
         )
+
+    def _update_candidate_artists(
+        self,
+        vehicle_id: str,
+        artists: _VehicleArtists,
+        snapshot: CandidateSnapshot | None,
+        state: VehicleState,
+    ) -> None:
+        visible = self.config.show_candidate_paths and snapshot is not None
+        candidates = snapshot.candidates if visible else ()
+        while len(artists.candidate_paths) < len(candidates):
+            (line,) = self.axes.plot([], [], visible=False, zorder=3)
+            label = self.axes.annotate(
+                "", xy=(0.0, 0.0), xytext=(8, 0), textcoords="offset points",
+                fontsize=7, verticalalignment="center", visible=False,
+                bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.8},
+                arrowprops={"arrowstyle": "-", "linewidth": 0.5, "alpha": 0.4},
+                zorder=8,
+            )
+            artists.candidate_paths.append(_CandidateArtists(line, label))
+
+        # 同一份快照沿用世界座標與圖元，不以新車位重畫舊評估結果。
+        if visible and self._candidate_snapshots.get(vehicle_id) is not snapshot:
+            self._draw_candidate_snapshot(artists, snapshot)
+            self._candidate_snapshots[vehicle_id] = snapshot
+        if snapshot is None:
+            self._candidate_snapshots.pop(vehicle_id, None)
+        for index, candidate_artists in enumerate(artists.candidate_paths):
+            active = index < len(candidates)
+            candidate_artists.line.set_visible(active)
+            candidate_artists.label.set_visible(active and self.config.show_candidate_labels)
+        artists.candidate_time.set_visible(
+            bool(candidates) and self.config.show_candidate_labels,
+        )
+        if candidates:
+            artists.candidate_time.set_position((state.x, state.y - 1.0))
+            artists.candidate_time.set_text(f"candidates @ {snapshot.evaluated_at:.2f}s")
+
+    def _draw_candidate_snapshot(
+        self, artists: _VehicleArtists, snapshot: CandidateSnapshot,
+    ) -> None:
+        points = [
+            candidate_path_points(snapshot, candidate, self.track)
+            for candidate in snapshot.candidates
+        ]
+        label_order = sorted(range(len(points)), key=lambda index: points[index][-1, 1])
+        for rank, index in enumerate(label_order):
+            candidate = snapshot.candidates[index]
+            candidate_artists = artists.candidate_paths[index]
+            color = artists.color if candidate.feasible else "0.5"
+            line = candidate_artists.line
+            line.set_data(points[index][:, 0], points[index][:, 1])
+            line.set_color(color)
+            line.set_linestyle(":" if not candidate.feasible else "-" if candidate.selected else "--")
+            line.set_linewidth(2.0 if candidate.selected else 1.0)
+            line.set_alpha(0.75 if candidate.selected else 0.4)
+            label = candidate_artists.label
+            label.xy = tuple(points[index][-1])
+            label.set_text(candidate_path_label(candidate))
+            label.set_color(color)
+            left = label.xy[0] > self._label_mid_x
+            label.set_horizontalalignment("right" if left else "left")
+            label.set_position((-8 if left else 8, 13 * (rank - (len(points) - 1) / 2)))
+
+    def _update_legend(self) -> None:
+        handles, _ = self.axes.get_legend_handles_labels()
+        if self.config.show_candidate_paths:
+            handles.extend((
+                Line2D([], [], color="0.4", linestyle="--", label="candidate snapshot"),
+                Line2D([], [], color="0.4", linewidth=2.5, label="selected / tracking"),
+                Line2D([], [], color="0.5", linestyle=":", label="rejected candidate"),
+            ))
+        self.axes.legend(handles=handles, fontsize=8, loc="upper right")
 
     def _plot_closed_line(
         self,

@@ -1,6 +1,8 @@
 import unittest
+from dataclasses import replace
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from core.pure_pursuit import PursuitTarget
 from core.track import Track
@@ -8,6 +10,8 @@ from core.track_geometry import world_to_track
 from core.vehicle_geometry import VehicleGeometry
 from core.vehicle_state import VehicleState
 from sim.visualizer import SimulationVisualizer, VisualizationConfig
+from strategy.base import CandidatePath, CandidateSnapshot
+from strategy.offset_path import LateralManeuver
 
 
 class SimulationVisualizerTests(unittest.TestCase):
@@ -17,6 +21,21 @@ class SimulationVisualizerTests(unittest.TestCase):
         self.target = PursuitTarget(0, 2, 3.9, 0.5)
         self.geometry = VehicleGeometry(0.5, 0.3, 0.1)
         self.position = world_to_track(self.state, self.track)
+        self.snapshot = CandidateSnapshot(
+            evaluated_at=1.0,
+            position=self.position,
+            distances=(0.0, 0.5, 1.0),
+            candidates=(
+                CandidatePath(
+                    LateralManeuver(self.position.s, self.position.d, 0.3, 1.0),
+                    selected=True, race_cost=1.0, blocking_cost=2.0,
+                ),
+                CandidatePath(
+                    LateralManeuver(self.position.s, self.position.d, -0.3, 1.0),
+                    name="RIGHT", feasible=False, reason="predicted overlap",
+                ),
+            ),
+        )
 
     def tearDown(self) -> None:
         plt.close("all")
@@ -114,11 +133,88 @@ class SimulationVisualizerTests(unittest.TestCase):
         visualizer.update(self.state, [self.state], self.target)
         self.assertIn("vehicle", visualizer._vehicle_artists)
 
+    def test_candidate_costs_rejections_and_timestamp_are_displayed(self) -> None:
+        visualizer = SimulationVisualizer(self.track, VisualizationConfig())
+        self._update(visualizer, candidate_snapshot=self.snapshot)
+        visualizer.figure.canvas.draw()
+        artists = visualizer._vehicle_artists["vehicle"]
+        selected, rejected = artists.candidate_paths
+        self.assertTrue(selected.line.get_visible())
+        self.assertEqual(selected.line.get_linestyle(), "-")
+        self.assertIn("J=3.00", selected.label.get_text())
+        self.assertTrue(selected.label.get_text().endswith("*"))
+        self.assertEqual(rejected.line.get_linestyle(), ":")
+        self.assertIn("RIGHT", rejected.label.get_text())
+        self.assertIn("predicted overlap", rejected.label.get_text())
+        self.assertEqual(artists.candidate_time.get_text(), "candidates @ 1.00s")
+
+    def test_candidate_snapshots_reuse_artists_and_clear_old_lines(self) -> None:
+        visualizer = SimulationVisualizer(self.track, VisualizationConfig())
+        self._update(visualizer, candidate_snapshot=self.snapshot)
+        artists = visualizer._vehicle_artists["vehicle"]
+        first_line = artists.candidate_paths[0].line
+        original_points = np.array(first_line.get_data())
+        line_count, text_count = len(visualizer.axes.lines), len(visualizer.axes.texts)
+        self.state = replace(self.state, x=3.9, y=0.5)
+        self._update(visualizer, candidate_snapshot=self.snapshot)
+        np.testing.assert_array_equal(first_line.get_data(), original_points)
+        smaller = replace(self.snapshot, evaluated_at=1.2, candidates=self.snapshot.candidates[:1])
+        self._update(visualizer, candidate_snapshot=smaller)
+        self.assertFalse(artists.candidate_paths[1].line.get_visible())
+        self.assertFalse(artists.candidate_paths[1].label.get_visible())
+        self._update(visualizer)
+        self.assertFalse(artists.candidate_time.get_visible())
+        self.assertTrue(all(not item.line.get_visible() for item in artists.candidate_paths))
+        self.assertTrue(all(not item.label.get_visible() for item in artists.candidate_paths))
+        self._update(visualizer, candidate_snapshot=self.snapshot)
+        self.assertIs(artists.candidate_paths[0].line, first_line)
+        self.assertEqual((len(visualizer.axes.lines), len(visualizer.axes.texts)),
+                         (line_count, text_count))
+
+    def test_candidate_paths_and_labels_can_be_hidden(self) -> None:
+        for paths, labels in ((False, True), (True, False)):
+            with self.subTest(paths=paths, labels=labels):
+                visualizer = SimulationVisualizer(
+                    self.track,
+                    VisualizationConfig(show_candidate_paths=paths, show_candidate_labels=labels),
+                )
+                self._update(visualizer, candidate_snapshot=self.snapshot)
+                artists = visualizer._vehicle_artists["vehicle"]
+                self.assertTrue(all(item.line.get_visible() == paths
+                                    for item in artists.candidate_paths))
+                self.assertTrue(all(not item.label.get_visible() for item in artists.candidate_paths))
+                self.assertFalse(artists.candidate_time.get_visible())
+
+    def test_candidate_snapshots_reject_unknown_vehicle_ids(self) -> None:
+        visualizer = SimulationVisualizer(self.track, VisualizationConfig())
+        with self.assertRaisesRegex(ValueError, "unknown vehicle ID"):
+            visualizer.update_vehicles(
+                states={"vehicle": self.state}, trajectories={"vehicle": [self.state]},
+                targets={"vehicle": None}, candidate_snapshots={"other": self.snapshot},
+            )
+
+    def test_rejected_cost_candidate_shows_collision_reason_and_no_selection(self) -> None:
+        rejected = replace(
+            self.snapshot.candidates[0], selected=False, feasible=False,
+            reason="predicted overlap with other @ 0.40s", cost_terms=(("progress", -3.0),),
+        )
+        snapshot = replace(self.snapshot, candidates=(rejected,))
+        visualizer = SimulationVisualizer(self.track, VisualizationConfig())
+        self._update(visualizer, candidate_snapshot=snapshot)
+        visualizer.figure.canvas.draw()
+        artists = visualizer._vehicle_artists["vehicle"].candidate_paths[0]
+        self.assertEqual(artists.line.get_linestyle(), ":")
+        self.assertEqual(artists.line.get_color(), "0.5")
+        self.assertIn("other @ 0.40s", artists.label.get_text())
+        self.assertNotIn("J=", artists.label.get_text())
+        self.assertFalse(artists.label.get_text().endswith("*"))
+
     def _update(
         self,
         visualizer: SimulationVisualizer,
         collision_pairs: set[tuple[str, str]] | None = None,
         include_other: bool = False,
+        candidate_snapshot: CandidateSnapshot | None = None,
     ) -> None:
         states = {"vehicle": self.state}
         trajectories = {"vehicle": [self.state]}
@@ -139,6 +235,7 @@ class SimulationVisualizerTests(unittest.TestCase):
             geometries=geometries,
             track_positions=positions,
             collision_pairs=collision_pairs,
+            candidate_snapshots=None if candidate_snapshot is None else {"vehicle": candidate_snapshot},
         )
 
 

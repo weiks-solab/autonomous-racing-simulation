@@ -1,4 +1,4 @@
-"""檢查防守成本、觸發條件與多車路徑篩選。"""
+"""檢查防守成本、固定候選與只使用當下位置的決策。"""
 
 from dataclasses import replace
 import math
@@ -40,7 +40,8 @@ class DefendingStrategyTests(unittest.TestCase):
     def setUp(self) -> None:
         # 長直線讓成本與左右選擇的測試不受彎道影響。
         self.track = Track(np.array(((0, 0), (100, 0), (100, 100), (0, 100))), width=2.0)
-        self.config = DefenseConfig()
+        # 原成本行為的回歸測試；碰撞條件另外以獨立場景覆蓋。
+        self.config = DefenseConfig(collision_check_enabled=False)
         self.defender = observation("defender", 20.0, 0.0, 3.0, self.track)
         self.ego = observation("ego", 14.0, 0.6, 5.0, self.track)
 
@@ -80,10 +81,21 @@ class DefendingStrategyTests(unittest.TestCase):
         self.assertAlmostEqual(candidate.race_cost, expected_race)
         self.assertAlmostEqual(candidate.blocking_cost, expected_block)
 
-    def test_no_defense_for_ahead_slow_far_or_unspecified_vehicle(self) -> None:
+    def test_other_vehicles_plans_do_not_change_costs_or_decision(self) -> None:
+        results = []
+        for maneuver in (None, LateralManeuver(14.0, 0.6, -0.6, 3.0),
+                         LateralManeuver(14.0, 0.6, 0.6, 3.0)):
+            strategy = CostBasedDefenseStrategy(self.config, "ego")
+            ego = replace(self.ego, maneuver=maneuver)
+            decision = strategy.update(self.defender, (ego,), self.track, 0.0)
+            results.append((decision, strategy.last_candidates))
+        self.assertEqual(results[0], results[1])
+        self.assertEqual(results[0], results[2])
+
+    def test_no_defense_for_ahead_alongside_far_or_unspecified_vehicle(self) -> None:
         scenarios = (
             (observation("ego", 25.0, 0.6, 5.0, self.track),),
-            (observation("ego", 14.0, 0.6, 3.0, self.track),),
+            (observation("ego", 20.0, 0.6, 5.0, self.track),),
             (observation("ego", 5.0, 0.6, 5.0, self.track),),
             (observation("other", 14.0, 0.6, 5.0, self.track),),
             (),
@@ -95,23 +107,35 @@ class DefendingStrategyTests(unittest.TestCase):
                 self.assertIs(decision.mode, DefenseMode.CRUISE)
                 self.assertEqual(decision.blocking_cost, 0.0)
 
-    def test_nearby_ego_does_not_start_lateral_chasing(self) -> None:
-        strategy = CostBasedDefenseStrategy(self.config, "ego")
-        ego = observation("ego", 19.5, 0.6, 5.0, self.track)
-        decision = strategy.update(self.defender, (ego,), self.track, 0.0)
-        self.assertIs(decision.mode, DefenseMode.HOLD)
-        self.assertEqual(decision.target_d, 0.0)
-        self.assertEqual(decision.blocking_cost, 0.0)
+    def test_slow_or_very_close_rear_vehicle_still_uses_alignment_cost(self) -> None:
+        for s, speed in ((14.0, 1.0), (14.0, 3.0), (19.95, 5.0)):
+            with self.subTest(s=s, speed=speed):
+                strategy = CostBasedDefenseStrategy(self.config, "ego")
+                ego = observation("ego", s, 0.6, speed, self.track)
+                decision = strategy.update(self.defender, (ego,), self.track, 0.0)
+                self.assertIs(decision.mode, DefenseMode.DEFEND)
+                self.assertGreater(decision.target_d, 0.0)
+                self.assertGreater(decision.blocking_cost, 0.0)
 
-    def test_hold_time_prevents_immediate_side_switch(self) -> None:
+    def test_lowest_cost_can_switch_side_at_next_evaluation(self) -> None:
         strategy = CostBasedDefenseStrategy(self.config, "ego")
         first = strategy.update(self.defender, (self.ego,), self.track, 0.0)
         right_ego = observation("ego", 14.0, -0.6, 5.0, self.track)
-        held = strategy.update(self.defender, (right_ego,), self.track, 0.3)
-        switched = strategy.update(self.defender, (right_ego,), self.track, 0.8)
-        self.assertEqual(held.target_d, first.target_d)
-        self.assertEqual(held.maneuver, first.maneuver)
+        switched = strategy.update(self.defender, (right_ego,), self.track, 0.3)
+        self.assertGreater(first.target_d, 0.0)
         self.assertLess(switched.target_d, 0.0)
+        self.assertAlmostEqual(
+            switched.race_cost + switched.blocking_cost,
+            min(candidate.total_cost for candidate in strategy.last_candidates),
+        )
+
+    def test_decision_period_is_respected(self) -> None:
+        strategy = CostBasedDefenseStrategy(self.config, "ego")
+        first = strategy.update(self.defender, (self.ego,), self.track, 0.0)
+        right_ego = observation("ego", 14.0, -0.6, 5.0, self.track)
+        self.assertEqual(
+            strategy.update(self.defender, (right_ego,), self.track, 0.1), first,
+        )
 
     def test_maneuver_origin_is_preserved_while_car_moves(self) -> None:
         strategy = CostBasedDefenseStrategy(self.config, "ego")
@@ -135,51 +159,49 @@ class DefendingStrategyTests(unittest.TestCase):
         self.assertIs(finished.mode, DefenseMode.CRUISE)
         self.assertIsNone(finished.maneuver)
 
-    def test_all_other_vehicles_are_checked_before_choosing_a_side(self) -> None:
-        # 第三車占據左側，且相距 2 m，避免只觸發近距離 HOLD。
-        blocker = observation("third", 22.0, 0.6, 1.5, self.track)
-        strategy = CostBasedDefenseStrategy(self.config, "ego")
-        decision = strategy.update(self.defender, (self.ego, blocker), self.track, 0.0)
-        left = next(item for item in strategy.last_candidates if item.target_d == 0.6)
-        self.assertFalse(left.feasible)
-        self.assertIn("third", left.reason)
-        self.assertLess(decision.target_d, 0.6)
+    def test_collisions_and_other_vehicles_do_not_override_cost_selection(self) -> None:
+        baseline = CostBasedDefenseStrategy(self.config, "ego")
+        expected = baseline.update(self.defender, (self.ego,), self.track, 0.0)
+        for s, d, speed in ((22.0, 0.6, 1.5), (20.0, 0.0, 3.0)):
+            with self.subTest(s=s, d=d):
+                blocker = observation("third", s, d, speed, self.track)
+                strategy = CostBasedDefenseStrategy(self.config, "ego")
+                decision = strategy.update(
+                    self.defender, (self.ego, blocker), self.track, 0.0,
+                )
+                self.assertEqual(decision, expected)
+                self.assertEqual(strategy.last_candidates, baseline.last_candidates)
 
-    def test_out_of_bounds_target_is_rejected(self) -> None:
-        config = replace(self.config, candidate_offsets=(-2.0, 2.0))
+    def test_only_fixed_targets_within_available_width_are_scored(self) -> None:
+        config = replace(self.config, candidate_offsets=(-2.0, -0.8, -0.6, 0.6, 0.8, 2.0))
         strategy = CostBasedDefenseStrategy(config, "ego")
-        strategy.update(self.defender, (self.ego,), self.track, 0.0)
-        for item in strategy.last_candidates:
-            if abs(item.target_d) == 2.0:
-                self.assertFalse(item.feasible)
-                self.assertEqual(item.reason, "track width exceeded")
+        defender = observation("defender", 20.0, 0.13, 3.0, self.track)
+        ego = observation("ego", 14.0, 0.47, 5.0, self.track)
+        decision = strategy.update(defender, (ego,), self.track, 0.0)
+        # 路寬 2、車寬 .3、留距 .1，目標限制為 |d| <= .75。
+        self.assertEqual(
+            {item.target_d for item in strategy.last_candidates}, {0.0, -0.6, 0.6},
+        )
+        self.assertAlmostEqual(
+            decision.race_cost + decision.blocking_cost,
+            min(item.total_cost for item in strategy.last_candidates),
+        )
 
-    def test_unsafe_path_can_be_abandoned_during_hold_time(self) -> None:
+    def test_narrower_track_removes_wide_targets(self) -> None:
+        track = replace(self.track, width=0.9)
         strategy = CostBasedDefenseStrategy(self.config, "ego")
-        first = strategy.update(self.defender, (self.ego,), self.track, 0.0)
-        blocker = observation("third", 22.0, 0.6, 1.5, self.track)
-        changed = strategy.update(self.defender, (self.ego, blocker), self.track, 0.3)
-        self.assertLess(changed.target_d, first.target_d)
-        previous_path = next(item for item in strategy.last_candidates
-                             if item.target_d == first.target_d)
-        self.assertFalse(previous_path.feasible)
+        strategy.update(self.defender, (self.ego,), track, 0.0)
+        self.assertEqual([item.target_d for item in strategy.last_candidates], [0.0])
 
-    def test_body_corners_are_checked_even_when_reference_point_is_inside(self) -> None:
+    def test_body_rotation_does_not_filter_candidates(self) -> None:
         shifted = observation("defender", 20.0, 0.6, 3.0, self.track)
         rotated = replace(shifted, state=replace(shifted.state, yaw=math.pi / 4))
+        baseline = CostBasedDefenseStrategy(self.config, "ego")
         strategy = CostBasedDefenseStrategy(self.config, "ego")
-        strategy.update(rotated, (self.ego,), self.track, 0.0)
-        self.assertTrue(all(not item.feasible for item in strategy.last_candidates))
-        self.assertTrue(any(item.reason == "body corner outside track margin"
-                            for item in strategy.last_candidates))
-
-    def test_no_feasible_candidate_is_reported(self) -> None:
-        strategy = CostBasedDefenseStrategy(self.config, "ego")
-        overlap = observation("third", 20.0, 0.0, 3.0, self.track)
-        decision = strategy.update(self.defender, (self.ego, overlap), self.track, 0.0)
-        self.assertIs(decision.mode, DefenseMode.HOLD)
-        self.assertIn("no feasible candidate", decision.reason)
-        self.assertTrue(all(not item.feasible for item in strategy.last_candidates))
+        expected = baseline.update(shifted, (self.ego,), self.track, 0.0)
+        actual = strategy.update(rotated, (self.ego,), self.track, 0.0)
+        self.assertEqual(actual, expected)
+        self.assertEqual(strategy.last_candidates, baseline.last_candidates)
 
     def test_behind_detection_wraps_at_start_finish_line(self) -> None:
         track = Track.create_oval(10.0, 5.0, 200, width=2.0)
@@ -201,8 +223,9 @@ class DefendingStrategyTests(unittest.TestCase):
 
     def test_invalid_inputs_are_rejected(self) -> None:
         for kwargs in ({"q_block": -1}, {"prediction_step": 0},
-                       {"hold_time": float("nan")}, {"candidate_offsets": (float("inf"),)},
-                       {"minimum_gap": 10}):
+                       {"detection_range": float("nan")},
+                       {"candidate_offsets": (float("inf"),)},
+                       {"return_tolerance": -1}):
             with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
                 DefenseConfig(**kwargs)
         strategy = CostBasedDefenseStrategy(self.config, "ego")
@@ -212,6 +235,17 @@ class DefendingStrategyTests(unittest.TestCase):
             strategy.update(self.defender, (self.defender,), self.track, 0.0)
         with self.assertRaises(ValueError):
             strategy.update(self.defender, (self.ego,), self.track, -1.0)
+        with self.assertRaisesRegex(ValueError, "too narrow"):
+            strategy.update(
+                self.defender, (self.ego,), replace(self.track, width=0.4), 0.0,
+            )
+        with self.assertRaisesRegex(ValueError, "closed"):
+            strategy.update(
+                self.defender, (self.ego,), replace(self.track, closed=False), 0.0,
+            )
+        strategy.update(self.defender, (self.ego,), self.track, 1.0)
+        with self.assertRaisesRegex(ValueError, "backwards"):
+            strategy.update(self.defender, (self.ego,), self.track, 0.5)
 
 
 if __name__ == "__main__":

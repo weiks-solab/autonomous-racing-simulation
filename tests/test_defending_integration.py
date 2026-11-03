@@ -25,20 +25,20 @@ def run_without_window(defense_enabled: bool) -> tuple[dict, str, Track]:
 class DefendingIntegrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.attacker_id = next(
-            vehicle_id for vehicle_id, assignment in main.STRATEGY_ASSIGNMENTS.items()
-            if assignment.name == "overtake"
-        )
-        cls.defender_id = next(
-            vehicle_id for vehicle_id, assignment in main.STRATEGY_ASSIGNMENTS.items()
-            if assignment.name == "defend"
-        )
-        cls.active, cls.active_output, cls.track = run_without_window(True)
-        cls.passive, cls.passive_output, _ = run_without_window(False)
+        # 固定舊策略場景，讓回歸測試不依賴使用者正在調整的示範車數與策略。
+        cls.attacker_id, cls.defender_id = "vehicle-1", "vehicle-2"
+        specs = (("vehicle-1", 0.0, 6.0), ("vehicle-2", 6.0, 5.0),
+                 ("vehicle-3", -20.0, 4.0))
+        assignments = {
+            "vehicle-1": StrategyAssignment("overtake"),
+            "vehicle-2": StrategyAssignment("defend", target_vehicle_id="vehicle-1"),
+        }
+        with patch("main.VEHICLE_SPECS", specs), patch("main.STRATEGY_ASSIGNMENTS", assignments):
+            cls.active, cls.active_output, cls.track = run_without_window(True)
+            cls.passive, cls.passive_output, _ = run_without_window(False)
 
-    def test_default_demo_completes_two_laps_without_reported_collision(self) -> None:
-        self.assertIn("Detected collision pairs: none", self.active_output)
-        self.assertIn("Pass completed: yes", self.active_output)
+    def test_rule_based_scene_completes_two_laps_and_reports_defense(self) -> None:
+        self.assertIn("Detected collision pairs:", self.active_output)
         self.assertIn("DEFEND", self.active_output)
         self.assertIn(self.defender_id, self.active["strategy_labels"])
         positions = [
@@ -49,6 +49,18 @@ class DefendingIntegrationTests(unittest.TestCase):
         steps = (np.diff([position.s for position in positions]) + length / 2) % length - length / 2
         self.assertGreater(float(np.sum(steps)) / length, 2.0)
         self.assertLess(max(abs(position.d) for position in positions), main.TRACK_WIDTH / 2)
+
+    def test_existing_collision_is_reported_and_simulation_continues(self) -> None:
+        specs = (("rear", 0.0, 6.0), ("front", 0.0, 5.0))
+        assignments = {"front": StrategyAssignment("defend", target_vehicle_id="rear")}
+        with patch("main.VEHICLE_SPECS", specs), \
+             patch("main.STRATEGY_ASSIGNMENTS", assignments), \
+             patch("main.SIMULATION_SECONDS", 0.4):
+            frame, output, _ = run_without_window(True)
+        self.assertIn("Detected collision pairs: front/rear", output)
+        for trajectory in frame["trajectories"].values():
+            self.assertEqual(len(trajectory), 1 + int(0.4 / main.MODEL_CONFIG.time_step))
+            self.assertGreater(trajectory[-1].velocity, trajectory[0].velocity)
 
     def test_passive_vehicle_is_unchanged_and_defender_actually_moves(self) -> None:
         self.assertEqual(

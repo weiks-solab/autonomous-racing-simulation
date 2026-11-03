@@ -4,8 +4,35 @@ from dataclasses import dataclass
 from typing import Protocol, Sequence
 
 from core.track import Track
+from core.track_geometry import TrackPosition
+from core.vehicle_state import VehicleState
 from strategy.observations import VehicleObservation
 from strategy.offset_path import LateralManeuver
+
+
+@dataclass(frozen=True)
+class CandidatePath:
+    """候選路徑的顯示資料，不參與控制或其他車的觀測。"""
+
+    maneuver: LateralManeuver
+    selected: bool = False
+    name: str = ""
+    feasible: bool = True
+    reason: str = ""
+    race_cost: float | None = None
+    blocking_cost: float | None = None
+    cost_terms: tuple[tuple[str, float], ...] = ()
+    predicted_states: tuple[VehicleState, ...] = ()
+
+
+@dataclass(frozen=True)
+class CandidateSnapshot:
+    """保留評估位置與結果；候選可提供取樣距離或完整預測狀態。"""
+
+    evaluated_at: float
+    position: TrackPosition
+    distances: tuple[float, ...]
+    candidates: tuple[CandidatePath, ...]
 
 
 @dataclass(frozen=True)
@@ -18,6 +45,7 @@ class StrategyDecision:
     maneuver: LateralManeuver | None = None
     reason: str = ""
     details: tuple[str, ...] = ()
+    candidate_snapshot: CandidateSnapshot | None = None
 
     @property
     def display_text(self) -> str:

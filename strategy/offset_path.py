@@ -6,7 +6,7 @@ import math
 import numpy as np
 
 from core.track import Track
-from core.track_geometry import TrackPosition, track_length, track_to_world
+from core.track_geometry import TrackPosition, track_length, track_to_world_points
 
 
 @dataclass(frozen=True)
@@ -88,6 +88,20 @@ def wrapped_forward_distance(
     return (current_s - start_s) % centerline_length
 
 
+def continue_lateral_maneuver(
+    maneuver: LateralManeuver, current_s: float, centerline_length: float,
+) -> LateralManeuver:
+    """完成橫移後保留等偏移參考線，避免繞下一圈時重新開始過渡。"""
+    if maneuver.start_d == maneuver.target_d:
+        return maneuver
+    progress = wrapped_forward_distance(maneuver.start_s, current_s, centerline_length)
+    if progress < maneuver.transition_length:
+        return maneuver
+    return LateralManeuver(
+        current_s, maneuver.target_d, maneuver.target_d, maneuver.transition_length,
+    )
+
+
 def generate_offset_track(
     base_track: Track,
     current_position: TrackPosition,
@@ -113,19 +127,11 @@ def generate_offset_track(
 
     distances = np.arange(0.0, config.path_length, config.sample_spacing)
     distances = np.append(distances, config.path_length)
-    points = np.array(
-        [
-            track_to_world(
-                current_position.s + float(distance),
-                lateral_offset_at_distance(
-                    progress + float(distance),
-                    maneuver.start_d,
-                    maneuver.target_d,
-                    maneuver.transition_length,
-                ),
-                base_track,
-            )
-            for distance in distances
-        ]
+    fraction = np.clip((progress + distances) / maneuver.transition_length, 0.0, 1.0)
+    offsets = maneuver.start_d + (maneuver.target_d - maneuver.start_d) * (
+        3.0 * fraction**2 - 2.0 * fraction**3
+    )
+    points = track_to_world_points(
+        current_position.s + distances, offsets, base_track,
     )
     return Track(centerline=points, closed=False, width=base_track.width)

@@ -21,6 +21,9 @@ from sim.simulated_vehicle import (
 from sim.visualizer import SimulationVisualizer, VisualizationConfig
 from sim.strategy_history import StrategyHistory
 from strategy.assignment import StrategyAssignment, StrategyManager
+from strategy.base import CandidateSnapshot
+from strategy.bicycle_prediction import BicyclePredictionConfig
+from strategy.cost_overtaking import CostBasedOvertakingStrategy, CostOvertakingConfig
 from strategy.observations import VehicleObservation, create_vehicle_observation
 from strategy.defending import DefenseConfig
 from strategy.offset_path import LateralManeuver, OffsetPathConfig, generate_offset_track
@@ -38,18 +41,19 @@ TRACK_WIDTH = 2.0
 
 # (車輛 ID, 起始 s, 目標速度)。可增加其他車；負 s 會繞回封閉賽道。
 VEHICLE_SPECS = (
-    ("vehicle-1", 0.0, 6.0),
+    ("vehicle-1", 0.0, 7.0),
     ("vehicle-2", 6.0, 5.0),
-    ("vehicle-3", -20.0, 4.0),
+##    ("vehicle-3", -20.0, 4.0),
 )
 
 # 此次模擬的策略對照表：只改這裡，就能把策略換到另一台車。
-# centerline：跟隨中心線；overtake：進攻；defend：防守指定對象。
+# cost_overtake：五候選成本進攻；overtake：原本的規則式進攻。
+# centerline：跟隨中心線；defend：防守指定對象。
 # 未列出的車也會自動使用 centerline。每台車都有自己的策略物件。
 STRATEGY_ASSIGNMENTS = {
-    "vehicle-1": StrategyAssignment("overtake"),
+    "vehicle-1": StrategyAssignment("cost_overtake"),
     "vehicle-2": StrategyAssignment("defend", target_vehicle_id="vehicle-1"),
-    "vehicle-3": StrategyAssignment("centerline"),
+ ##   "vehicle-3": StrategyAssignment("centerline"),
 }
 
 MODEL_CONFIG = VehicleModelConfig(
@@ -78,23 +82,31 @@ OVERTAKING_CONFIG = OvertakingConfig(
     prediction_step=0.25,
 )
 DEFENSE_CONFIG = DefenseConfig(
-    q_block=10.0,                    # 越大越想與 ego 對齊；0 表示不主動防守
-    center_weight=1.0,             # 越大越偏好中心線
+    q_block=5.0,                  # 越大越想與 ego 當下位置對齊；0 關閉對齊成本
+    center_weight=2.0,             # 越大越偏好中心線
     smooth_weight=1.0,             # 越大越不喜歡急促橫移
     detection_range=8.0,           # 後車在此範圍內才考慮防守
-    minimum_speed_advantage=0.2,  # 後車至少快多少才構成威脅
-    minimum_gap=1.2,              # 太近或並排時停止追逐橫向位置
-    return_tolerance=0.08,
+    return_tolerance=0.08,        # 接回共同中心線的橫向容許誤差
     transition_length=1.0,         # 越長，橫移越緩慢
     decision_period=0.2,           # 每隔多久比較一次候選路徑
-    hold_time=0.6,                 # 選定目標後，至少維持多久（原路徑仍可行時）
-    switch_improvement=0.05,       # 新路徑至少改善多少成本才切換
-    candidate_offsets=(-0.6, -0.3, 0.0, 0.3, 0.6),
-    prediction_horizon=1.5,
-    prediction_step=0.1,
-    safety_margin=0.1,             # 車身與賽道邊界保留的距離
+    candidate_offsets=(-0.6, -0.3, 0.0, 0.3, 0.6),  # 固定候選；超出可用路寬就排除
+    prediction_horizon=1,       # 自身候選路徑的成本評估時間
+    prediction_step=0.1,          # 成本取樣的時間間距
+    collision_check_enabled=True, # False 可停用獨立的碰撞條件
+    collision_horizon=1.0,        # 幾何碰撞預測時長；間距沿用 prediction_step
+    safety_margin=0.1,            # 限制候選目標與賽道邊界的留距
 )
-OFFSET_PATH_CONFIG = OffsetPathConfig(sample_spacing=0.2, path_length=18.0)
+COST_OVERTAKING_CONFIG = CostOvertakingConfig(
+    progress_weight=1.0,           # 前進距離越多，成本越低
+    overtaking_weight=20.0,        # 預測終點超過前車時給一次獎勵
+    candidate_offsets=(-0.6, -0.3, 0.0, 0.3, 0.6),
+    detection_range=6.0,           # 對此範圍內最近的前車預測
+    transition_length=6.0,         # 候選參考路徑的橫移過渡長度
+    decision_period=0.2,           # 每次重新比較五條預測軌跡的間隔
+    prediction_horizon=3.0,        # 預測使用 MODEL_CONFIG 的時間步長
+    safety_margin=0.1,             # 只依可用路寬篩選橫向目標
+)
+OFFSET_PATH_CONFIG = OffsetPathConfig(sample_spacing=0.2, path_length=7.0)
 
 
 def create_display_options(realtime: bool) -> VisualizationConfig:
@@ -103,7 +115,7 @@ def create_display_options(realtime: bool) -> VisualizationConfig:
         realtime=realtime,
 
         # Track
-        show_centerline=True,
+        show_centerline=False,
         show_track_boundaries=True,
 
         # Vehicles
@@ -111,13 +123,15 @@ def create_display_options(realtime: bool) -> VisualizationConfig:
         show_vehicle_footprints=True,
         show_vehicle_heading=False,
         show_collision_status=True,
-        show_strategy_status=True,
+        show_strategy_status=False,
         show_temporary_paths=True,
+        show_candidate_paths=True,
+        show_candidate_labels=False,
 
         # Controller and history information
         show_trajectories=True,
         show_pursuit_targets=True,
-        show_track_positions=True,
+        show_track_positions=False,
     )
 
 
@@ -162,6 +176,7 @@ def _visualize_vehicles(
     collision_pairs: set[tuple[str, str]],
     strategy_labels: dict[str, str],
     temporary_tracks: dict[str, Track],
+    candidate_snapshots: dict[str, CandidateSnapshot],
 ) -> None:
     track_positions: dict[str, TrackPosition] = {
         vehicle.vehicle_id: world_to_track(vehicle.state, track)
@@ -182,6 +197,7 @@ def _visualize_vehicles(
         collision_pairs=collision_pairs,
         strategy_labels=strategy_labels,
         temporary_paths=temporary_tracks,
+        candidate_snapshots=candidate_snapshots,
     )
 
 
@@ -218,18 +234,32 @@ def run_simulation(
         for vehicle_id, start_s, target_speed in VEHICLE_SPECS
     ]
     validate_unique_vehicle_ids(vehicles)
+    prediction_configs = {
+        vehicle.vehicle_id: BicyclePredictionConfig(
+            vehicle.model.config, vehicle.controller.config, OFFSET_PATH_CONFIG,
+        )
+        for vehicle in vehicles
+    }
+    # 工廠每次建立獨立策略；新增策略可在此註冊，再由對照表選用。
+    strategy_factories = {
+        "cost_overtake": lambda vehicle_id: CostBasedOvertakingStrategy(
+            COST_OVERTAKING_CONFIG, prediction_configs[vehicle_id], prediction_configs,
+        ),
+    }
     manager = StrategyManager(
         [vehicle.vehicle_id for vehicle in vehicles],
         STRATEGY_ASSIGNMENTS,
         OVERTAKING_CONFIG,
         DEFENSE_CONFIG,
         defense_enabled=defense_enabled,
+        strategy_factories=strategy_factories,
     )
     visualizer = SimulationVisualizer(track, create_display_options(realtime))
     histories = {vehicle.vehicle_id: StrategyHistory() for vehicle in vehicles}
     maneuvers: dict[str, LateralManeuver] = {}
     temporary_tracks: dict[str, Track] = {}
     strategy_labels: dict[str, str] = {}
+    candidate_snapshots: dict[str, CandidateSnapshot] = {}
     detected_collisions: set[tuple[str, str]] = set()
     current_collisions: set[tuple[str, str]] = set()
 
@@ -241,10 +271,13 @@ def run_simulation(
         decisions = manager.update(observations, track, time_seconds)
         maneuvers = {}
         strategy_labels = {}
+        candidate_snapshots = {}
         for vehicle_id, decision in decisions.items():
             histories[vehicle_id].record(time_seconds, decision)
             if decision.maneuver is not None:
                 maneuvers[vehicle_id] = decision.maneuver
+            if decision.candidate_snapshot is not None:
+                candidate_snapshots[vehicle_id] = decision.candidate_snapshot
             if manager.assignments[vehicle_id].name != "centerline":
                 strategy_labels[vehicle_id] = decision.display_text
 
@@ -263,12 +296,14 @@ def run_simulation(
             _visualize_vehicles(
                 visualizer, vehicles, track, current_collisions,
                 strategy_labels, temporary_tracks,
+                candidate_snapshots,
             )
 
     if not realtime:
         _visualize_vehicles(
             visualizer, vehicles, track, current_collisions,
             strategy_labels, temporary_tracks,
+            candidate_snapshots,
         )
     for vehicle in vehicles:
         vehicle_id = vehicle.vehicle_id

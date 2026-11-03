@@ -1,14 +1,18 @@
 """把策略名稱轉成各車獨立的策略，統一呼叫既有攻防演算法。"""
 
 from dataclasses import dataclass, replace
-from typing import Mapping, Sequence
+import math
+from typing import Callable, Mapping, Sequence
+
+import numpy as np
 
 from core.track import Track
-from strategy.base import StrategyDecision, VehicleStrategy
+from strategy.base import CandidatePath, CandidateSnapshot, StrategyDecision, VehicleStrategy
 from strategy.centerline import CenterlineStrategy
-from strategy.defending import CostBasedDefenseStrategy, DefenseConfig
+from strategy.defending import CostBasedDefenseStrategy, DefenseConfig, DefenseMode
 from strategy.observations import VehicleObservation
-from strategy.overtaking import OvertakingConfig, RuleBasedOvertakingStrategy
+from strategy.offset_path import LateralManeuver
+from strategy.overtaking import OvertakingConfig, OvertakingMode, RuleBasedOvertakingStrategy
 
 
 @dataclass(frozen=True)
@@ -19,8 +23,8 @@ class StrategyAssignment:
     target_vehicle_id: str | None = None
 
     def __post_init__(self) -> None:
-        if self.name not in ("centerline", "overtake", "defend"):
-            raise ValueError("strategy must be centerline, overtake or defend")
+        if not isinstance(self.name, str) or not self.name.strip():
+            raise ValueError("strategy name must be a non-empty string")
         if self.name == "defend":
             if not isinstance(self.target_vehicle_id, str) or not self.target_vehicle_id.strip():
                 raise ValueError("defend requires a target_vehicle_id")
@@ -33,6 +37,7 @@ class OvertakingStrategy:
 
     def __init__(self, config: OvertakingConfig) -> None:
         self.algorithm = RuleBasedOvertakingStrategy(config)
+        self.candidate_snapshot: CandidateSnapshot | None = None
 
     def update(
         self,
@@ -41,7 +46,37 @@ class OvertakingStrategy:
         track: Track,
         time_seconds: float,
     ) -> StrategyDecision:
+        previous_evaluations = self.algorithm.last_candidate_evaluations
         result = self.algorithm.update(vehicle, others, track)
+        evaluations = self.algorithm.last_candidate_evaluations
+        if result.mode in (OvertakingMode.FOLLOW, OvertakingMode.RETURN):
+            self.candidate_snapshot = None
+        elif evaluations and evaluations is not previous_evaluations:
+            # 只記錄真正評估過的左右候選；鎖定側邊後沿用這份快照。
+            config = self.algorithm.config
+            count = math.ceil(config.prediction_horizon / config.prediction_step)
+            self.candidate_snapshot = CandidateSnapshot(
+                evaluated_at=time_seconds,
+                position=vehicle.track_position,
+                distances=tuple(
+                    max(vehicle.state.velocity, 0.0)
+                    * min(step * config.prediction_step, config.prediction_horizon)
+                    for step in range(count + 1)
+                ),
+                candidates=tuple(
+                    CandidatePath(
+                        maneuver=LateralManeuver(
+                            vehicle.track_position.s, vehicle.track_position.d,
+                            candidate.target_d, config.transition_length,
+                        ),
+                        selected=candidate.side is result.side,
+                        name=candidate.side.name,
+                        feasible=candidate.feasible,
+                        reason=candidate.reason,
+                    )
+                    for candidate in evaluations
+                ),
+            )
         details = () if result.side is None else (f"side={result.side.name}",)
         return StrategyDecision(
             mode=result.mode.value,
@@ -50,6 +85,7 @@ class OvertakingStrategy:
             maneuver=result.maneuver,
             reason=result.reason,
             details=details,
+            candidate_snapshot=self.candidate_snapshot,
         )
 
 
@@ -58,6 +94,7 @@ class DefendingStrategy:
 
     def __init__(self, config: DefenseConfig, target_vehicle_id: str) -> None:
         self.algorithm = CostBasedDefenseStrategy(config, target_vehicle_id)
+        self.candidate_snapshot: CandidateSnapshot | None = None
 
     def update(
         self,
@@ -67,13 +104,42 @@ class DefendingStrategy:
         time_seconds: float,
     ) -> StrategyDecision:
         result = self.algorithm.update(vehicle, others, track, time_seconds)
+        if (self.candidate_snapshot is None
+                or self.candidate_snapshot.evaluated_at != self.algorithm.last_evaluation_time):
+            config = self.algorithm.config
+            count = math.ceil(config.prediction_horizon / config.prediction_step)
+            distances = max(vehicle.state.velocity, 0.0) * np.linspace(
+                0.0, config.prediction_horizon, count + 1,
+            )
+            self.candidate_snapshot = CandidateSnapshot(
+                evaluated_at=self.algorithm.last_evaluation_time,
+                position=vehicle.track_position,
+                distances=tuple(float(distance) for distance in distances),
+                candidates=tuple(
+                    CandidatePath(
+                        maneuver=candidate.maneuver,
+                        selected=(candidate.feasible and result.mode is not DefenseMode.NO_FEASIBLE_PATH
+                                  and candidate.target_d == result.target_d),
+                        feasible=candidate.feasible,
+                        reason="" if candidate.collision is None else candidate.collision.reason,
+                        race_cost=candidate.race_cost,
+                        blocking_cost=candidate.blocking_cost,
+                        predicted_states=candidate.predicted_states,
+                    )
+                    for candidate in self.algorithm.last_candidates
+                ),
+            )
+        details = ("continuing previous path",)
+        if result.race_cost is not None and result.blocking_cost is not None:
+            details = (f"race={result.race_cost:.2f} block={result.blocking_cost:.2f}",)
         return StrategyDecision(
             mode=result.mode.value,
             target_d=result.target_d,
             target_vehicle_id=result.target_vehicle_id,
             maneuver=result.maneuver,
             reason=result.reason,
-            details=(f"race={result.race_cost:.2f} block={result.blocking_cost:.2f}",),
+            details=details,
+            candidate_snapshot=self.candidate_snapshot,
         )
 
 
@@ -102,11 +168,16 @@ class StrategyManager:
         overtaking_config: OvertakingConfig,
         defense_config: DefenseConfig,
         defense_enabled: bool = True,
+        strategy_factories: Mapping[str, Callable[[str], VehicleStrategy]] | None = None,
     ) -> None:
         if not vehicle_ids or len(set(vehicle_ids)) != len(vehicle_ids):
             raise ValueError("vehicle_ids must be non-empty and unique")
         if set(assignments) - set(vehicle_ids):
             raise ValueError("strategy assignment contains an unknown vehicle ID")
+        factories = dict(strategy_factories or {})
+        known_names = {"centerline", "overtake", "defend"} | set(factories)
+        if any(assignment.name not in known_names for assignment in assignments.values()):
+            raise ValueError("strategy assignment contains an unregistered strategy name")
 
         self.assignments: dict[str, StrategyAssignment] = {}
         self.strategies: dict[str, VehicleStrategy] = {}
@@ -120,9 +191,12 @@ class StrategyManager:
                 if target_id not in vehicle_ids or target_id == vehicle_id:
                     raise ValueError("defense target must be an existing, different vehicle")
             self.assignments[vehicle_id] = assignment
-            self.strategies[vehicle_id] = create_strategy(
-                assignment, overtaking_config, defense_config
-            )
+            if assignment.name in factories:
+                self.strategies[vehicle_id] = factories[assignment.name](vehicle_id)
+            else:
+                self.strategies[vehicle_id] = create_strategy(
+                    assignment, overtaking_config, defense_config,
+                )
 
     def update(
         self,
@@ -135,23 +209,15 @@ class StrategyManager:
         if any(key != value.vehicle_id for key, value in observations.items()):
             raise ValueError("observation keys must match their vehicle IDs")
 
-        shared = dict(observations)
         decisions: dict[str, StrategyDecision] = {}
-        # 保留既有資訊順序：一般／進攻車先決策，防守車再讀取新的進攻路徑。
-        # 同一階段內都讀相同快照，避免多車結果受字典排列順序影響。
-        for defense_phase in (False, True):
-            phase_decisions: dict[str, StrategyDecision] = {}
-            for vehicle_id, strategy in self.strategies.items():
-                is_defender = self.assignments[vehicle_id].name == "defend"
-                if is_defender != defense_phase:
-                    continue
-                others = tuple(
-                    other for other_id, other in shared.items() if other_id != vehicle_id
-                )
-                phase_decisions[vehicle_id] = strategy.update(
-                    shared[vehicle_id], others, track, time_seconds
-                )
-            for vehicle_id, decision in phase_decisions.items():
-                shared[vehicle_id] = replace(shared[vehicle_id], maneuver=decision.maneuver)
-            decisions.update(phase_decisions)
+        # 所有車讀取同一步觀測；防守車不接收其他車的規劃路徑。
+        for vehicle_id, strategy in self.strategies.items():
+            is_defender = self.assignments[vehicle_id].name == "defend"
+            others = tuple(
+                replace(other, maneuver=None) if is_defender else other
+                for other_id, other in observations.items() if other_id != vehicle_id
+            )
+            decisions[vehicle_id] = strategy.update(
+                observations[vehicle_id], others, track, time_seconds
+            )
         return decisions

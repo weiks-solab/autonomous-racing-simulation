@@ -130,3 +130,4 @@ Never modify files outside this project.
 Do not assume the existence of other projects.
 
 All generated files must remain inside this repository.
+回答時使用繁體中文

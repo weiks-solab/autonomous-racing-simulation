@@ -8,9 +8,10 @@ from typing import Sequence
 import numpy as np
 
 from core.track import Track
-from core.track_geometry import signed_longitudinal_gap, track_length, world_to_track
-from core.vehicle_geometry import oriented_rectangle_corners, rectangles_overlap
+from core.track_geometry import signed_longitudinal_gap, track_length
 from core.vehicle_state import VehicleState
+from strategy.collision_check import PredictedCollision
+from strategy.defense_conditions import RearPrediction, has_predicted_collision, predict_rear
 from strategy.observations import VehicleObservation
 from strategy.offset_path import LateralManeuver
 from strategy.prediction import predict_vehicle_state, predicted_offset
@@ -19,8 +20,8 @@ from strategy.prediction import predict_vehicle_state, predicted_offset
 class DefenseMode(Enum):
     CRUISE = "cruise"
     DEFEND = "defend"
-    HOLD = "hold"
     RETURN = "return"
+    NO_FEASIBLE_PATH = "no_feasible_path"
 
 
 @dataclass(frozen=True)
@@ -31,27 +32,25 @@ class DefenseConfig:
     center_weight: float = 1.0
     smooth_weight: float = 2.0
     detection_range: float = 8.0
-    minimum_speed_advantage: float = 0.2
-    minimum_gap: float = 1.2
     return_tolerance: float = 0.08
     transition_length: float = 3.0
     decision_period: float = 0.2
-    hold_time: float = 0.6
-    switch_improvement: float = 0.05
     candidate_offsets: tuple[float, ...] = (-0.6, -0.3, 0.0, 0.3, 0.6)
     prediction_horizon: float = 1.5
     prediction_step: float = 0.1
     safety_margin: float = 0.1
+    collision_check_enabled: bool = True
+    collision_horizon: float = 1.0
 
     def __post_init__(self) -> None:
         nonnegative = (
             self.q_block, self.center_weight, self.smooth_weight,
-            self.minimum_speed_advantage, self.return_tolerance,
-            self.hold_time, self.switch_improvement, self.safety_margin,
+            self.return_tolerance, self.safety_margin,
         )
         positive = (
-            self.detection_range, self.minimum_gap, self.transition_length,
+            self.detection_range, self.transition_length,
             self.decision_period, self.prediction_horizon, self.prediction_step,
+            self.collision_horizon,
         )
         if any(not math.isfinite(value) or value < 0.0 for value in nonnegative):
             raise ValueError(
@@ -59,23 +58,29 @@ class DefenseConfig:
             )
         if any(not math.isfinite(value) or value <= 0.0 for value in positive):
             raise ValueError("defense distances and timing must be positive and finite")
-        if self.minimum_gap >= self.detection_range:
-            raise ValueError("minimum_gap must be smaller than detection_range")
         if not all(math.isfinite(value) for value in self.candidate_offsets):
             raise ValueError("candidate_offsets must be finite")
+        if not isinstance(self.collision_check_enabled, bool):
+            raise ValueError("collision_check_enabled must be a bool")
 
 
 @dataclass(frozen=True)
 class DefenseCandidate:
     target_d: float
     maneuver: LateralManeuver
-    race_cost: float
-    blocking_cost: float
-    feasible: bool
-    reason: str
+    race_cost: float | None
+    blocking_cost: float | None
+    collision: PredictedCollision | None = None
+    predicted_states: tuple[VehicleState, ...] = ()
+
+    @property
+    def feasible(self) -> bool:
+        return self.collision is None
 
     @property
     def total_cost(self) -> float:
+        if self.race_cost is None or self.blocking_cost is None:
+            raise ValueError("collision-rejected candidates do not have a cost")
         return self.race_cost + self.blocking_cost
 
 
@@ -86,15 +91,15 @@ class DefenseDecision:
     target_vehicle_id: str | None
     maneuver: LateralManeuver | None
     reason: str
-    race_cost: float = 0.0
-    blocking_cost: float = 0.0
+    race_cost: float | None = 0.0
+    blocking_cost: float | None = 0.0
 
     @property
     def display_text(self) -> str:
-        return (
-            f"{self.mode.value.upper()}\ntarget_d={self.target_d:+.2f}"
-            f"\nrace={self.race_cost:.2f} block={self.blocking_cost:.2f}"
-        )
+        text = f"{self.mode.value.upper()}\ntarget_d={self.target_d:+.2f}"
+        if self.race_cost is None or self.blocking_cost is None:
+            return text + "\n" + self.reason
+        return text + f"\nrace={self.race_cost:.2f} block={self.blocking_cost:.2f}"
 
 
 class CostBasedDefenseStrategy:
@@ -110,7 +115,7 @@ class CostBasedDefenseStrategy:
         )
         self.last_candidates: tuple[DefenseCandidate, ...] = ()
         self.last_evaluation_time = -math.inf
-        self.last_switch_time = -math.inf
+        self.last_rear_prediction: RearPrediction | None = None
 
     def update(
         self,
@@ -119,7 +124,7 @@ class CostBasedDefenseStrategy:
         track: Track,
         time_seconds: float,
     ) -> DefenseDecision:
-        # 1. 檢查輸入；只在固定間隔重新比較路徑。
+        # 只在固定間隔重新比較路徑。
         if not track.closed:
             raise ValueError("defending requires a closed base track")
         if not math.isfinite(time_seconds) or time_seconds < 0.0:
@@ -133,127 +138,84 @@ class CostBasedDefenseStrategy:
             raise ValueError("defender and ego must be different vehicles")
         if time_seconds - self.last_evaluation_time < self.config.decision_period:
             return self.decision
-        self.last_evaluation_time = time_seconds
-
         length = track_length(track)
         ego = next((other for other in others if other.vehicle_id == self.ego_id), None)
         gap = math.inf if ego is None else signed_longitudinal_gap(
             defender.track_position, ego.track_position, length
         )
-        # 2. 只有指定 ego 在後方追近時，才啟用防守成本。
-        threat = (
+        # 指定對象在後方且位於偵測範圍內，才計算對齊成本。
+        defending = (
             ego is not None
-            and -self.config.detection_range <= gap < -self.config.minimum_gap
-            and ego.state.velocity - defender.state.velocity
-            >= self.config.minimum_speed_advantage
+            and -self.config.detection_range <= gap < 4.0
             and self.config.q_block > 0.0
         )
-        nearby = any(
-            abs(signed_longitudinal_gap(defender.track_position, other.track_position, length))
-            <= self.config.minimum_gap
-            for other in others
-        )
-        mode = DefenseMode.DEFEND if threat else DefenseMode.RETURN
-        if nearby:
-            mode = DefenseMode.HOLD
-
-        if not threat and not nearby and self.decision.maneuver is None:
-            self.last_candidates = ()
-            self.decision = DefenseDecision(
-                DefenseMode.CRUISE, 0.0, None, None, "following centerline"
+        ego_d = ego.track_position.d if defending and ego is not None else None
+        self.last_rear_prediction = None
+        if self.config.collision_check_enabled and ego is not None:
+            self.last_rear_prediction = predict_rear(
+                ego, track, self.config.collision_horizon, self.config.prediction_step,
             )
-            return self.decision
 
-        # 3. 評估各條候選，先排除越界或預測碰撞的路徑。
-        targets = self._candidate_targets(defender, ego, track, threat, nearby)
-        evaluations = tuple(
-            self._evaluate_candidate(defender, others, track, target, ego, threat)
+        # 可關閉的碰撞條件先篩選，通過後才參與成本比較。
+        targets = self._candidate_targets(defender, track)
+        self.last_candidates = tuple(
+            self._evaluate_candidate(defender, track, target, ego_d)
             for target in targets
         )
-        self.last_candidates = evaluations
-        feasible = [candidate for candidate in evaluations if candidate.feasible]
+        feasible = [candidate for candidate in self.last_candidates if candidate.feasible]
         if not feasible:
-            # 幾何預測無解時保留原路徑，並明確回報；不假裝能保證避碰。
             self.decision = replace(
-                self.decision, mode=DefenseMode.HOLD,
-                reason="no feasible candidate; continuing previous path",
+                self.decision, mode=DefenseMode.NO_FEASIBLE_PATH,
+                reason="all candidates predict overlap; continuing previous path",
+                race_cost=None, blocking_cost=None,
             )
+            self.last_evaluation_time = time_seconds
             return self.decision
-
-        # 4. 比較成本；原路徑安全時，避免頻繁換目標。
         best = min(feasible, key=lambda candidate: candidate.total_cost)
-        current = next(
-            (candidate for candidate in feasible
-             if math.isclose(candidate.target_d, self.decision.target_d)),
-            None,
-        )
-        # 原路徑仍可行時，短暫鎖定目標，且只接受明顯更好的新選擇。
-        if threat and not nearby and current is not None:
-            locked = time_seconds - self.last_switch_time < self.config.hold_time
-            small_gain = (
-                current.total_cost - best.total_cost <= self.config.switch_improvement
-            )
-            if locked or small_gain:
-                best = current
-
-        changed = not math.isclose(best.target_d, self.decision.target_d)
-        if changed:
-            self.last_switch_time = time_seconds
         maneuver = best.maneuver
         centered = abs(defender.track_position.d) <= self.config.return_tolerance
         if abs(best.target_d) < 1e-9 and centered:
             maneuver = None
-            if not threat and not nearby:
-                mode = DefenseMode.CRUISE
-        elif not threat and not nearby and abs(best.target_d) > 1e-9:
-            mode = DefenseMode.HOLD
+
+        # 模式只用於顯示，不覆蓋成本選出的目標。
+        mode = DefenseMode.DEFEND if defending else DefenseMode.RETURN
+        if not defending and maneuver is None:
+            mode = DefenseMode.CRUISE
 
         self.decision = DefenseDecision(
             mode=mode,
             target_d=best.target_d,
-            target_vehicle_id=self.ego_id if threat or nearby else None,
+            target_vehicle_id=self.ego_id if defending else None,
             maneuver=maneuver,
-            reason=("nearby vehicle; do not chase laterally"
-                    if nearby else "lowest feasible cost"),
+            reason="lowest cost",
             race_cost=best.race_cost,
             blocking_cost=best.blocking_cost,
         )
+        self.last_evaluation_time = time_seconds
         return self.decision
 
     def _candidate_targets(
         self,
         defender: VehicleObservation,
-        ego: VehicleObservation | None,
         track: Track,
-        threat: bool,
-        nearby: bool,
     ) -> tuple[float, ...]:
-        current_d = defender.track_position.d
-        if nearby:
-            # 近距離只比較繼續原路徑與停止橫移，不再追著 ego 換邊。
-            targets = [self.decision.target_d, current_d]
-        elif threat and ego is not None:
-            maximum_d = max(
-                0.0,
-                track.width / 2.0 - defender.geometry.width / 2.0 - self.config.safety_margin,
-            )
-            ego_d = float(np.clip(ego.track_position.d, -maximum_d, maximum_d))
-            targets = [
-                self.decision.target_d, current_d, 0.0,
-                *self.config.candidate_offsets, ego_d,
-            ]
-        else:
-            targets = [0.0, self.decision.target_d, current_d]
-        return tuple(dict.fromkeys(targets))
+        maximum_d = (
+            track.width / 2.0 - defender.geometry.width / 2.0 - self.config.safety_margin
+        )
+        if maximum_d < 0.0:
+            raise ValueError("track is too narrow for defender width and safety_margin")
+        # 中心線固定列入候選；不加入對方位置或臨時目標。
+        return tuple(dict.fromkeys(
+            target for target in (0.0, *self.config.candidate_offsets)
+            if abs(target) <= maximum_d
+        ))
 
     def _evaluate_candidate(
         self,
         defender: VehicleObservation,
-        others: Sequence[VehicleObservation],
         track: Track,
         target_d: float,
-        ego: VehicleObservation | None,
-        threat: bool,
+        ego_d: float | None,
     ) -> DefenseCandidate:
         # 保留未完成動作的起點，避免每次更新都重新開始過渡。
         maneuver = self.decision.maneuver
@@ -263,6 +225,15 @@ class CostBasedDefenseStrategy:
                 target_d, self.config.transition_length,
             )
         candidate = replace(defender, maneuver=maneuver)
+        predicted_states: tuple[VehicleState, ...] = ()
+        rear = self.last_rear_prediction
+        if rear is not None:
+            predicted_states = tuple(
+                predict_vehicle_state(candidate, time, track) for time in rear.times
+            )
+            collision = has_predicted_collision(defender, predicted_states, rear)
+            if collision is not None:
+                return DefenseCandidate(target_d, maneuver, None, None, collision, predicted_states)
         step_count = math.ceil(self.config.prediction_horizon / self.config.prediction_step)
         times = np.linspace(0.0, self.config.prediction_horizon, step_count + 1)
         offsets = np.array([
@@ -276,43 +247,12 @@ class CostBasedDefenseStrategy:
             self.config.center_weight * np.sum(offsets[1:] ** 2)
             + self.config.smooth_weight * np.sum(np.diff(offsets) ** 2)
         )
-        # 原公式的 ego 位置固定為「現在的 d」，不是 ego 未來的位置。
+        # 對齊指定對象當下的 d，整段評分使用同一個位置。
         blocking_cost = 0.0
-        if threat and ego is not None:
+        if ego_d is not None:
             blocking_cost = float(
-                self.config.q_block * np.sum((offsets[1:] - ego.track_position.d) ** 2)
+                self.config.q_block * np.sum((offsets[1:] - ego_d) ** 2)
             )
-
-        reason = self._check_path(candidate, others, track, target_d, times)
         return DefenseCandidate(
-            target_d, maneuver, race_cost, blocking_cost,
-            reason == "clear", reason,
+            target_d, maneuver, race_cost, blocking_cost, predicted_states=predicted_states,
         )
-
-    def _check_path(
-        self,
-        candidate: VehicleObservation,
-        others: Sequence[VehicleObservation],
-        track: Track,
-        target_d: float,
-        times: np.ndarray,
-    ) -> str:
-        maximum_d = (
-            track.width / 2.0 - candidate.geometry.width / 2.0 - self.config.safety_margin
-        )
-        if maximum_d < 0.0 or abs(target_d) > maximum_d:
-            return "track width exceeded"
-        for time in times:
-            state = predict_vehicle_state(candidate, float(time), track)
-            # 逐一檢查車身四個角，包含彎道與橫移時的車身旋轉。
-            for x, y in oriented_rectangle_corners(state, candidate.geometry):
-                corner = world_to_track(
-                    VehicleState(float(x), float(y), state.yaw, 0.0), track
-                )
-                if abs(corner.d) > track.width / 2.0 - self.config.safety_margin:
-                    return "body corner outside track margin"
-            for other in others:
-                other_state = predict_vehicle_state(other, float(time), track)
-                if rectangles_overlap(state, candidate.geometry, other_state, other.geometry):
-                    return f"predicted overlap with {other.vehicle_id}"
-        return "clear"
