@@ -42,13 +42,16 @@ class CandidateSnapshotTests(unittest.TestCase):
         held = strategy.update(moved, (rear,), self.track, 0.1)
         self.assertIs(held.candidate_snapshot, snapshot)
         self.assertEqual(snapshot.position, defender.track_position)
-        self.assertEqual(snapshot.distances[-1], 4.5)
+        self.assertEqual(snapshot.distances, ())
+        self.assertEqual(len(selected.predicted_states), 11)
+        self.assertIs(selected.predicted_states[0], defender.state)
 
         updated = strategy.update(moved, (rear,), self.track, 0.3)
         self.assertIsNot(updated.candidate_snapshot, snapshot)
         self.assertEqual(updated.candidate_snapshot.evaluated_at, 0.3)
         self.assertEqual(updated.candidate_snapshot.position, moved.track_position)
-        self.assertEqual(updated.candidate_snapshot.distances[-1], 6.0)
+        self.assertTrue(all(candidate.predicted_states[0] is moved.state
+                            for candidate in updated.candidate_snapshot.candidates))
 
     def test_defense_drawn_samples_match_the_scored_path(self) -> None:
         config = DefenseConfig(
@@ -61,14 +64,14 @@ class CandidateSnapshotTests(unittest.TestCase):
         moved = self.observation("front", 21.0, 0.2, 3.0)
         result = strategy.update(moved, (rear,), self.track, 0.3)
         snapshot = result.candidate_snapshot
-        np.testing.assert_allclose(snapshot.distances, (0.0, 0.55, 1.1, 1.65))
+        self.assertEqual(snapshot.distances, ())
         for candidate in snapshot.candidates:
             points = candidate_path_points(snapshot, candidate, self.track)
             offsets = points[:, 1]
             self.assertAlmostEqual(offsets[0], moved.track_position.d)
             self.assertAlmostEqual(
                 candidate.race_cost,
-                config.center_weight * np.sum(offsets[1:] ** 2)
+                -config.progress_weight * (points[-1, 0] - moved.state.x)
                 + config.smooth_weight * np.sum(np.diff(offsets) ** 2),
             )
             self.assertAlmostEqual(

@@ -74,9 +74,12 @@ class DefendingStrategyTests(unittest.TestCase):
         strategy.update(self.defender, (ego,), self.track, 0.0)
         candidate = next(item for item in strategy.last_candidates if item.target_d == 0.6)
 
-        # v=3、過渡長度=3，所以兩個時間點的 smoothstep 輸入為 .25 與 .5。
-        offsets = np.array((0.0, 0.6 * (3 * 0.25**2 - 2 * 0.25**3), 0.3))
-        expected_race = np.sum(offsets[1:] ** 2) + 2.0 * np.sum(np.diff(offsets) ** 2)
+        # 直線上 x 的變化就是賽道進度；d 取自走滿 v*t 後的取樣位置。
+        offsets = np.array([state.y for state in candidate.predicted_states])
+        progress = candidate.predicted_states[-1].x - self.defender.state.x
+        self.assertLess(progress, 3.0 * 0.5)
+        expected_race = -config.progress_weight * progress
+        expected_race += config.smooth_weight * np.sum(np.diff(offsets) ** 2)
         expected_block = 6.0 * np.sum((offsets[1:] - 0.6) ** 2)
         self.assertAlmostEqual(candidate.race_cost, expected_race)
         self.assertAlmostEqual(candidate.blocking_cost, expected_block)
@@ -96,6 +99,8 @@ class DefendingStrategyTests(unittest.TestCase):
         scenarios = (
             (observation("ego", 25.0, 0.6, 5.0, self.track),),
             (observation("ego", 20.0, 0.6, 5.0, self.track),),
+            (observation("ego", 19.95, 0.6, 5.0, self.track),),
+            (observation("ego", 18.0, 0.6, 5.0, self.track),),
             (observation("ego", 5.0, 0.6, 5.0, self.track),),
             (observation("other", 14.0, 0.6, 5.0, self.track),),
             (),
@@ -107,8 +112,8 @@ class DefendingStrategyTests(unittest.TestCase):
                 self.assertIs(decision.mode, DefenseMode.CRUISE)
                 self.assertEqual(decision.blocking_cost, 0.0)
 
-    def test_slow_or_very_close_rear_vehicle_still_uses_alignment_cost(self) -> None:
-        for s, speed in ((14.0, 1.0), (14.0, 3.0), (19.95, 5.0)):
+    def test_rear_speed_does_not_gate_alignment_beyond_two_metres(self) -> None:
+        for s, speed in ((14.0, 1.0), (14.0, 3.0), (17.9, 5.0)):
             with self.subTest(s=s, speed=speed):
                 strategy = CostBasedDefenseStrategy(self.config, "ego")
                 ego = observation("ego", s, 0.6, speed, self.track)
@@ -145,19 +150,65 @@ class DefendingStrategyTests(unittest.TestCase):
         continued = strategy.update(moved, (ego,), self.track, 0.3)
         self.assertEqual(first.maneuver, continued.maneuver)
 
-    def test_returns_to_center_after_ego_has_passed(self) -> None:
+    def test_no_centerline_preference_after_ego_has_passed(self) -> None:
         strategy = CostBasedDefenseStrategy(self.config, "ego")
         strategy.update(self.defender, (self.ego,), self.track, 0.0)
-        shifted = observation("defender", 22.0, 0.5, 3.0, self.track)
+        shifted = observation("defender", 24.0, 0.6, 3.0, self.track)
         passed_ego = observation("ego", 28.0, 0.6, 5.0, self.track)
-        returning = strategy.update(shifted, (passed_ego,), self.track, 1.0)
-        self.assertIs(returning.mode, DefenseMode.RETURN)
-        self.assertEqual(returning.target_d, 0.0)
-        self.assertAlmostEqual(returning.maneuver.start_d, 0.5)
+        continued = strategy.update(shifted, (passed_ego,), self.track, 1.0)
+        self.assertIs(continued.mode, DefenseMode.RETURN)
+        self.assertEqual(continued.target_d, 0.6)
+        self.assertEqual(continued.blocking_cost, 0.0)
         centered = observation("defender", 26.0, 0.03, 3.0, self.track)
         finished = strategy.update(centered, (passed_ego,), self.track, 2.0)
         self.assertIs(finished.mode, DefenseMode.CRUISE)
         self.assertIsNone(finished.maneuver)
+
+    def test_progress_reward_alone_prefers_less_lateral_travel_on_a_straight(self) -> None:
+        defender = observation("defender", 20.0, 0.6, 3.0, self.track)
+        for weight in (0.0, 2.0):
+            with self.subTest(weight=weight):
+                config = replace(self.config, q_block=0.0, smooth_weight=0.0,
+                                 progress_weight=weight)
+                strategy = CostBasedDefenseStrategy(config, "ego")
+                decision = strategy.update(defender, (), self.track, 0.0)
+                if weight == 0.0:
+                    self.assertTrue(all(item.total_cost == 0.0 for item in strategy.last_candidates))
+                else:
+                    self.assertEqual(decision.target_d, 0.6)
+                    self.assertAlmostEqual(decision.race_cost, -weight * 3.0 * 1.5)
+
+    def test_constant_lateral_offsets_have_equal_progress_on_a_straight(self) -> None:
+        costs = []
+        for d in (0.0, 0.6):
+            strategy = CostBasedDefenseStrategy(replace(self.config, q_block=0.0), "ego")
+            defender = observation("defender", 20.0, d, 3.0, self.track)
+            decision = strategy.update(defender, (), self.track, 0.0)
+            self.assertEqual(decision.target_d, d)
+            costs.append(decision.race_cost)
+        self.assertAlmostEqual(costs[0], costs[1])
+
+    def test_progress_reward_prefers_inner_path_and_wraps_at_finish(self) -> None:
+        track = Track.create_oval(10.0, 10.0, 500, width=2.0)
+        config = replace(self.config, q_block=0.0, smooth_weight=0.0, prediction_horizon=2.0)
+        decisions = []
+        for s in (0.5, -0.5):
+            strategy = CostBasedDefenseStrategy(config, "ego")
+            defender = observation("defender", s, 0.0, 3.0, track)
+            decision = strategy.update(defender, (), track, 0.0)
+            self.assertEqual(decision.target_d, 0.6)
+            costs = {item.target_d: item.race_cost for item in strategy.last_candidates}
+            self.assertLess(costs[0.6], costs[0.0])
+            self.assertLess(costs[0.0], costs[-0.6])
+            decisions.append(decision)
+        self.assertAlmostEqual(decisions[0].race_cost, decisions[1].race_cost, delta=0.01)
+
+    def test_stationary_vehicle_has_zero_progress_reward(self) -> None:
+        config = replace(self.config, q_block=0.0)
+        strategy = CostBasedDefenseStrategy(config, "ego")
+        defender = observation("defender", 20.0, 0.6, 0.0, self.track)
+        strategy.update(defender, (), self.track, 0.0)
+        self.assertTrue(all(item.race_cost == 0.0 for item in strategy.last_candidates))
 
     def test_collisions_and_other_vehicles_do_not_override_cost_selection(self) -> None:
         baseline = CostBasedDefenseStrategy(self.config, "ego")
@@ -201,7 +252,12 @@ class DefendingStrategyTests(unittest.TestCase):
         expected = baseline.update(shifted, (self.ego,), self.track, 0.0)
         actual = strategy.update(rotated, (self.ego,), self.track, 0.0)
         self.assertEqual(actual, expected)
-        self.assertEqual(strategy.last_candidates, baseline.last_candidates)
+        for candidate, reference in zip(strategy.last_candidates, baseline.last_candidates):
+            self.assertEqual(candidate.target_d, reference.target_d)
+            self.assertEqual(candidate.total_cost, reference.total_cost)
+            self.assertEqual(candidate.feasible, reference.feasible)
+            self.assertIs(candidate.predicted_states[0], rotated.state)
+            self.assertEqual(candidate.predicted_states[1:], reference.predicted_states[1:])
 
     def test_behind_detection_wraps_at_start_finish_line(self) -> None:
         track = Track.create_oval(10.0, 5.0, 200, width=2.0)
@@ -222,7 +278,9 @@ class DefendingStrategyTests(unittest.TestCase):
         self.assertIs(predict_vehicle_state(vehicle, 0.0, self.track), vehicle.state)
 
     def test_invalid_inputs_are_rejected(self) -> None:
-        for kwargs in ({"q_block": -1}, {"prediction_step": 0},
+        for kwargs in ({"q_block": -1}, {"progress_weight": -1},
+                       {"progress_weight": float("nan")}, {"prediction_step": 0},
+                       {"path_sample_spacing": 0},
                        {"detection_range": float("nan")},
                        {"candidate_offsets": (float("inf"),)},
                        {"return_tolerance": -1}):

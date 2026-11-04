@@ -7,6 +7,7 @@ from unittest.mock import patch
 import numpy as np
 
 from core.track import Track
+from core.track_geometry import signed_longitudinal_gap, track_length, world_to_track
 from sim.candidate_paths import candidate_path_label, candidate_path_points
 from strategy.assignment import DefendingStrategy
 from strategy.defense_conditions import has_predicted_collision, predict_rear
@@ -20,7 +21,8 @@ class DefenseCollisionTests(unittest.TestCase):
         self.track = Track(np.array(((0, 0), (100, 0), (100, 100), (0, 100))), width=2.0)
         self.config = DefenseConfig(collision_horizon=1.0)
         self.defender = observation("front", 20.0, 0.0, 3.0, self.track)
-        self.rear = observation("rear", 18.0, 0.6, 5.0, self.track)
+        # 落後超過 2 m，讓對齊成本啟用，同時能在 1 秒內追上。
+        self.rear = observation("rear", 17.9, 0.6, 5.2, self.track)
 
     def test_collision_rejects_alignment_target_before_cost_comparison(self) -> None:
         strategy = CostBasedDefenseStrategy(replace(self.config, q_block=1e8), "rear")
@@ -47,7 +49,7 @@ class DefenseCollisionTests(unittest.TestCase):
         self.assertEqual(decision.target_d, 0.6)
         self.assertIsNone(strategy.last_rear_prediction)
         self.assertTrue(all(item.feasible for item in strategy.last_candidates))
-        self.assertTrue(all(item.predicted_states == () for item in strategy.last_candidates))
+        self.assertTrue(all(len(item.predicted_states) == 16 for item in strategy.last_candidates))
 
     def test_collision_condition_can_be_replaced_without_changing_costs(self) -> None:
         strategy = CostBasedDefenseStrategy(self.config, "rear")
@@ -73,7 +75,7 @@ class DefenseCollisionTests(unittest.TestCase):
         self.assertEqual(len(long.last_rear_prediction.times), 21)
 
     def test_rear_is_predicted_once_without_bicycle_rollout_or_future_plan(self) -> None:
-        with_plan = replace(self.rear, maneuver=LateralManeuver(18.0, 0.6, -0.6, 1.0))
+        with_plan = replace(self.rear, maneuver=LateralManeuver(17.9, 0.6, -0.6, 1.0))
         plain, planned = (CostBasedDefenseStrategy(self.config, "rear") for _ in range(2))
         expected = plain.update(self.defender, (self.rear,), self.track, 0.0)
         with patch("strategy.bicycle_prediction.predict_bicycle_trajectory") as bicycle, \
@@ -86,9 +88,9 @@ class DefenseCollisionTests(unittest.TestCase):
         prediction = planned.last_rear_prediction
         self.assertIs(prediction.states[0], self.rear.state)
         for time, state in zip(prediction.times, prediction.states):
-            self.assertAlmostEqual(state.x, 18.0 + 5.0 * time)
+            self.assertAlmostEqual(state.x, 17.9 + 5.2 * time)
             self.assertAlmostEqual(state.y, 0.6)
-            self.assertEqual(state.velocity, 5.0)
+            self.assertEqual(state.velocity, 5.2)
 
     def test_only_assigned_rear_is_checked_and_missing_rear_skips_condition(self) -> None:
         far_rear = observation("rear", 14.0, 0.6, 5.0, self.track)
@@ -166,10 +168,13 @@ class DefenseCollisionTests(unittest.TestCase):
         self.assertIn("continuing previous path", result.display_text)
 
     def test_rear_prediction_wraps_at_finish_line(self) -> None:
-        rear = observation("rear", 399.0, 0.6, 5.0, self.track)
-        result = predict_rear(rear, self.track, 1.0, 0.1)
-        self.assertAlmostEqual(result.states[-1].x, 4.0)
-        self.assertAlmostEqual(result.states[-1].y, 0.6)
+        track = Track.create_oval(10.0, 10.0, 500, width=2.0)
+        rear = observation("rear", -1.0, 0.6, 5.0, track)
+        result = predict_rear(rear, track, 1.0, 0.1)
+        end = world_to_track(result.states[-1], track)
+        progress = signed_longitudinal_gap(rear.track_position, end, track_length(track))
+        self.assertAlmostEqual(progress, 5.0 / (1.0 - 0.6 / 10.0), delta=0.03)
+        self.assertAlmostEqual(end.d, 0.6, delta=0.01)
 
     def test_invalid_collision_settings_and_mismatched_samples_are_rejected(self) -> None:
         for kwargs in ({"collision_horizon": 0.0}, {"collision_horizon": float("nan")},

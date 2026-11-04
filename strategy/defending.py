@@ -14,7 +14,7 @@ from strategy.collision_check import PredictedCollision
 from strategy.defense_conditions import RearPrediction, has_predicted_collision, predict_rear
 from strategy.observations import VehicleObservation
 from strategy.offset_path import LateralManeuver
-from strategy.prediction import predict_vehicle_state, predicted_offset
+from strategy.prediction import predict_path_trajectory
 
 
 class DefenseMode(Enum):
@@ -29,7 +29,7 @@ class DefenseConfig:
     """距離單位為公尺，時間單位為秒；常用設定集中在 main.py。"""
 
     q_block: float = 6.0
-    center_weight: float = 1.0
+    progress_weight: float = 1.0
     smooth_weight: float = 2.0
     detection_range: float = 8.0
     return_tolerance: float = 0.08
@@ -38,19 +38,20 @@ class DefenseConfig:
     candidate_offsets: tuple[float, ...] = (-0.6, -0.3, 0.0, 0.3, 0.6)
     prediction_horizon: float = 1.5
     prediction_step: float = 0.1
+    path_sample_spacing: float = 0.2
     safety_margin: float = 0.1
     collision_check_enabled: bool = True
     collision_horizon: float = 1.0
 
     def __post_init__(self) -> None:
         nonnegative = (
-            self.q_block, self.center_weight, self.smooth_weight,
+            self.q_block, self.progress_weight, self.smooth_weight,
             self.return_tolerance, self.safety_margin,
         )
         positive = (
             self.detection_range, self.transition_length,
             self.decision_period, self.prediction_horizon, self.prediction_step,
-            self.collision_horizon,
+            self.collision_horizon, self.path_sample_spacing,
         )
         if any(not math.isfinite(value) or value < 0.0 for value in nonnegative):
             raise ValueError(
@@ -146,7 +147,7 @@ class CostBasedDefenseStrategy:
         # 指定對象在後方且位於偵測範圍內，才計算對齊成本。
         defending = (
             ego is not None
-            and -self.config.detection_range <= gap < 4.0
+            and -self.config.detection_range <= gap < -2.0
             and self.config.q_block > 0.0
         )
         ego_d = ego.track_position.d if defending and ego is not None else None
@@ -154,6 +155,7 @@ class CostBasedDefenseStrategy:
         if self.config.collision_check_enabled and ego is not None:
             self.last_rear_prediction = predict_rear(
                 ego, track, self.config.collision_horizon, self.config.prediction_step,
+                self.config.path_sample_spacing,
             )
 
         # 可關閉的碰撞條件先篩選，通過後才參與成本比較。
@@ -225,26 +227,26 @@ class CostBasedDefenseStrategy:
                 target_d, self.config.transition_length,
             )
         candidate = replace(defender, maneuver=maneuver)
-        predicted_states: tuple[VehicleState, ...] = ()
+        step_count = math.ceil(self.config.prediction_horizon / self.config.prediction_step)
+        cost_times = np.linspace(0.0, self.config.prediction_horizon, step_count + 1)
         rear = self.last_rear_prediction
+        times = cost_times if rear is None else np.union1d(cost_times, rear.times)
+        prediction = predict_path_trajectory(candidate, track, times, self.config.path_sample_spacing)
+        cost_indices = np.searchsorted(times, cost_times)
+        predicted_states = prediction.states
         if rear is not None:
             predicted_states = tuple(
-                predict_vehicle_state(candidate, time, track) for time in rear.times
+                prediction.states[index] for index in np.searchsorted(times, rear.times)
             )
             collision = has_predicted_collision(defender, predicted_states, rear)
             if collision is not None:
                 return DefenseCandidate(target_d, maneuver, None, None, collision, predicted_states)
-        step_count = math.ceil(self.config.prediction_horizon / self.config.prediction_step)
-        times = np.linspace(0.0, self.config.prediction_horizon, step_count + 1)
-        offsets = np.array([
-            predicted_offset(candidate, max(defender.state.velocity, 0.0) * float(time), track)
-            for time in times
-        ])
-        offsets[0] = defender.track_position.d
-
-        # J_race：偏好中心線，並減少突然的橫向變化。
+        offsets = prediction.offsets[cost_indices]
+        # 走滿 v*T 後的 s_end - s_start；跨越起終點仍連續累積。
+        progress = float(prediction.progress[cost_indices[-1]])
+        # J_race：獎勵進度，保留原本的橫移平順成本。
         race_cost = float(
-            self.config.center_weight * np.sum(offsets[1:] ** 2)
+            -self.config.progress_weight * progress
             + self.config.smooth_weight * np.sum(np.diff(offsets) ** 2)
         )
         # 對齊指定對象當下的 d，整段評分使用同一個位置。

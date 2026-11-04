@@ -41,8 +41,8 @@ TRACK_WIDTH = 2.0
 
 # (車輛 ID, 起始 s, 目標速度)。可增加其他車；負 s 會繞回封閉賽道。
 VEHICLE_SPECS = (
-    ("vehicle-1", 0.0, 7.0),
-    ("vehicle-2", 6.0, 5.0),
+    ("vehicle-1", 0.0, 10.0),
+    ("vehicle-2", 6.0, 8.0),
 ##    ("vehicle-3", -20.0, 4.0),
 )
 
@@ -70,30 +70,32 @@ LOOKAHEAD_DISTANCE = 2.0
 SPEED_GAIN = 1.5
 MAX_ACCELERATION = 3.0
 
+# 規則式 overtake 專用；cost_overtake 使用下方的 COST_OVERTAKING_CONFIG。
 OVERTAKING_CONFIG = OvertakingConfig(
-    detection_range=6.0,
-    minimum_speed_advantage=0.5,
-    lateral_offset=0.6,
-    safety_margin=0.1,
-    pass_clearance=1.0,
-    return_tolerance=0.08,
-    transition_length=6.0,
-    prediction_horizon=5.0,
-    prediction_step=0.25,
+    detection_range=5.0,          # 前方縱向距離 5 m 內，才考慮較慢車輛
+    minimum_speed_advantage=0.5,  # 當下車速至少比前車快 0.5 m/s，才觸發超車
+    lateral_offset=0.6,           # 左右超車目標為 d=±0.6 m，相對於中心線
+    safety_margin=0.1,            # 篩選橫向候選時，車寬之外預留的賽道邊界距離（m）
+    pass_clearance=1.0,           # 自車的 s 領先被超車輛超過 1 m 後，開始返回中心線
+    return_tolerance=0.08,        # 回程時 |d|≤0.08 m，就判定已回到中心線
+    transition_length=6.0,       # 以賽道縱向 6 m 完成平滑橫移；越長越平緩
+    prediction_horizon=4.0,      # 左右候選的幾何碰撞檢查，向前預測 4 s
+    prediction_step=0.25,        # 每 0.25 s 取樣檢查預測碰撞；不是決策更新週期
 )
 DEFENSE_CONFIG = DefenseConfig(
-    q_block=5.0,                  # 越大越想與 ego 當下位置對齊；0 關閉對齊成本
-    center_weight=2.0,             # 越大越偏好中心線
+    q_block=15.0,                  # 越大越想與 ego 當下位置對齊；0 關閉對齊成本
+    progress_weight=2.0,           # 越大越重視預估前進進度
     smooth_weight=1.0,             # 越大越不喜歡急促橫移
-    detection_range=8.0,           # 後車在此範圍內才考慮防守
+    detection_range=6.0,           # 後車在此範圍內才考慮防守
     return_tolerance=0.08,        # 接回共同中心線的橫向容許誤差
-    transition_length=1.0,         # 越長，橫移越緩慢
-    decision_period=0.2,           # 每隔多久比較一次候選路徑
+    transition_length=4.0,         # 越長，橫移越緩慢
+    decision_period=0.3,           # 每隔多久比較一次候選路徑
     candidate_offsets=(-0.6, -0.3, 0.0, 0.3, 0.6),  # 固定候選；超出可用路寬就排除
     prediction_horizon=1,       # 自身候選路徑的成本評估時間
     prediction_step=0.1,          # 成本取樣的時間間距
-    collision_check_enabled=True, # False 可停用獨立的碰撞條件
-    collision_horizon=1.0,        # 幾何碰撞預測時長；間距沿用 prediction_step
+    path_sample_spacing=0.2,      # 幾何路徑的取樣距離；越小越細
+    collision_check_enabled=False, # False 可停用獨立的碰撞條件
+    collision_horizon=1.5,        # 幾何碰撞預測時長；間距沿用 prediction_step
     safety_margin=0.1,            # 限制候選目標與賽道邊界的留距
 )
 COST_OVERTAKING_CONFIG = CostOvertakingConfig(
@@ -101,12 +103,12 @@ COST_OVERTAKING_CONFIG = CostOvertakingConfig(
     overtaking_weight=20.0,        # 預測終點超過前車時給一次獎勵
     candidate_offsets=(-0.6, -0.3, 0.0, 0.3, 0.6),
     detection_range=6.0,           # 對此範圍內最近的前車預測
-    transition_length=6.0,         # 候選參考路徑的橫移過渡長度
-    decision_period=0.2,           # 每次重新比較五條預測軌跡的間隔
-    prediction_horizon=3.0,        # 預測使用 MODEL_CONFIG 的時間步長
+    transition_length=3.0,         # 候選參考路徑的橫移過渡長度
+    decision_period=0.1,           # 每次重新比較五條預測軌跡的間隔
+    prediction_horizon=1.5,        # 預測使用 MODEL_CONFIG 的時間步長
     safety_margin=0.1,             # 只依可用路寬篩選橫向目標
 )
-OFFSET_PATH_CONFIG = OffsetPathConfig(sample_spacing=0.2, path_length=7.0)
+OFFSET_PATH_CONFIG = OffsetPathConfig(sample_spacing=0.2, path_length=4.0)
 
 
 def create_display_options(realtime: bool) -> VisualizationConfig:

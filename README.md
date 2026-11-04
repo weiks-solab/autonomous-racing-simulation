@@ -54,11 +54,12 @@ python3 main.py --realtime --no-defense
 | `DEFENSE_CONFIG` 參數 | 增大時的效果 |
 | --- | --- |
 | `q_block` | 更重視與 ego 的橫向位置對齊；設為 0 關閉對齊成本，碰撞開關獨立 |
-| `center_weight` | 更偏好中心線 |
+| `progress_weight` | 更重視預估前進進度，設為 0 關閉進度獎勵 |
 | `smooth_weight` | 更不喜歡預測路徑中突然的橫向變化 |
 | `transition_length` | 橫移需要更長距離，動作較緩慢 |
 | `detection_range` | 在更遠的後方範圍內啟用對齊成本 |
 | `decision_period` | 更久才重新比較候選成本 |
+| `path_sample_spacing` | 幾何路徑取樣較疏；單位為公尺，較小可提高距離換算精度 |
 | `collision_horizon` | 防守碰撞條件檢查更長的未來時間；不改變成本評估時長 |
 
 `collision_check_enabled=False` 可停用防守碰撞條件，回到原本只依成本選路徑。
@@ -279,10 +280,12 @@ collision_horizon=1.0,
 prediction_step=0.1,
 ```
 
-防守車以目前速度沿每條候選平滑路徑前進，將未來的 `(s, d)` 轉成世界座標，
-車頭方向採用路徑切線。指定對象則保持當下的 `d` 與縱向速度，沿賽道前進；
-每輪只預測一次供五條候選共用，不讀取它的候選或已選路徑。這些都是幾何
-近似，不執行 Pure Pursuit 或 bicycle rollout，沒有模擬追蹤誤差。
+防守車先將候選路徑轉成世界座標，累加相鄰取樣點的距離，再找出沿路徑走滿
+`目前車身速度 × t` 的位置，插值取得對應的 `s`、`d`，車頭方向取路徑線段切線。
+路徑長度不足時繼續取樣；跨越起終點時，縱向進度不繞回。
+指定對象保持當下的 `d` 與車身速度，用相同方法預測；每輪只預測一次供五條
+候選共用，不讀取它的候選或已選路徑。這些都是幾何近似，不執行 Pure Pursuit
+或 bicycle rollout，沒有模擬追蹤誤差。
 
 碰撞時間範圍由 `collision_horizon` 決定，取樣間隔不大於 `prediction_step`，
 包含當下與終點。使用實際車身的旋轉矩形比較同一時間點，接觸也視為碰撞。
@@ -306,20 +309,26 @@ prediction_step=0.1,
 ```text
 J_O = J_race + q_block × sum((d_opponent[k] - d_ego_now)²)
 
-J_race = center_weight × sum(d_opponent[k]²)
+J_race = -progress_weight × estimated_progress
        + smooth_weight × sum((d_opponent[k] - d_opponent[k-1])²)
+
+estimated_progress = s_end - s_start
+s_end = 沿候選路徑走滿 max(v, 0) × prediction_horizon 後的賽道位置
 ```
 
 `k=1..N` 是未來的預測時間點，`d_opponent[0]` 為對手車目前位置。
 `N` 是預測步數，不是車輛數量。`d_ego_now` 在一次成本評估中固定，沒有預測
-ego 未來意圖。`J_race` 是偏好中心線與平順移動的簡化成本，並非圈速最佳化。
+ego 未來意圖。`v` 是當下車身速度，不直接當成 `ds/dt`。幾何路徑依
+`path_sample_spacing` 取樣（預設 0.2 公尺），以距離累加與線性插值取得各時間點
+的位置。成本、碰撞檢查與候選圖使用同一套位置計算，不再使用 `D² / L` 的平均比例。
+靜止時進度為 0；此處仍是理想沿路徑行駛的估計，不包含實際追蹤誤差。
 
-對方通過、離開偵測範圍或 `q_block=0` 時，只有中心線與平順成本參與選擇，
-返回路徑也由相同成本比較決定。所有成本都是取樣點的加總，改變
-`prediction_step` 也會改變成本尺度與平順項的相對影響，需要重新觀察權重效果。
+對齊成本關閉時，只有進度獎勵與平順成本參與選擇，不再偏好或強制返回中心線。
+平順與對齊項仍為取樣點的加總，進度獎勵只計算一次；改變 `prediction_step`
+仍會影響成本的相對尺度，需要重新觀察權重效果。
 
 狀態顯示為 `CRUISE`（跟隨共同中心線）、`DEFEND`（啟用對齊成本）
-與 `RETURN`（對齊成本關閉，仍在追蹤偏移路徑）；全部候選被剔除時顯示
+與 `RETURN`（沿用既有名稱，表示對齊成本關閉但仍在追蹤偏移路徑）；全部候選被剔除時顯示
 `NO_FEASIBLE_PATH` 並保留舊路徑。其餘狀態只用於顯示，
 不會覆蓋成本選出的目標。選中 `0` 且已接近中心線時，以 `return_tolerance`
 判斷是否接回共同中心線。圖上也會顯示 `race` 與 `block` 成本；終端會列出

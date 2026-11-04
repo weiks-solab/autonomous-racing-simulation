@@ -4,8 +4,6 @@ from dataclasses import dataclass, replace
 import math
 from typing import Callable, Mapping, Sequence
 
-import numpy as np
-
 from core.track import Track
 from strategy.base import CandidatePath, CandidateSnapshot, StrategyDecision, VehicleStrategy
 from strategy.centerline import CenterlineStrategy
@@ -106,15 +104,10 @@ class DefendingStrategy:
         result = self.algorithm.update(vehicle, others, track, time_seconds)
         if (self.candidate_snapshot is None
                 or self.candidate_snapshot.evaluated_at != self.algorithm.last_evaluation_time):
-            config = self.algorithm.config
-            count = math.ceil(config.prediction_horizon / config.prediction_step)
-            distances = max(vehicle.state.velocity, 0.0) * np.linspace(
-                0.0, config.prediction_horizon, count + 1,
-            )
             self.candidate_snapshot = CandidateSnapshot(
                 evaluated_at=self.algorithm.last_evaluation_time,
                 position=vehicle.track_position,
-                distances=tuple(float(distance) for distance in distances),
+                distances=(),
                 candidates=tuple(
                     CandidatePath(
                         maneuver=candidate.maneuver,

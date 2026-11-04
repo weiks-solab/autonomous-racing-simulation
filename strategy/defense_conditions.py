@@ -11,7 +11,7 @@ from core.vehicle_geometry import VehicleGeometry, rectangles_overlap
 from core.vehicle_state import VehicleState
 from strategy.collision_check import PredictedCollision
 from strategy.observations import VehicleObservation
-from strategy.prediction import predict_vehicle_state
+from strategy.prediction import predict_path_trajectory
 
 
 @dataclass(frozen=True)
@@ -24,14 +24,15 @@ class RearPrediction:
 
 def predict_rear(
     rear: VehicleObservation, track: Track, horizon: float, step: float,
+    sample_spacing: float = 0.2,
 ) -> RearPrediction:
-    """指定後車維持當下 d 與縱向速度，忽略其已選路徑。"""
+    """指定後車維持當下 d 與車身速度，忽略其已選路徑。"""
     snapshot = replace(rear, maneuver=None)
     count = math.ceil(horizon / step)
     times = tuple(float(time) for time in np.linspace(0.0, horizon, count + 1))
     return RearPrediction(
         rear.vehicle_id, rear.geometry, times,
-        tuple(predict_vehicle_state(snapshot, time, track) for time in times),
+        predict_path_trajectory(snapshot, track, times, sample_spacing).states,
     )
 
 
