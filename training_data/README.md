@@ -33,7 +33,7 @@ python generate_training_data.py --episodes 3 --seconds 4 --horizon-steps 5 --st
 答案則是對手在 `0.1 s` 後相對現在的 `d` 變化。
 
 未指定配對時，優先從 `defend` 指派推導出 `(被防守的車, 防守車)`；
-若沒有防守指派，則收集每台進攻車與其他車的有向配對。
+若沒有防守指派，則收集每台進攻車或 `progress` 車與其他車的有向配對。
 也可明確指定一組或多組，不限於兩台車：
 
 ```powershell

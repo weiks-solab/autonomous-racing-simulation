@@ -3,21 +3,22 @@
 輕量的 Python 2D 賽車模擬器。每輛車各自使用運動學自行車模型與 Pure
 Pursuit 控制器，車輛數量可自由增加。
 
-目前示範由 `vehicle-1` 使用成本式進攻，`vehicle-2` 使用防守策略。
+目前示範由 `vehicle-1` 使用成本式進攻，`vehicle-3` 使用純進度策略。
 車數與策略可在 `main.py` 自行調整，未指派策略的車持續跟隨中心線。
 策略只決定橫向目標與平滑路徑；
 方向盤角度及速度控制仍由 Pure Pursuit 負責。
 
 ## 安裝與執行
 
-需要 Python 3.10 以上、NumPy 與 Matplotlib，沒有新增其他依賴。
+基本模擬需要 Python 3.10 以上、NumPy 與 Matplotlib。
+GP 訓練另外使用 scikit-learn，相依清單見 `requirements-gp.txt`。
 
 ```bash
 python3 -m pip install -r requirements.txt
 python3 main.py
 ```
 
-預設模擬 21 秒，再顯示中心線、賽道邊界、各車軌跡與車身。即時觀看：
+預設在圓角矩形賽道模擬 21 秒，再顯示賽道邊界、各車軌跡與車身。即時觀看：
 
 ```bash
 python3 main.py --realtime
@@ -31,6 +32,21 @@ python3 main.py --realtime --no-defense
 
 若環境使用 `python` 指令，將上述 `python3` 換成 `python` 即可。
 
+## 收集資料與訓練 GP
+
+在專案根目錄使用既有 Python 環境，先生成資料，再指定輸出的資料夾訓練：
+
+```bash
+python3 generate_training_data.py --episodes 5 --seconds 20 --horizon-steps 5
+python3 train_gp.py --data data/training/生成的資料夾名稱
+```
+
+目前時間步長為 0.02 s，`--horizon-steps 5` 表示答案為 0.1 s 後的位移。
+訓練依整場模擬切分資料，保存標準化器、GP、誤差報告與評估圖。
+資料及模型保留在本機，不納入 Git；程式不會自動安裝套件。
+詳細操作見 [資料生成說明](training_data/README.md) 與 [GP 訓練說明](GP_TRAINING.md)。
+本次功能與設定調整記錄於 [CHANGELOG.md](CHANGELOG.md)。
+
 ## 想調整參數，先看 main.py 開頭
 
 常用設定集中在 `main.py` 的「常用參數」區，每個防守參數都有簡短中文註解。
@@ -41,11 +57,12 @@ python3 main.py --realtime --no-defense
 | `STRATEGY_ASSIGNMENTS` | 指定每台車使用什麼策略，以及防守誰 |
 | `DEFENSE_ENABLED` | 是否啟用防守 |
 | `SIMULATION_SECONDS` | 模擬多久 |
-| `TRACK_*` | 橢圓大小、點數與賽道寬度 |
+| `TRACK_*` | 地圖選擇、直道與彎道尺寸、點數與賽道寬度 |
 | `MODEL_CONFIG` / `VEHICLE_GEOMETRY` | 時間步長、軸距、速度限制與車身尺寸 |
 | `LOOKAHEAD_DISTANCE` | Pure Pursuit 的前視距離 |
 | `OVERTAKING_CONFIG` | 原本規則式 `overtake` 使用的超車參數 |
 | `COST_OVERTAKING_CONFIG` | 新增 `cost_overtake` 的進度、超車獎勵與預測參數 |
+| `PROGRESS_CONFIG` | `progress` 的候選目標、橫移長度、決策週期與自車預測時長 |
 | `DEFENSE_CONFIG` | 所有防守車使用的成本、觸發條件與路徑參數 |
 | `OFFSET_PATH_CONFIG` | 臨時路徑的取樣間距與長度 |
 
@@ -71,6 +88,31 @@ python3 main.py --realtime --no-defense
 
 `create_display_options()` 緊接在參數區下方，可以切換軌跡、車身、控制目標、
 策略狀態、臨時路徑與候選快照的顯示。
+
+## 切換賽道與調整直道、彎道
+
+在 `main.py` 頂端設定 `TRACK_NAME`：
+
+```python
+TRACK_NAME = "rounded_rectangle"  # 四段直道＋四個 90 度圓弧
+# TRACK_NAME = "oval"             # 切回原本的橢圓
+```
+
+預設圓角矩形的中心線跨度為 20 × 12 m，彎道半徑 3 m，路寬 2 m。
+水平直道各長 14 m、垂直直道各長 6 m，一圈約 58.85 m。
+中心在原點，從下方直道左端出發，沿逆時針行駛。
+可調整 `TRACK_RECTANGLE_LENGTH`、`TRACK_RECTANGLE_HEIGHT`、
+`TRACK_CORNER_RADIUS`；長寬是中心線跨度，不包含兩側路寬。
+彎道直徑必須小於兩個跨度，且半徑必須大於半個路寬，以保留四段直道及有效內側邊界。
+
+兩種地圖共用 `TRACK_WIDTH` 與 `TRACK_POINT_COUNT`，預設 500 點。
+圓角矩形沿幾何弧長等距取樣，直道與圓弧的切線方向連續；原本橢圓仍沿參數角取樣。
+`oval` 尺寸由 `TRACK_SEMI_MAJOR_AXIS` 與 `TRACK_SEMI_MINOR_AXIS` 決定。
+賽道建立邏輯在 `core/track_factory.py`，未來新增形狀可統一從 `create_track()` 接入。
+
+模擬與 `generate_training_data.py` 共用 `create_demo_track()`，切圖會同時套用至兩者；
+資料匯出仍保存實際中心線、路寬與封閉設定。車輛位置更新、`s/d` 投影、Pure Pursuit
+與每車策略介面沿用原有方式。改變彎道尺寸後仍應檢查追蹤誤差，必要時調整速度與前視距離。
 
 ## 查看攻防候選路徑
 
@@ -131,6 +173,7 @@ STRATEGY_ASSIGNMENTS = {
 | `centerline` | 跟隨中心線，不主動進攻或防守 | `strategy/centerline.py` |
 | `overtake` | 找前方較慢的車，選擇左右超車路徑 | `strategy/overtaking.py` |
 | `cost_overtake` | 五候選 bicycle 預測，以進度與超車獎勵選路徑 | `strategy/cost_overtaking.py` |
+| `progress` | 五候選 bicycle 預測，只選最大進度，不預測其他車或篩選碰撞 | `strategy/progress.py` |
 | `defend` | 依成本選擇橫向防守位置 | `strategy/defending.py` |
 
 例如想改成第二台車進攻，第三台車防守第二台，只需改成：
@@ -214,6 +257,29 @@ J          = J_progress + J_pass
 調整 `COST_OVERTAKING_CONFIG` 的 `progress_weight`、`overtaking_weight`、
 `candidate_offsets`、`prediction_horizon`、`decision_period` 與 `transition_length`
 即可改變評分與預測範圍。預測模型使用 `MODEL_CONFIG`，控制器使用各車實際設定。
+
+### 純進度策略
+
+在 `STRATEGY_ASSIGNMENTS` 使用 `StrategyAssignment("progress")`，即可只比較自車的
+五條候選軌跡。例如保留後車超車、讓前車只爭取自己的進度：
+
+```python
+STRATEGY_ASSIGNMENTS = {
+    "vehicle-1": StrategyAssignment("cost_overtake"),
+    "vehicle-3": StrategyAssignment("progress"),
+}
+```
+
+`progress` 使用各車自己的 Pure Pursuit、速度設定與自行車模型，選擇預測終點累積
+縱向進度 `delta_s` 最大的候選，圖上成本為 `J = -delta_s`。不找超車對象、不計算
+超車獎勵，也不預測其他車或剔除預測碰撞。其他車的位置、速度與已選路徑不影響決策。
+候選目標仍受路寬、車寬與 `safety_margin` 限制；這只限制目標位置，不檢查整條軌跡出界。
+主迴圈的實際碰撞偵測仍會記錄重疊，不改變車輛運動。
+
+參數集中於 `PROGRESS_CONFIG`：預設候選 `(-0.6, -0.3, 0, 0.3, 0.6)` m、過渡長度
+3 m、決策週期 0.1 s、預測時長 1.5 s。預測步長沿用 `MODEL_CONFIG.time_step`。
+相同目標沿用既有橫移動作；每台車保有獨立狀態。候選圖只列出 `progress` 成本。
+無視窗訓練資料入口也支援此策略，並保存其設定至 metadata。
 
 ### 隨時替換策略
 

@@ -147,7 +147,7 @@ class CostBasedDefenseStrategy:
         # 指定對象在後方且位於偵測範圍內，才計算對齊成本。
         defending = (
             ego is not None
-            and -self.config.detection_range <= gap < -2.0
+            and -self.config.detection_range <= gap < -1
             and self.config.q_block > 0.0
         )
         ego_d = ego.track_position.d if defending and ego is not None else None

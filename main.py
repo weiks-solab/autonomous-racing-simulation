@@ -5,6 +5,7 @@ import math
 
 from core.pure_pursuit import PurePursuitConfig, PurePursuitController
 from core.track import Track
+from core.track_factory import TrackConfig, create_track
 from core.track_geometry import (
     TrackPosition,
     track_to_world,
@@ -28,32 +29,39 @@ from strategy.observations import VehicleObservation, create_vehicle_observation
 from strategy.defending import DefenseConfig
 from strategy.offset_path import LateralManeuver, OffsetPathConfig, generate_offset_track
 from strategy.overtaking import OvertakingConfig
+from strategy.progress import ProgressConfig, ProgressStrategy
 
 
 # ===== 常用參數集中在這裡：距離 m、速度 m/s、時間 s =====
 DEFENSE_ENABLED = True
 SIMULATION_SECONDS = 21.0
 
-TRACK_SEMI_MAJOR_AXIS = 10.0
-TRACK_SEMI_MINOR_AXIS = 5.0
+# 只改 TRACK_NAME 即可換圖；兩種地圖共用路寬與取樣點數。
+TRACK_NAME = "rounded_rectangle"  # "rounded_rectangle" 或 "oval"
+TRACK_RECTANGLE_LENGTH = 20.0    # 中心線左右跨度，不含路寬
+TRACK_RECTANGLE_HEIGHT = 12.0    # 中心線上下跨度，不含路寬
+TRACK_CORNER_RADIUS = 3.0        # 四個 90 度彎的中心線半徑
+TRACK_SEMI_MAJOR_AXIS = 10.0     # oval 專用
+TRACK_SEMI_MINOR_AXIS = 5.0      # oval 專用
 TRACK_POINT_COUNT = 500
 TRACK_WIDTH = 2.0
 
 # (車輛 ID, 起始 s, 目標速度)。可增加其他車；負 s 會繞回封閉賽道。
 VEHICLE_SPECS = (
-    ("vehicle-1", 0.0, 10.0),
-    ("vehicle-2", 6.0, 8.0),
-##    ("vehicle-3", -20.0, 4.0),
+    ("vehicle-1", 0.0, 11.0),
+ ##   ("vehicle-2", 4.0, 9.0),
+    ("vehicle-3", 4.0, 9.0),
 )
 
 # 此次模擬的策略對照表：只改這裡，就能把策略換到另一台車。
 # cost_overtake：五候選成本進攻；overtake：原本的規則式進攻。
+# progress：五候選只比較自車進度，不預測其他車或篩選碰撞。
 # centerline：跟隨中心線；defend：防守指定對象。
 # 未列出的車也會自動使用 centerline。每台車都有自己的策略物件。
 STRATEGY_ASSIGNMENTS = {
     "vehicle-1": StrategyAssignment("cost_overtake"),
-    "vehicle-2": StrategyAssignment("defend", target_vehicle_id="vehicle-1"),
- ##   "vehicle-3": StrategyAssignment("centerline"),
+ ##   "vehicle-2": StrategyAssignment("defend", target_vehicle_id="vehicle-1"),
+    "vehicle-3": StrategyAssignment("progress"),
 }
 
 MODEL_CONFIG = VehicleModelConfig(
@@ -88,8 +96,8 @@ DEFENSE_CONFIG = DefenseConfig(
     smooth_weight=1.0,             # 越大越不喜歡急促橫移
     detection_range=6.0,           # 後車在此範圍內才考慮防守
     return_tolerance=0.08,        # 接回共同中心線的橫向容許誤差
-    transition_length=4.0,         # 越長，橫移越緩慢
-    decision_period=0.3,           # 每隔多久比較一次候選路徑
+    transition_length=2.0,         # 越長，橫移越緩慢
+    decision_period=0.2,           # 每隔多久比較一次候選路徑
     candidate_offsets=(-0.6, -0.3, 0.0, 0.3, 0.6),  # 固定候選；超出可用路寬就排除
     prediction_horizon=1,       # 自身候選路徑的成本評估時間
     prediction_step=0.1,          # 成本取樣的時間間距
@@ -109,6 +117,27 @@ COST_OVERTAKING_CONFIG = CostOvertakingConfig(
     safety_margin=0.1,             # 只依可用路寬篩選橫向目標
 )
 OFFSET_PATH_CONFIG = OffsetPathConfig(sample_spacing=0.2, path_length=4.0)
+PROGRESS_CONFIG = ProgressConfig(
+    candidate_offsets=(-0.6, -0.3, 0.0, 0.3, 0.6),
+    transition_length=3.0,
+    decision_period=0.1,
+    prediction_horizon=1.5,
+    safety_margin=0.1,  # 只限制候選目標與路邊的距離，不是車間碰撞留距。
+)
+
+
+def create_demo_track() -> Track:
+    """Share the selected map with the simulation and training-data entry points."""
+    return create_track(TrackConfig(
+        name=TRACK_NAME,
+        point_count=TRACK_POINT_COUNT,
+        width=TRACK_WIDTH,
+        rectangle_length=TRACK_RECTANGLE_LENGTH,
+        rectangle_height=TRACK_RECTANGLE_HEIGHT,
+        corner_radius=TRACK_CORNER_RADIUS,
+        semi_major_axis=TRACK_SEMI_MAJOR_AXIS,
+        semi_minor_axis=TRACK_SEMI_MINOR_AXIS,
+    ))
 
 
 def create_display_options(realtime: bool) -> VisualizationConfig:
@@ -224,12 +253,7 @@ def run_simulation(
     realtime: bool = False,
     defense_enabled: bool = DEFENSE_ENABLED,
 ) -> None:
-    track = Track.create_oval(
-        semi_major_axis=TRACK_SEMI_MAJOR_AXIS,
-        semi_minor_axis=TRACK_SEMI_MINOR_AXIS,
-        point_count=TRACK_POINT_COUNT,
-        width=TRACK_WIDTH,
-    )
+    track = create_demo_track()
     model_config = MODEL_CONFIG
     vehicles = [
         _create_vehicle(vehicle_id, start_s, target_speed, model_config, track)
@@ -246,6 +270,9 @@ def run_simulation(
     strategy_factories = {
         "cost_overtake": lambda vehicle_id: CostBasedOvertakingStrategy(
             COST_OVERTAKING_CONFIG, prediction_configs[vehicle_id], prediction_configs,
+        ),
+        "progress": lambda vehicle_id: ProgressStrategy(
+            PROGRESS_CONFIG, prediction_configs[vehicle_id],
         ),
     }
     manager = StrategyManager(

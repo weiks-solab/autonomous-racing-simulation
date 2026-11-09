@@ -100,7 +100,7 @@ class DefendingStrategyTests(unittest.TestCase):
             (observation("ego", 25.0, 0.6, 5.0, self.track),),
             (observation("ego", 20.0, 0.6, 5.0, self.track),),
             (observation("ego", 19.95, 0.6, 5.0, self.track),),
-            (observation("ego", 18.0, 0.6, 5.0, self.track),),
+            (observation("ego", 19.0, 0.6, 5.0, self.track),),
             (observation("ego", 5.0, 0.6, 5.0, self.track),),
             (observation("other", 14.0, 0.6, 5.0, self.track),),
             (),
@@ -112,8 +112,8 @@ class DefendingStrategyTests(unittest.TestCase):
                 self.assertIs(decision.mode, DefenseMode.CRUISE)
                 self.assertEqual(decision.blocking_cost, 0.0)
 
-    def test_rear_speed_does_not_gate_alignment_beyond_two_metres(self) -> None:
-        for s, speed in ((14.0, 1.0), (14.0, 3.0), (17.9, 5.0)):
+    def test_rear_speed_does_not_gate_alignment_beyond_one_metre(self) -> None:
+        for s, speed in ((14.0, 1.0), (14.0, 3.0), (17.9, 5.0), (18.0, 5.0), (18.9, 1.0)):
             with self.subTest(s=s, speed=speed):
                 strategy = CostBasedDefenseStrategy(self.config, "ego")
                 ego = observation("ego", s, 0.6, speed, self.track)

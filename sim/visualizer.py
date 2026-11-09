@@ -111,7 +111,7 @@ class SimulationVisualizer:
         self.axes.set_ylim(y_min - margin, y_max + margin)
         self.axes.set_xlabel("x [m]")
         self.axes.set_ylabel("y [m]")
-        self.axes.set_title("Pure Pursuit on an Ellipse")
+        self.axes.set_title("Racing Overtake Simulator")
         self._update_legend()
 
     def update(

@@ -21,6 +21,7 @@ from strategy.defending import DefenseConfig
 from strategy.observations import VehicleObservation, create_vehicle_observation
 from strategy.offset_path import LateralManeuver, OffsetPathConfig, generate_offset_track
 from strategy.overtaking import OvertakingConfig
+from strategy.progress import ProgressConfig, ProgressStrategy
 from training_data.collector import TrainingDataCollector
 from training_data.schema import require_id, require_integer
 
@@ -71,6 +72,7 @@ class SimulationSettings:
     cost_overtaking_config: CostOvertakingConfig = field(default_factory=CostOvertakingConfig)
     offset_path_config: OffsetPathConfig = field(default_factory=OffsetPathConfig)
     defense_enabled: bool = True
+    progress_config: ProgressConfig = field(default_factory=ProgressConfig)
 
 
 @dataclass(frozen=True)
@@ -142,6 +144,7 @@ def _effective_offset_config(scenario: EpisodeScenario, settings: SimulationSett
         "overtake": settings.overtaking_config.transition_length,
         "defend": settings.defense_config.transition_length,
         "cost_overtake": settings.cost_overtaking_config.transition_length,
+        "progress": settings.progress_config.transition_length,
     }
     # 資料入口也支援原本的 overtake；參考線必須涵蓋完整橫移。
     length = max(
@@ -168,6 +171,9 @@ def _create_manager(
         strategy_factories={
             "cost_overtake": lambda vehicle_id: CostBasedOvertakingStrategy(
                 settings.cost_overtaking_config, prediction_configs[vehicle_id], prediction_configs,
+            ),
+            "progress": lambda vehicle_id: ProgressStrategy(
+                settings.progress_config, prediction_configs[vehicle_id],
             ),
         },
     )
@@ -233,7 +239,7 @@ def randomized_scenarios(
     require_integer("episode_count", episode_count, 1)
     require_integer("seed", seed)
     if not settings.track.closed:
-        raise ValueError("randomized oval scenarios require a closed track")
+        raise ValueError("randomized scenarios require a closed track")
     if not vehicle_specs:
         raise ValueError("at least one vehicle specification is required")
     for vehicle_id, start_s, speed in vehicle_specs:

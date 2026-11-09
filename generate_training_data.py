@@ -9,7 +9,6 @@ from typing import Sequence
 from uuid import uuid4
 
 from core.pure_pursuit import PurePursuitConfig
-from core.track import Track
 from sim.data_generation import (
     EpisodeScenario,
     RandomizationConfig,
@@ -41,10 +40,7 @@ def _demo_settings(
     import main as demo
 
     settings = SimulationSettings(
-        track=Track.create_oval(
-            demo.TRACK_SEMI_MAJOR_AXIS, demo.TRACK_SEMI_MINOR_AXIS,
-            demo.TRACK_POINT_COUNT, demo.TRACK_WIDTH,
-        ),
+        track=demo.create_demo_track(),
         model_config=demo.MODEL_CONFIG,
         geometry=demo.VEHICLE_GEOMETRY,
         controller_config=PurePursuitConfig(
@@ -56,6 +52,7 @@ def _demo_settings(
         cost_overtaking_config=demo.COST_OVERTAKING_CONFIG,
         offset_path_config=demo.OFFSET_PATH_CONFIG,
         defense_enabled=demo.DEFENSE_ENABLED and not no_defense,
+        progress_config=demo.PROGRESS_CONFIG,
     )
     return settings, demo.VEHICLE_SPECS, dict(demo.STRATEGY_ASSIGNMENTS)
 
@@ -77,7 +74,7 @@ def _select_pairs(
             pairs = tuple(
                 VehiclePair(ego_id, other_id)
                 for ego_id, assignment in assignments.items()
-                if assignment.name in ("overtake", "cost_overtake")
+                if assignment.name in ("overtake", "cost_overtake", "progress")
                 for other_id in vehicle_ids if other_id != ego_id
             )
     if not pairs:
@@ -95,7 +92,7 @@ def _run_metadata(
 ) -> dict:
     config_names = (
         "model_config", "geometry", "controller_config", "overtaking_config",
-        "defense_config", "cost_overtaking_config", "offset_path_config",
+        "defense_config", "cost_overtaking_config", "offset_path_config", "progress_config",
     )
     return {
         "seed": seed,
