@@ -5,6 +5,8 @@ from training_data.dataset import build_dataset
 from training_data.extractors import (
     ExtractorRegistry,
     FeatureContext,
+    InputField,
+    OutputField,
     TargetContext,
     create_default_registry,
 )
@@ -21,7 +23,7 @@ from training_data.schema import (
 )
 
 __all__ = [
-    "DatasetSchema", "ExtractorRegistry", "FeatureContext", "FieldSpec", "FrameSnapshot",
+    "DatasetSchema", "ExtractorRegistry", "FeatureContext", "FieldSpec", "FrameSnapshot", "InputField", "OutputField",
     "RecordedEpisode", "SamplingConfig", "TargetContext", "TrainingDataCollector",
     "TrainingDataset", "TrainingSample", "VehiclePair", "build_dataset", "create_default_registry",
     "export_dataset", "load_dataset", "load_recordings",

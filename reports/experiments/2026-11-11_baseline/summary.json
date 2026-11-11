@@ -1,0 +1,195 @@
+[
+  {
+    "archive": "gp_future_0p02s",
+    "source_model_directory": "models/gp/20261109T084348Z_1b728413",
+    "source_data_directory": "data/training/20261105T065547Z_270c5e64",
+    "historical_branch_commit_command": "未記錄；不可由盤點版本或目錄時間戳推定。",
+    "model_id_timestamp_note": "ID 含 UTC 時間標記；未另存可驗證的起訖時間。",
+    "sample_count": 1000,
+    "samples_per_episode": {
+      "episode-00000": 200,
+      "episode-00001": 200,
+      "episode-00002": 200,
+      "episode-00003": 200,
+      "episode-00004": 200
+    },
+    "train_sample_count": 800,
+    "test_sample_count": 200,
+    "recalculated_metrics": {
+      "gp": {
+        "mae": 0.00732046612521311,
+        "rmse": 0.010424109168857394
+      },
+      "always_zero": {
+        "mae": 0.008498050306381748,
+        "rmse": 0.011522915161063935
+      }
+    },
+    "matches_report": true,
+    "track_summary": {
+      "type_name": "未記錄，以 metadata 中完整中心線為準",
+      "points": 500,
+      "width_m": 2.0,
+      "closed": true,
+      "centerline_span_x_m": 20.0,
+      "centerline_span_y_m": 10.0,
+      "polyline_length_m": 48.44192236619687
+    },
+    "sample_prediction_targets_match": true,
+    "raw_state_row_count": 2010,
+    "raw_collision_frame_count": 0,
+    "maximum_absolute_error_case": {
+      "episode_id": "episode-00001",
+      "step_index": "18",
+      "time_s": "0.36",
+      "actual": "0.030033427375518174",
+      "predicted_mean": "0.003436918518592207",
+      "error": "-0.026596508856925966"
+    },
+    "local_only_files": [
+      {
+        "path": "data/training/20261105T065547Z_270c5e64/samples.csv",
+        "bytes": 144194,
+        "sha256": "6a5bf0425c299b50e8b62cf12153b914206d2f9a37c287acf80afbd0a851f573"
+      },
+      {
+        "path": "data/training/20261105T065547Z_270c5e64/raw_states.csv",
+        "bytes": 425095,
+        "sha256": "a0df93d3c5b9cabe7bdeb32d529c111e549a228293efeef328ea4d36347bb81b"
+      }
+    ],
+    "local_only_model": "models/gp/20261109T084348Z_1b728413/model.pkl"
+  },
+  {
+    "archive": "gp_future_1s",
+    "source_model_directory": "models/gp/20261109T090300Z_5d40b9b6",
+    "source_data_directory": "data/training/20261109T090105Z_79f9bb58",
+    "historical_branch_commit_command": "未記錄；不可由盤點版本或目錄時間戳推定。",
+    "model_id_timestamp_note": "ID 含 UTC 時間標記；未另存可驗證的起訖時間。",
+    "sample_count": 4755,
+    "samples_per_episode": {
+      "episode-00000": 951,
+      "episode-00001": 951,
+      "episode-00002": 951,
+      "episode-00003": 951,
+      "episode-00004": 951
+    },
+    "train_sample_count": 3804,
+    "test_sample_count": 951,
+    "recalculated_metrics": {
+      "gp": {
+        "mae": 0.12062348458572103,
+        "rmse": 0.17937866550603052
+      },
+      "always_zero": {
+        "mae": 0.1086308233696553,
+        "rmse": 0.16007559725177473
+      }
+    },
+    "matches_report": true,
+    "track_summary": {
+      "type_name": "未記錄，以 metadata 中完整中心線為準",
+      "points": 500,
+      "width_m": 2.0,
+      "closed": true,
+      "centerline_span_x_m": 20.0,
+      "centerline_span_y_m": 10.0,
+      "polyline_length_m": 48.44192236619687
+    },
+    "sample_prediction_targets_match": true,
+    "raw_state_row_count": 10010,
+    "raw_collision_frame_count": 0,
+    "maximum_absolute_error_case": {
+      "episode_id": "episode-00001",
+      "step_index": "1",
+      "time_s": "0.02",
+      "actual": "0.920331539085953",
+      "predicted_mean": "0.015395679172802395",
+      "error": "-0.9049358599131506"
+    },
+    "local_only_files": [
+      {
+        "path": "data/training/20261109T090105Z_79f9bb58/samples.csv",
+        "bytes": 682995,
+        "sha256": "745eaf0d2b8807ddbfde84b82533e5f6104f826e3cbfdddfebc0d1da2f429540"
+      },
+      {
+        "path": "data/training/20261109T090105Z_79f9bb58/raw_states.csv",
+        "bytes": 2089649,
+        "sha256": "7dbc80244dc4f2177b966f4a195d54c5e61f818efac3c72f9d95ee9ba447d8a1"
+      }
+    ],
+    "local_only_model": "models/gp/20261109T090300Z_5d40b9b6/model.pkl"
+  },
+  {
+    "archive": "gp_current_sd",
+    "source_model_directory": "models/gp/20261111T064250Z_dbc5bc95",
+    "source_data_directory": "data/training/20261111T063545Z_f6eb6a97",
+    "historical_branch_commit_command": "未記錄；不可由盤點版本或目錄時間戳推定。",
+    "model_id_timestamp_note": "ID 含 UTC 時間標記；未另存可驗證的起訖時間。",
+    "sample_count": 1005,
+    "samples_per_episode": {
+      "episode-00000": 201,
+      "episode-00001": 201,
+      "episode-00002": 201,
+      "episode-00003": 201,
+      "episode-00004": 201
+    },
+    "train_sample_count": 804,
+    "test_sample_count": 201,
+    "recalculated_metrics": {
+      "gp": {
+        "mae": 0.039130575733781765,
+        "rmse": 0.11773215074050387
+      },
+      "always_zero": {
+        "mae": 0.568662834098525,
+        "rmse": 0.5796604304440734
+      },
+      "training_mean": {
+        "mae": 0.10169122808514516,
+        "rmse": 0.16574865421658677
+      }
+    },
+    "matches_report": true,
+    "track_summary": {
+      "type_name": "未記錄，以 metadata 中完整中心線為準",
+      "points": 500,
+      "width_m": 2.0,
+      "closed": true,
+      "centerline_span_x_m": 20.0,
+      "centerline_span_y_m": 12.0,
+      "polyline_length_m": 58.84834817896283
+    },
+    "sample_prediction_targets_match": true,
+    "raw_state_row_count": 10010,
+    "raw_collision_frame_count": 0,
+    "maximum_absolute_error_case": {
+      "episode_id": "episode-00001",
+      "step_index": "0",
+      "time_s": "0.0",
+      "actual": "-0.43618274389582457",
+      "predicted_mean": "0.39690294097551215",
+      "error": "0.8330856848713367"
+    },
+    "local_only_files": [
+      {
+        "path": "data/training/20261111T063545Z_f6eb6a97/samples.csv",
+        "bytes": 83758,
+        "sha256": "8134c3acc3ac7acacad9a6133b0bb9f86af5d0cc16ddefdb385a0bbc2e863b99"
+      },
+      {
+        "path": "data/training/20261111T063545Z_f6eb6a97/raw_states.csv",
+        "bytes": 2024653,
+        "sha256": "c6b762f21fe5d9dad2bb8bc59cccd4a5a51de15fa35d8310644f698dcfee4260"
+      }
+    ],
+    "local_only_model": "models/gp/20261111T064250Z_dbc5bc95/model.pkl",
+    "training_target_aggregation_from_local_samples": {
+      "count": 804,
+      "mean": 0.5666917230737042,
+      "unit": "m",
+      "source": "本次由本機 samples.csv 的 train_episode_ids 對應列計算；非重新擬合模型。"
+    }
+  }
+]

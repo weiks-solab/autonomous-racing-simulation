@@ -10,7 +10,7 @@ import numpy as np
 
 from core.track import Track
 from core.track_geometry import TrackPosition
-from core.vehicle_geometry import VehicleGeometry
+from core.vehicle_geometry import CollisionConfig, VehicleGeometry
 from core.vehicle_state import VehicleState
 from strategy.observations import VehicleObservation
 from strategy.offset_path import LateralManeuver
@@ -175,7 +175,7 @@ class TrainingDataTests(unittest.TestCase):
             collector.record("episode", 1, 0.03, {"ego": observation("ego", 0.0, 0.0, 1.0)})
 
     def test_invalid_schemas_pairs_and_time_settings_are_rejected(self) -> None:
-        for kwargs in ({"label_horizon_steps": 0}, {"sample_stride_steps": True}, {"time_step": math.nan}):
+        for kwargs in ({"label_horizon_steps": -1}, {"sample_stride_steps": True}, {"time_step": math.nan}):
             with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
                 SamplingConfig(**kwargs)
         with self.assertRaises(ValueError):
@@ -232,7 +232,11 @@ class TrainingDataIOTests(unittest.TestCase):
     def test_raw_roundtrip_preserves_maneuvers_and_geometries(self) -> None:
         collector = TrainingDataCollector(0.02)
         observations = {
-            "ego": replace(observation("ego", 1.0, 0.2, 3.0), maneuver=LateralManeuver(1.0, 0.2, 0.5, 4.0)),
+            "ego": replace(
+                observation("ego", 1.0, 0.2, 3.0),
+                maneuver=LateralManeuver(1.0, 0.2, 0.5, 4.0),
+                geometry=replace(GEOMETRY, collision=CollisionConfig(0.4, 0.24)),
+            ),
             "opponent": observation("opponent", 4.0, -0.1, 2.0),
         }
         for index in range(2):
@@ -241,6 +245,16 @@ class TrainingDataIOTests(unittest.TestCase):
         export_dataset(dataset, collector.episodes, self.track, self.output)
         _, _, episodes = load_recordings(self.output)
         self.assertEqual(episodes, collector.episodes)
+
+    def test_raw_recordings_without_collision_size_columns_remain_readable(self) -> None:
+        self.export()
+        path = self.output / "raw_states.csv"
+        with path.open(newline="", encoding="utf-8") as stream:
+            rows = list(csv.reader(stream))
+        with path.open("w", newline="", encoding="utf-8") as stream:
+            csv.writer(stream).writerows(row[:-2] for row in rows)
+        _, _, episodes = load_recordings(self.output)
+        self.assertEqual(episodes, self.collector.episodes)
 
     def test_existing_output_is_not_overwritten(self) -> None:
         original = self.export()

@@ -1,11 +1,89 @@
 # 訓練資料生成模組
 
-本模組收集模擬車輛的實際狀態，建立「當下觀察 → 未來反應」的數值迴歸資料。
+本模組收集模擬車輛的實際狀態，建立同時刻對應或「當下觀察 → 未來反應」的數值迴歸資料。
 不負責訓練 GP，不需要 scikit-learn，也不會變更 `gp_demo.py`。
 
-原有 `main.py`、`core/`、策略與視覺化程式維持原樣。新增的無視窗模擬入口
+車模、控制器、策略與視覺化仍沿用原有實作。無視窗模擬入口
 `sim/data_generation.py` 直接使用既有策略管理器、Pure Pursuit 與運動模型。
 `generate_training_data.py` 讀取 `main.py` 的車輛、賽道及控制／策略設定，但不執行其主程式。
+
+## 現在預設：學習 progress 對手的 s → d
+
+輸入為對手當下的 `opponent_s`，答案為同一時刻的 `opponent_current_d`。
+預設時間間隔為 0，學的是固定賽道上的行車路線，而不是下一刻的位移。
+目前 main.py 中 vehicle-2 使用 progress；若之後修改車輛，請確認被收集的對手仍使用所需策略。
+
+```powershell
+.\.venv\Scripts\python.exe generate_training_data.py --episodes 5 --seconds 20 --stride-steps 5
+.\.venv\Scripts\python.exe train_gp.py --data data/training/生成的資料夾名稱
+```
+
+若有多台車，也可用 `--pair vehicle-1 vehicle-2` 明確選擇；第二個 ID 是被學習的對手。
+未指定配對時，有 progress 車就優先將它作為對手，避免把進攻車的行為混入。
+實際車速、航向及既有動作仍可能影響同一 s 的 d；只用 s 是代表路線的近似。
+
+## 自己選欄位、註冊欄位：只編輯 fields.py
+
+日常修改集中在 `training_data/fields.py`。第一步，在最上方選擇已註冊的名稱：
+
+```python
+SELECTED_INPUTS = ["opponent_s"]
+SELECTED_OUTPUTS = ["opponent_current_d"]
+```
+
+例如要多看一項對手速度，將輸入改成：
+
+```python
+SELECTED_INPUTS = ["opponent_s", "opponent_speed"]
+```
+
+第二步，若要用的欄位還不存在，就在同一個檔案的 `INPUT_FIELDS` 加一筆：
+
+```python
+InputField("opponent_yaw", "rad", "對手當下的世界座標航向。",
+           lambda c: c.opponent.state.yaw),
+```
+
+四個項目依序是「欄位名稱、單位、說明、取值方式」。`lambda c:` 後面的部分就是要取的值。
+接著把 `opponent_yaw` 放進 `SELECTED_INPUTS`，收集程式就會自動註冊，不用再改主流程。
+
+答案則加在 `OUTPUT_FIELDS`，額外指定時間：
+
+```python
+OutputField("opponent_current_speed", "m/s", "對手當下的速度。",
+            lambda c: c.opponent.state.velocity, timing="current"),
+```
+
+再設定 `SELECTED_OUTPUTS = ["opponent_current_speed"]` 即可。訓練時只有一個答案會自動選用。
+
+| 取值寫法 | 意義 |
+| --- | --- |
+| `c.ego` / `c.opponent` | 當下的我方 / 對手 |
+| `.track_position.s` / `.track_position.d` | 賽道縱向 / 橫向位置 |
+| `.state.x` / `.state.y` | 世界座標位置 |
+| `.state.yaw` / `.state.velocity` | 世界座標航向 / 車身速度 |
+| `c.future_ego` / `c.future_opponent` | 指定未來時刻的我方 / 對手，只提供給答案 |
+
+`timing="current"` 必須使用 horizon=0，省略命令列時間時會自動選 0。
+`timing="future"` 則預設選 1 步，例如未來位置使用 `lambda c: c.future_opponent.track_position.d`。
+同一份資料不能混用 current 與 future 答案；要學不同時間，請分開收集或重建。
+欄位需為數值標量、名稱唯一且使用小寫底線。輸入名稱和答案名稱也不能相同。
+若學的是同時刻 d，輸入不要再直接包含同一個 d，否則只是把答案複製回去。
+
+隨時列出已註冊欄位，不會開始模擬：
+
+```powershell
+.\.venv\Scripts\python.exe generate_training_data.py --list-fields
+```
+
+命令列 `--features`、`--targets` 可以暫時覆蓋檔案中的選擇。
+要回到舊的四輸入、未來位移問題，可以改 fields.py 的兩行選擇，或直接執行：
+
+```powershell
+.\.venv\Scripts\python.exe generate_training_data.py --episodes 5 --seconds 4 --features relative_s relative_d relative_speed opponent_d --targets opponent_delta_d --horizon-steps 5
+```
+
+這裡的答案是 0.1 s 後的位移。原有資料檔格式仍可直接載入；不會自動覆寫舊資料。
 
 ## 執行
 
@@ -26,14 +104,16 @@ python generate_training_data.py
 `--seconds` 必須是車模步長的整數倍，且足以涵蓋答案的預測時間。
 
 ```powershell
-python generate_training_data.py --episodes 3 --seconds 4 --horizon-steps 5 --stride-steps 2 --output data/training/example
+python generate_training_data.py --episodes 3 --seconds 4 --features relative_s relative_d relative_speed opponent_d --targets opponent_delta_d --horizon-steps 5 --stride-steps 2 --output data/training/example
 ```
 
 以目前 `main.py` 的步長 `0.02 s` 而言，這個例子每 `0.04 s` 取一筆輸入，
 答案則是對手在 `0.1 s` 後相對現在的 `d` 變化。
 
-未指定配對時，優先從 `defend` 指派推導出 `(被防守的車, 防守車)`；
-若沒有防守指派，則收集每台進攻車或 `progress` 車與其他車的有向配對。
+未指定配對時，先以 progress 車作為對手；沒有 progress 車時，
+從 `defend` 指派推導出 `(被防守的車, 防守車)`；兩者都沒有時收集進攻車與其他車的有向配對。
+進攻車可使用 `overtake`、`cost_overtake` 或 `relative_overtake`；相對進度策略的
+設定由 `RELATIVE_OVERTAKING_CONFIG` 傳入，與其他模擬設定一同記錄至 metadata。
 也可明確指定一組或多組，不限於兩台車：
 
 ```powershell
@@ -43,7 +123,7 @@ python generate_training_data.py --pair vehicle-1 vehicle-2
 `--pair EGO_ID OPPONENT_ID` 可以重複指定。兩個 ID 必須不同且存在於 `VEHICLE_SPECS`。
 `--no-defense` 將防守車改為既有的中心線跟隨模式，仍會收集相同配對的資料。
 
-## 預設欄位與形狀
+## 欄位與形狀
 
 每筆資料的識別欄位為 `episode_id, step_index, time_s, ego_id, opponent_id`，
 不會自動放入模型輸入。
@@ -54,6 +134,8 @@ python generate_training_data.py --pair vehicle-1 vehicle-2
 | 輸入 | `relative_d` | 我方 d 減對手 d | m |
 | 輸入 | `relative_speed` | 我方 `VehicleState.velocity` 減對手的值 | m/s |
 | 輸入 | `opponent_d` | 對手當下相對中心線的 d | m |
+| 輸入 | `opponent_s` | 對手當下的賽道 s，每圈繞回 | m |
+| 答案 | `opponent_current_d` | 同一時刻的對手 d | m |
 | 答案 | `opponent_delta_d` | 對手 `d(t + Δt) - d(t)` | m |
 
 位置使用後軸參考點，d 沿中心線前進方向左正右負。
@@ -61,12 +143,15 @@ python generate_training_data.py --pair vehicle-1 vehicle-2
 恰好相距半圈時映射到負值。開放賽道直接相減。
 相對速度是兩車標量速度的差，沒有投影成沿賽道的 s 速度。
 
-預設 `label_horizon_steps=1`、`sample_stride_steps=1`。
-答案是車模更新後的實際 d 差，不是策略目標、候選路徑或橫向速度。
+CLI 依選定答案自動決定 horizon：current 為 0，future 為 1；stride 預設為 1。
+舊 Python 介面 `SamplingConfig()` 與 `DatasetSchema()` 的預設仍保留未來位移問題，
+使用 API 建立同時刻資料時，需明確傳入 `SamplingConfig(label_horizon_steps=0)` 與對應 schema。
+答案來自實際狀態，不使用策略目標或候選預測作為實際答案。
 單一 episode 的所有車會先完成同一步更新，再收集一次同步觀察，包含初始與最後狀態。
 
 內部輸入固定為 `X.shape == (N, F)`，答案固定為 `Y.shape == (N, T)`。
-預設為 `(N, 4)` 與 `(N, 1)`；沒有有效樣本時也保留正確的空陣列形狀。
+CLI 目前預設為 `(N, 1)` 與 `(N, 1)`；舊四輸入問題為 `(N, 4)` 與 `(N, 1)`。
+沒有有效樣本時也保留正確的空陣列形狀。
 
 ```python
 from training_data import load_dataset
@@ -95,7 +180,8 @@ CLI 的初始條件會依固定 seed 改變整體起始位置、各車縱向位�
 
 預設排除預測區間內我方或對手涉及的碰撞，包含與第三台車的碰撞。
 其他兩台車之間的碰撞不會排除這組樣本。`--keep-collisions` 可保留碰撞區間。
-缺少配對車輛、沒有足夠未來狀態，以及提取值為 NaN/Inf 的樣本會記錄排除原因。
+缺少配對車輛、未來模式沒有足夠未來狀態，以及提取值為 NaN/Inf 的樣本會記錄排除原因。
+同時刻模式只檢查當下，包含最後一幀，不會丟掉不需要未來資料的樣本。
 不補零、不跨 episode 配對、不替換樣本中的對手。沒有有效樣本時 CLI 會報錯。
 目前不自動排除模擬途中出界的狀態，可用原始資料另行分析與篩選。
 
@@ -152,8 +238,10 @@ export_dataset(dataset, episodes, track, "data/training/example_extended")
 避免把時間相鄰且重疊的樣本隨機分散到不同集合，造成評估過於樂觀。
 若對手的策略參數改變，需決定分開建模或新增能描述差異的輸入。
 
-目前四個輸入未包含航向誤差、橫向動作歷史與策略內部狀態，
-相同輸入可能有不同答案。模組負責忠實收集資料，不保證這四個特徵能唯一決定反應。
+舊四輸入問題未包含航向誤差、橫向動作歷史與策略內部狀態，
+新預設只使用 s，亦可能在相同位置有不同 d。模組負責忠實收集資料，
+不保證指定特徵能唯一決定反應；不同地圖不應直接混成同一個 s→d 模型。
+封閉賽道的 s 在起終點繞回，目前 GP 的 RBF 尚未特別處理這個週期接縫。
 
 ## 測試
 

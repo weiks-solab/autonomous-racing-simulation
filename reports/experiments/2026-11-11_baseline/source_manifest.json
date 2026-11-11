@@ -1,0 +1,195 @@
+{
+  "inventory_date": "2026-11-11",
+  "date_timezone": "Asia/Taipei",
+  "branch": "master",
+  "base_commit": "d3910ddc11e9ef31c5eceaa70afd71c920507e34",
+  "version_note": "基於 d3910ddc11e9ef31c5eceaa70afd71c920507e34，含未提交修改",
+  "status_before_document_edits": "M CHANGELOG.md\n M GP_TRAINING.md\n M README.md\n M core/vehicle_geometry.py\n M generate_training_data.py\n M main.py\n M sim/data_generation.py\n M strategy/cost_overtaking.py\n M tests/test_collision_detection.py\n M tests/test_cost_overtaking.py\n M tests/test_cost_overtaking_integration.py\n M tests/test_training_data.py\n M tests/test_vehicle_geometry.py\n M train_gp.py\n M training_data/README.md\n M training_data/__init__.py\n M training_data/dataset.py\n M training_data/extractors.py\n M training_data/io.py\n M training_data/schema.py\n?? strategy/relative_overtaking.py\n?? tests/test_field_registration.py\n?? tests/test_relative_overtaking.py\n?? tests/test_relative_overtaking_integration.py\n?? training_data/fields.py",
+  "history": [
+    "d3910ddc11e9ef31c5eceaa70afd71c920507e34 2026-11-09T19:35:03+08:00 2026-11-09T19:35:03+08:00 Add GP training, selectable tracks, and progress-only strategy",
+    "b644d11a4a0c1cbbd236ab25e666043eeeaed37c 2026-11-04T19:31:12+08:00 2026-11-04T19:31:12+08:00 Improve defense path prediction and add training data collection with GP demo",
+    "3a85f8fae3688a49931ebdddf1b6485957f5ef83 2026-11-03T19:22:53+08:00 2026-11-03T19:22:53+08:00 Add cost-based overtaking/defending, collision filtering and candidate visualization",
+    "a5736bfe4393f6bd1f44a76541576e8414c45b36 2026-11-02T17:04:16+08:00 2026-11-02T17:04:16+08:00 Add cost-based defense and per-vehicle strategy assignments",
+    "63aa9a46da43166208d7eff0053b4007838df7ce 2026-08-31T18:50:33+08:00 2026-08-31T18:50:33+08:00 Add Milestone 4 rule-based overtaking strategy",
+    "34126682f839c7bfd8465565397d4658184c4264 2026-08-31T16:04:15+08:00 2026-08-31T16:04:15+08:00 Complete milestone 3 track and vehicle geometry",
+    "242ef4febe4b9143b96a20f7fbe5493c7a808899 2026-08-31T13:40:35+08:00 2026-08-31T13:40:35+08:00 Complete milestone 2 multi-vehicle simulation",
+    "9a447293263495b4988e08e5f25f30508c48a242 2026-07-21T21:26:21+08:00 2026-07-21T21:26:21+08:00 Complete milestone 1 single vehicle pure pursuit simulation"
+  ],
+  "remote_tracking_refs_local_snapshot": [
+    "origin d3910ddc11e9ef31c5eceaa70afd71c920507e34",
+    "origin/master d3910ddc11e9ef31c5eceaa70afd71c920507e34"
+  ],
+  "remote_state_note": "僅本機 tracking refs；本次未 fetch、commit 或 push，未查核即時遠端。",
+  "code_files_sha256": {
+    "strategy/relative_overtaking.py": "09f6a51c2b45a076df85ef14ef699d8105f01fb9cb56a6a5ec84cb6854a1d37b",
+    "tests/test_field_registration.py": "d0053ae3bbb6faffa1e568a18efa50145c5c3d44c02c5583f27b5a420bd6df29",
+    "tests/test_relative_overtaking.py": "863d06877baa1b1be270bdacb95c1eb776d2741d20c7cb0015e8aa7edb9eb50d",
+    "tests/test_relative_overtaking_integration.py": "b3bb86204c07b83366bf7d52b3bce453c6643a2e4f2ca829c9be7fd0cb2bffee",
+    "training_data/fields.py": "4c9abb2e5e4d19b46f6edcc6bc4aa8ce69de8557ca3f97f5c5de3d79fa8dbdf2",
+    ".gitignore": "e41f7a2b8d963f02b7a07e39b899bd0ebbf836d98e8e41b92f93cb2b052435fd",
+    "core/__init__.py": "3d6fa97e101beb05798026a77f26427c0ea9318fffd0d98d28fd770799b3c776",
+    "core/pure_pursuit.py": "a82b6b14f65550368b759c5884c740bb89f13317086dbeba5acda31a1f914c01",
+    "core/track.py": "7cc487252d484aae50efdfeac9371d7522559a5d13ded32314913cd3249309a4",
+    "core/track_factory.py": "ff5bca9780f9c112a3cb57679f615b7e3fa4b9530c7ded624391c06731aac112",
+    "core/track_geometry.py": "99ba16e5789e29236d3d4317127f0d32896bdec1ae53ff458b59b42dd064f7a2",
+    "core/vehicle_geometry.py": "20b3cbae8921249d38f249429c251d55f2e963234a9fa1ab0b901f9de528403e",
+    "core/vehicle_model.py": "72ec5d6b996434fd2be4447ca75b226c4cf36d0f8be4c0a9e7735ab3403c4875",
+    "core/vehicle_state.py": "02d18d07effee1860001a7882aa89a28bcbc9b9c07cc3440ea8e83e7f5503dee",
+    "generate_training_data.py": "eb702cfeb1915fc494a85e33d0f7e711cd5537742a25c31a12803049b541eafa",
+    "gp_demo.py": "6f7629b6ad1c232ff28ea350571065a960e142ca43885b26caa0368b9b392aa8",
+    "main.py": "f2b0172569ad1d7d1cb2a51ec6199be5d776b51ac456c466f285ff23c952ffb6",
+    "requirements-gp.txt": "f55c24e7326c77a470c0a2f70ed56268d12cb9958854443d95bf28f426ba30a2",
+    "requirements.txt": "7eccb067d0b858ba0a38f908105cd272c3dce49a04c85eaffa349e82e68a257d",
+    "sim/__init__.py": "2fea6864ca504ee952ef0d952d45f59d0ef63849056adedd81c291fdf5774ebe",
+    "sim/candidate_paths.py": "c6b09e446bb73d66a982b9527cc273a9efc7ac45338292d8b6f617e7846024cf",
+    "sim/data_generation.py": "910001ea437a47ef173e6e325fe08b6326ca4320e9b1c52e59bc1e99946732a4",
+    "sim/simulated_vehicle.py": "77963f357822563592bcd6714a12d6b231c1aceef5ceca61128075ba359320ae",
+    "sim/strategy_history.py": "7d6b73b08513b9d117cd9cbce9cd24e31b0b08048270792719aca133e8681663",
+    "sim/visualizer.py": "6da8d40ddc01f10ae3848530a42a18099e5db1bbe2310f531a6ddb177bfe066c",
+    "strategy/__init__.py": "fa28a2c975ad13e3c84283812e196dc1c71a9a1edbcbd1d31a6eda5f37ee9487",
+    "strategy/assignment.py": "52cab2217dd5f12e9286ba6ab4ea642e86b092dc327dd87bedcddf0fbd8c4325",
+    "strategy/base.py": "ef949a0a8894a9e18863c0a640c133c41b4e7cbdcf43efc58226186aec65f727",
+    "strategy/bicycle_prediction.py": "e60cc80871648f23674469b97ad812b15b367c5088b4d823f73d7840caec9c81",
+    "strategy/centerline.py": "294e7930f378accc68d11c9467183f5780f996943cdbc3373ee3358d9229e232",
+    "strategy/collision_check.py": "3420d8c030fe5728f177293feb12ef9999bbf800768f03b6a67182f9ff2c7bc1",
+    "strategy/cost_overtaking.py": "cc2d3e805db401ee4f43effcef66ec3f204ae2caacc7e70201222d83288e910b",
+    "strategy/defending.py": "a1d410ad40d104d16bd84f201fe67a62b2218eb2984bc276b32e5f0de2216c6a",
+    "strategy/defense_conditions.py": "5df5262f24c613784f2d93f3e53d16264f2d6f9baf98c23ecc819969c9682506",
+    "strategy/observations.py": "d6c869b11824e704fd7a0f0825698365d41205cb9038737f4bf331e38e5ee944",
+    "strategy/offset_path.py": "78a2d413db11cbbd0fe3c05f781555d84305414465413a718074cf89ef93d5e5",
+    "strategy/overtaking.py": "9ac533b4ea19a2d64691ceef166c0634cedf8b6e7af36c933ce56a4015a0a348",
+    "strategy/prediction.py": "8d3b8420282cdde95bdeb324dba4746553404b13b6941c1edf44f01cc233b3f7",
+    "strategy/progress.py": "f28f6637fe285368411487ebb0d1f7d28022ded1f2f8c7dfdbb861a997ca34ac",
+    "tests/__init__.py": "40181bc6dd033f9d33df09a3aaa629500c7023a88be1fa832c523e0295874a14",
+    "tests/test_bicycle_prediction.py": "774907d5b72a4476cda8d7e0caa758b8a2fbf9c6e340dc22a02ff05d36b02326",
+    "tests/test_candidate_snapshots.py": "c9ec8a8c38ce725eee566a9f29dc1f6800f9e3df0d1219a2e57ed884a75e5c56",
+    "tests/test_collision_detection.py": "b749a22f11741674b45346176b9a0525d590a218a2c4794505197dca47742834",
+    "tests/test_cost_overtaking.py": "19c114a39cde6a1ac599cab8c6d076b2136dae75020d1f4ba4ae089191d762b5",
+    "tests/test_cost_overtaking_integration.py": "1c9c780dfcdafb7849fd3b1398ffdafbe6ad2002ae6991858897f01084caec2e",
+    "tests/test_defending_integration.py": "259793d780df30d90c26c29ee5151770a22d356aa4426a77626e7b4f1be5ac58",
+    "tests/test_defending_strategy.py": "6955a97331d90673dc10f358afc576267e2a3e7eaecacff770831919a94c7179",
+    "tests/test_defense_conditions.py": "9ef3a83cee4596ecd4758669dfe5934db65e7089b0776c92d370541aeb43f523",
+    "tests/test_gp_training.py": "7424ab454e8fecc9f12866dd44215b6b511ca1ca3f0c23e8bf538c277991c488",
+    "tests/test_offset_path.py": "3eb39fd5e1c42bb88bc899bcb9b7483442d3696d07b54c88078403492b075ee1",
+    "tests/test_open_track.py": "d2e347a3de65ba1889b0644d29d55244bb4ff8e94dc7131fd1e5f707de5569cf",
+    "tests/test_overtaking_integration.py": "2cdfa25cb502be138711235c21e007367894929a6401cfa480f0ac0efa93a567",
+    "tests/test_overtaking_strategy.py": "3a154ab8fa7be8801ecac0d99dd09dd93bc95ce5a1e3b3520cc9897f04aa435f",
+    "tests/test_path_prediction.py": "6561c8e771e1780bc01cab7af50cca8c8128bc07fea4f7084b69621312198a84",
+    "tests/test_predicted_collision.py": "7f2d6745b0b4ad5053ec6b7597e0aa10bca3b144e97ceba5689b37c724c5ce91",
+    "tests/test_progress_integration.py": "9730c199bcdc7367f685b3946b150a1442808e998f121cca0aa7a7d1468837cf",
+    "tests/test_progress_strategy.py": "93ce9682da17555ab6853401c41b55400e5f5772ea3b231152deee4e1cbc8bd2",
+    "tests/test_pure_pursuit.py": "aa2bcaff162904770940f53ef16db59a8f12bf1adbc9c4273a3fd8f7d3bcb4a2",
+    "tests/test_simulated_vehicle.py": "8a5d29198ff84a152e5aa46b488c5fb585c6324c112ab7601990a7131db223e4",
+    "tests/test_strategy_assignment.py": "92fa75b97f6783193d1000fae647ca94aa3141bc9e502b06b0ab8711b880a79b",
+    "tests/test_strategy_observations.py": "bf70b0c7a0be42252e9a3b4e0d52f44f5109224941bde89536f6bb70c4e7f2c6",
+    "tests/test_track.py": "f3f503e00ed5db112349cfade6b9e0913b56c91ef058efe14bd56c331dded35d",
+    "tests/test_track_factory.py": "0a145e7c73a0e1ea71a3ed02c1d0aceca3fe0463b86a648f13bf5d8617911bf5",
+    "tests/test_track_geometry.py": "6619f5128d2d90cdb593102e929e1893493100f2207444e6786748125d6b2cb6",
+    "tests/test_track_switching.py": "5767b8c4b9d4380a943edc66173a365b3f5bb20da7fa256145cf0498c4d4f52c",
+    "tests/test_training_data.py": "64db46327195f614f718ee94ffbdb52e58d61bea75073fc742ef44866834446f",
+    "tests/test_training_data_generation.py": "d96a76a9a1d3be1f4562efcb5e14d9756bd303e495fb875d5d81e7fe5eef4818",
+    "tests/test_vehicle_geometry.py": "28681c220ca423b31699499c7371e77265c0ca977596a961b5333e10e92826e0",
+    "tests/test_vehicle_model.py": "f2d12ac1df6a3192bf9a443cb95475ee6f8ce278d25dcb973b6cdd93a718d57a",
+    "tests/test_visualizer.py": "a35bb83c993a8903d262297be3034d13bb41c8392efc5f670aaeae9901594a85",
+    "train_gp.py": "6097b19b97ac63cec20e9a980850a82a9c057fb96ac7811fc292e36fed4f8fa2",
+    "training_data/__init__.py": "5e8b8bcf3d5daa8e4420d705b56b22f2825c13c548d98213edd47ebe30c48e70",
+    "training_data/collector.py": "f56346428042a6e085c36f9d92de43936d497f95f01f4859b97f8926e07943dd",
+    "training_data/dataset.py": "4ac1a2ca8a5dc31141825451b712ba5acacd623f4e68030b092b4d75203dd649",
+    "training_data/extractors.py": "32b291197fdcaac62322ca4573857ecc8fcc052946cc52547c2540ce6ccc0641",
+    "training_data/io.py": "f42e7d44f5626bbeb4e5262d539b60321e41046b7f35130c5aa035050ed9bba8",
+    "training_data/schema.py": "1afce9e6b82cd9598a2bbd836510f2985e96a878c8c075a882b34f578d228827"
+  },
+  "existing_documents_sha256_before_edits": {
+    "AGENTS.md": "eceb0a41815aed855e6cff932b56ca1fb4914079c075f86fd1b098f3eaca7767",
+    "CHANGELOG.md": "4052632398d4ab1998bef6ca6a9cfe85653f06987eef3ed8f8f589c9d43c90c9",
+    "GP_TRAINING.md": "f9650c981b38a76a0a9e509817597f1da63ed122d22d70b4d7e2f6ad0508747b",
+    "README.md": "121c458b0c34089e85bec107ba8253b2a58f6f14d5a783b416b7cc4142a00623",
+    "training_data/README.md": "b474926ca4aea30cb4e8d91f38f2ff44e1cc29f2e188e12b5d36cf9c8bbb7e6b"
+  },
+  "files": [
+    {
+      "source": "models/gp/20261109T084348Z_1b728413/report.json",
+      "archived": "reports/experiments/2026-11-11_baseline/gp_future_0p02s/report.json",
+      "bytes": 2570,
+      "sha256": "7697c6b4b4b523747cb51cd22abb0c576292d96e0adb809e0eb52e61f28fb774"
+    },
+    {
+      "source": "models/gp/20261109T084348Z_1b728413/predictions.csv",
+      "archived": "reports/experiments/2026-11-11_baseline/gp_future_0p02s/predictions.csv",
+      "bytes": 41728,
+      "sha256": "b8a48853fac7e4d9cb7324cec008da69ca23d61ae346e1d82a8eeb486929ea33"
+    },
+    {
+      "source": "models/gp/20261109T084348Z_1b728413/evaluation.png",
+      "archived": "reports/experiments/2026-11-11_baseline/gp_future_0p02s/evaluation.png",
+      "bytes": 54224,
+      "sha256": "840bd3bb96f652cc695919ab2d44cfbbd483cb7c2349aff44cc68ecb09879c23"
+    },
+    {
+      "source": "data/training/20261105T065547Z_270c5e64/metadata.json",
+      "archived": "reports/experiments/2026-11-11_baseline/gp_future_0p02s/metadata.json",
+      "bytes": 46884,
+      "sha256": "b766f6547549c7bc59614cbad9e340b737b602a397503cd93823420bda8353f0"
+    },
+    {
+      "source": "models/gp/20261109T090300Z_5d40b9b6/report.json",
+      "archived": "reports/experiments/2026-11-11_baseline/gp_future_1s/report.json",
+      "bytes": 2954,
+      "sha256": "399fbff6fdd3a0894ec4908525f7ac033f38540eafcd67632e8e32a636d59e69"
+    },
+    {
+      "source": "models/gp/20261109T090300Z_5d40b9b6/predictions.csv",
+      "archived": "reports/experiments/2026-11-11_baseline/gp_future_1s/predictions.csv",
+      "bytes": 194135,
+      "sha256": "6fb280c2be6c33e0c9ec3b87f7c1e68eb7bc5aae8a8acd482f86b79217c31edc"
+    },
+    {
+      "source": "models/gp/20261109T090300Z_5d40b9b6/evaluation.png",
+      "archived": "reports/experiments/2026-11-11_baseline/gp_future_1s/evaluation.png",
+      "bytes": 65829,
+      "sha256": "d592dfa5de062f4f3dc6f1baa370058225c380d13033fc280a6d86fc9ce02018"
+    },
+    {
+      "source": "data/training/20261109T090105Z_79f9bb58/metadata.json",
+      "archived": "reports/experiments/2026-11-11_baseline/gp_future_1s/metadata.json",
+      "bytes": 46892,
+      "sha256": "6069469b72d8d8b926251d1b631c695775e59d0b0660a4f08c13b90a5353cad2"
+    },
+    {
+      "source": "models/gp/20261111T064250Z_dbc5bc95/report.json",
+      "archived": "reports/experiments/2026-11-11_baseline/gp_current_sd/report.json",
+      "bytes": 1945,
+      "sha256": "dd57fc7e3fcaba1ca25a64bbdbabb1f5f85fa30e6ceaae954fc350446cba943e"
+    },
+    {
+      "source": "models/gp/20261111T064250Z_dbc5bc95/predictions.csv",
+      "archived": "reports/experiments/2026-11-11_baseline/gp_current_sd/predictions.csv",
+      "bytes": 28936,
+      "sha256": "5425459bd0d6f2929ef0b01acbfd826be21a7230c4e8cd875a83fa7df32fa1ce"
+    },
+    {
+      "source": "models/gp/20261111T064250Z_dbc5bc95/evaluation.png",
+      "archived": "reports/experiments/2026-11-11_baseline/gp_current_sd/evaluation.png",
+      "bytes": 189403,
+      "sha256": "c02478f7aea44b8cf3fe54e83f59d176e4cfaf629799e7736535662f6a28157c"
+    },
+    {
+      "source": "data/training/20261111T063545Z_f6eb6a97/metadata.json",
+      "archived": "reports/experiments/2026-11-11_baseline/gp_current_sd/metadata.json",
+      "bytes": 41880,
+      "sha256": "74bc73c4f49f61c8eb7c68425a6038e437d14337fb03e66c52583d0fa5333ec7"
+    },
+    {
+      "source": ".cache/collision_benchmark.json",
+      "archived": "reports/experiments/2026-11-11_baseline/undated_diagnostics/collision_benchmark.json",
+      "bytes": 3819,
+      "sha256": "2e2c2bd777035322834e3d8dda31670f98f2a777f98c0af844f6a11e4ce37195"
+    },
+    {
+      "source": ".cache/stutter_profile.json",
+      "archived": "reports/experiments/2026-11-11_baseline/undated_diagnostics/stutter_profile.json",
+      "bytes": 3297,
+      "sha256": "44d7852d3a4b11573639d3021441460195fc2aacb7162f75f7c91955384cfebc"
+    }
+  ]
+}

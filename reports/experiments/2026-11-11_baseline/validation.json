@@ -1,0 +1,49 @@
+{
+  "date": "2026-11-11",
+  "timezone": "Asia/Taipei",
+  "branch": "master",
+  "version": "基於 d3910ddc11e9ef31c5eceaa70afd71c920507e34，含未提交修改",
+  "interpreter": ".cache/python/cpython-3.10.20-windows-x86_64-none/python.exe",
+  "versions": [
+    "3.10.20 (main, May 10 2026, 19:31:32) [MSC v.1944 64 bit (AMD64)]",
+    "numpy 2.2.6",
+    "matplotlib 3.10.9",
+    "scikit-learn 1.7.2"
+  ],
+  "environment": {
+    "TEMP": ".cache/research_handoff",
+    "TMP": ".cache/research_handoff",
+    "PYTHONPATH": ".venv/Lib/site-packages",
+    "PYTHONUTF8": "1",
+    "MPLCONFIGDIR": ".cache/matplotlib",
+    "MPLBACKEND": "Agg"
+  },
+  "unit_test_argv": [
+    ".cache/python/cpython-3.10.20-windows-x86_64-none/python.exe",
+    "-m",
+    "unittest",
+    "-v",
+    "tests.test_vehicle_geometry",
+    "tests.test_collision_detection",
+    "tests.test_training_data",
+    "tests.test_field_registration",
+    "tests.test_relative_overtaking",
+    "tests.test_defending_integration"
+  ],
+  "unit_test_exit_code": 1,
+  "unit_test_log": "unit_tests.log",
+  "original_venv_launch": {
+    "argv": [
+      ".venv/Scripts/python.exe",
+      "-"
+    ],
+    "outcome": "啟動失敗，原 Python 3.10 安裝路徑不存在；本次未修復或重建環境。"
+  },
+  "not_run": [
+    "完整 python -m unittest",
+    "main.py 圖形／即時模擬",
+    "重新訓練既有 GP 模型（欄位介面單元測試另含微型 GP 擬合）",
+    "大型模擬或策略成功率實驗"
+  ],
+  "unit_test_scope_note": "選定測試內含測試專用資料收集及微型 GP 擬合；不使用或覆寫既有 data/training 與 models/gp 產物。"
+}

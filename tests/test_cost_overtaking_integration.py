@@ -18,8 +18,11 @@ class CostOvertakingIntegrationTests(unittest.TestCase):
         if specs is None:
             specs = (("red", 0.0, 6.0), ("blue", 6.0, 5.0), ("green", -15.0, 4.0))
         output = io.StringIO()
+        config = replace(main.COST_OVERTAKING_CONFIG,
+                         candidate_offsets=(-0.6, -0.3, 0.0, 0.3, 0.6))
         with patch("main.VEHICLE_SPECS", specs), \
              patch("main.STRATEGY_ASSIGNMENTS", assignments), \
+             patch("main.COST_OVERTAKING_CONFIG", config), \
              patch("main.SIMULATION_SECONDS", 0.4), \
              patch("main.SimulationVisualizer") as visualizer, redirect_stdout(output):
             main.run_simulation(defense_enabled=defense_enabled)

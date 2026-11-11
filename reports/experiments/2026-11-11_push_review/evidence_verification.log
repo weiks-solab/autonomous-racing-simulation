@@ -1,0 +1,5 @@
+PASS gp_future_0p02s: 200 predictions; metrics match report
+PASS gp_future_1s: 951 predictions; metrics match report
+PASS gp_current_sd: 201 predictions; metrics match report
+PASS 14 archived file hashes; 1352 prediction rows
+Local raw-data checks are recorded in summary.json; original CSVs/models are not bundled.

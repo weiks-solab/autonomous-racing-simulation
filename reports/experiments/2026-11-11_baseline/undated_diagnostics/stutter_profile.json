@@ -1,0 +1,146 @@
+{
+  "no_drawing": {
+    "rollout_reference": {
+      "calls": 60000,
+      "total_ms": 4489.316,
+      "mean_ms": 0.075,
+      "median_ms": 0.071,
+      "p95_ms": 0.087,
+      "max_ms": 10.53
+    },
+    "rollout_projection": {
+      "calls": 60000,
+      "total_ms": 2347.222,
+      "mean_ms": 0.039,
+      "median_ms": 0.038,
+      "p95_ms": 0.044,
+      "max_ms": 0.414
+    },
+    "bicycle_rollout": {
+      "calls": 240,
+      "total_ms": 8733.964,
+      "mean_ms": 36.392,
+      "median_ms": 36.34,
+      "p95_ms": 37.215,
+      "max_ms": 46.691
+    },
+    "body_overlap": {
+      "calls": 33930,
+      "total_ms": 422.184,
+      "mean_ms": 0.012,
+      "median_ms": 0.011,
+      "p95_ms": 0.017,
+      "max_ms": 0.146
+    },
+    "collision_filter": {
+      "calls": 200,
+      "total_ms": 447.243,
+      "mean_ms": 2.236,
+      "median_ms": 2.857,
+      "p95_ms": 3.772,
+      "max_ms": 4.139
+    },
+    "replan": {
+      "calls": 40,
+      "total_ms": 9190.911,
+      "mean_ms": 229.773,
+      "median_ms": 230.94,
+      "p95_ms": 236.02,
+      "max_ms": 241.678
+    },
+    "reuse_decision": {
+      "calls": 369,
+      "total_ms": 0.768,
+      "mean_ms": 0.002,
+      "median_ms": 0.002,
+      "p95_ms": 0.004,
+      "max_ms": 0.005
+    },
+    "wall_seconds": 9.385,
+    "simulation_seconds": 8.2
+  },
+  "agg_drawing_every_step": {
+    "rollout_reference": {
+      "calls": 60000,
+      "total_ms": 4600.045,
+      "mean_ms": 0.077,
+      "median_ms": 0.073,
+      "p95_ms": 0.091,
+      "max_ms": 12.117
+    },
+    "rollout_projection": {
+      "calls": 60000,
+      "total_ms": 2386.818,
+      "mean_ms": 0.04,
+      "median_ms": 0.038,
+      "p95_ms": 0.045,
+      "max_ms": 1.566
+    },
+    "bicycle_rollout": {
+      "calls": 240,
+      "total_ms": 8913.134,
+      "mean_ms": 37.138,
+      "median_ms": 37.014,
+      "p95_ms": 38.261,
+      "max_ms": 48.763
+    },
+    "body_overlap": {
+      "calls": 33930,
+      "total_ms": 432.512,
+      "mean_ms": 0.013,
+      "median_ms": 0.011,
+      "p95_ms": 0.017,
+      "max_ms": 0.694
+    },
+    "collision_filter": {
+      "calls": 200,
+      "total_ms": 459.102,
+      "mean_ms": 2.296,
+      "median_ms": 2.86,
+      "p95_ms": 3.855,
+      "max_ms": 4.319
+    },
+    "replan": {
+      "calls": 40,
+      "total_ms": 9384.058,
+      "mean_ms": 234.601,
+      "median_ms": 235.964,
+      "p95_ms": 240.035,
+      "max_ms": 250.257
+    },
+    "update_artists": {
+      "calls": 409,
+      "total_ms": 200.26,
+      "mean_ms": 0.49,
+      "median_ms": 0.233,
+      "p95_ms": 2.561,
+      "max_ms": 11.393
+    },
+    "draw_frame": {
+      "calls": 409,
+      "total_ms": 8468.993,
+      "mean_ms": 20.707,
+      "median_ms": 20.513,
+      "p95_ms": 22.012,
+      "max_ms": 39.054
+    },
+    "whole_frame": {
+      "calls": 409,
+      "total_ms": 8669.252,
+      "mean_ms": 21.196,
+      "median_ms": 20.734,
+      "p95_ms": 24.463,
+      "max_ms": 50.447
+    },
+    "reuse_decision": {
+      "calls": 369,
+      "total_ms": 1.489,
+      "mean_ms": 0.004,
+      "median_ms": 0.004,
+      "p95_ms": 0.005,
+      "max_ms": 0.025
+    },
+    "wall_seconds": 18.371,
+    "simulation_seconds": 8.2
+  }
+}

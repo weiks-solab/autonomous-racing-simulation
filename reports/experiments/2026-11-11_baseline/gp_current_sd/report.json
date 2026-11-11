@@ -1,0 +1,79 @@
+{
+  "format_version": 1,
+  "data_directory": "data\\training\\20261111T063545Z_f6eb6a97",
+  "feature_specs": [
+    {
+      "name": "opponent_s",
+      "unit": "m",
+      "description": "對手當下的賽道 s，封閉賽道每圈繞回。"
+    }
+  ],
+  "target_spec": {
+    "name": "opponent_current_d",
+    "unit": "m",
+    "description": "與輸入同一時刻的對手 d。"
+  },
+  "sampling": {
+    "time_step": 0.02,
+    "label_horizon_steps": 0,
+    "sample_stride_steps": 5,
+    "reject_collisions": true
+  },
+  "label_horizon_seconds": 0.0,
+  "target_timing": "current",
+  "config": {
+    "target": "opponent_current_d",
+    "test_fraction": 0.2,
+    "seed": 42,
+    "length_scale": 1.0,
+    "noise_level": 0.02,
+    "optimizer_restarts": 2
+  },
+  "train_sample_count": 804,
+  "test_sample_count": 201,
+  "train_episode_ids": [
+    "episode-00000",
+    "episode-00002",
+    "episode-00003",
+    "episode-00004"
+  ],
+  "test_episode_ids": [
+    "episode-00001"
+  ],
+  "metrics": {
+    "gp": {
+      "mae": 0.03913057573378175,
+      "rmse": 0.11773215074050386
+    },
+    "always_zero": {
+      "mae": 0.5686628340985248,
+      "rmse": 0.5796604304440734
+    },
+    "training_mean": {
+      "mae": 0.10169122808514508,
+      "rmse": 0.16574865421658677
+    }
+  },
+  "initial_kernel": "1**2 * RBF(length_scale=1) + WhiteKernel(noise_level=0.02)",
+  "fitted_kernel": "0.918**2 * RBF(length_scale=0.137) + WhiteKernel(noise_level=0.384)",
+  "learned_parameters": {
+    "signal_variance": 0.8427965803903553,
+    "length_scales": [
+      0.13662822822696652
+    ],
+    "noise_variance": 0.38446646845730525
+  },
+  "scaler_mean": [
+    27.900253867804597
+  ],
+  "scaler_scale": [
+    17.161299201034183
+  ],
+  "fit_seconds": 3.554552200017497,
+  "fit_warnings": [],
+  "versions": {
+    "python": "3.10.10",
+    "numpy": "2.2.6",
+    "scikit_learn": "1.7.2"
+  }
+}

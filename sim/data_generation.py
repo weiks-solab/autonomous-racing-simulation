@@ -22,6 +22,7 @@ from strategy.observations import VehicleObservation, create_vehicle_observation
 from strategy.offset_path import LateralManeuver, OffsetPathConfig, generate_offset_track
 from strategy.overtaking import OvertakingConfig
 from strategy.progress import ProgressConfig, ProgressStrategy
+from strategy.relative_overtaking import RelativeOvertakingConfig, RelativeOvertakingStrategy
 from training_data.collector import TrainingDataCollector
 from training_data.schema import require_id, require_integer
 
@@ -73,6 +74,7 @@ class SimulationSettings:
     offset_path_config: OffsetPathConfig = field(default_factory=OffsetPathConfig)
     defense_enabled: bool = True
     progress_config: ProgressConfig = field(default_factory=ProgressConfig)
+    relative_overtaking_config: RelativeOvertakingConfig = field(default_factory=RelativeOvertakingConfig)
 
 
 @dataclass(frozen=True)
@@ -145,6 +147,7 @@ def _effective_offset_config(scenario: EpisodeScenario, settings: SimulationSett
         "defend": settings.defense_config.transition_length,
         "cost_overtake": settings.cost_overtaking_config.transition_length,
         "progress": settings.progress_config.transition_length,
+        "relative_overtake": settings.relative_overtaking_config.transition_length,
     }
     # 資料入口也支援原本的 overtake；參考線必須涵蓋完整橫移。
     length = max(
@@ -174,6 +177,9 @@ def _create_manager(
             ),
             "progress": lambda vehicle_id: ProgressStrategy(
                 settings.progress_config, prediction_configs[vehicle_id],
+            ),
+            "relative_overtake": lambda vehicle_id: RelativeOvertakingStrategy(
+                settings.relative_overtaking_config, prediction_configs[vehicle_id], prediction_configs,
             ),
         },
     )

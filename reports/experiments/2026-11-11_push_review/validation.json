@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-11",
+  "timezone": "Asia/Taipei",
+  "branch": "master",
+  "base_commit": "d3910ddc11e9ef31c5eceaa70afd71c920507e34",
+  "version_note": "基於 d3910ddc11e9ef31c5eceaa70afd71c920507e34，含未提交修改",
+  "remote_master_before_push": "d3910ddc11e9ef31c5eceaa70afd71c920507e34",
+  "remote_verification": "本次透過 GitHub connector 讀取 master，並執行 git fetch origin master，皆確認為同一 SHA。",
+  "authorization": "使用者明確要求記錄上次 push 後新增的內容並 push GitHub。",
+  "interpreter": ".cache/python/cpython-3.10.20-windows-x86_64-none/python.exe",
+  "versions": [
+    "3.10.20 (main, May 10 2026, 19:31:32) [MSC v.1944 64 bit (AMD64)]",
+    "numpy 2.2.6",
+    "matplotlib 3.10.9",
+    "scikit-learn 1.7.2"
+  ],
+  "environment": {
+    "PYTHONPATH": ".venv/Lib/site-packages",
+    "MPLCONFIGDIR": ".cache/matplotlib",
+    "TMP": ".cache/research_handoff",
+    "TEMP": ".cache/research_handoff",
+    "PYTHONUTF8": "1",
+    "MPLBACKEND": "Agg"
+  },
+  "unit_test_argv": [
+    ".cache/python/cpython-3.10.20-windows-x86_64-none/python.exe",
+    "-m",
+    "unittest",
+    "-v"
+  ],
+  "unit_test_exit_code": 1,
+  "wall_seconds": 22.732313600019552,
+  "unit_test_log": "unittest.log",
+  "test_scope": "完整 unittest discovery；包含測試專用短場景及微型 GP 擬合，不重訓既有研究模型。",
+  "evidence_verification_exit_code": 0,
+  "evidence_verification_log": "evidence_verification.log",
+  "preexisting_code_and_dependency_hashes_unchanged": 77,
+  "not_run": [
+    "既有研究 GP 重訓",
+    "大型新實驗",
+    "多 seed 超車成功率／碰撞率評估"
+  ],
+  "unit_test_summary": "Ran 264 tests in 21.436s",
+  "unit_test_methods_reported_ok": 264,
+  "class_setup_error_count": 1,
+  "final_checks": {
+    "git_diff_check_exit_code": 0,
+    "git_cached_diff_check_exit_code": 0,
+    "staged_archive_blob_hashes_match_count": 14,
+    "markdown_existing_file_link_count": 43,
+    "handoff_files_not_ignored": true,
+    "handoff_files_checked_count": 29,
+    "json_parsing_and_description_encoding_checked": true,
+    "original_agents_content_preserved": true,
+    "preexisting_code_and_dependency_hashes_unchanged": 77,
+    "original_evidence_and_raw_csv_files_unchanged": 20
+  }
+}

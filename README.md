@@ -3,7 +3,7 @@
 輕量的 Python 2D 賽車模擬器。每輛車各自使用運動學自行車模型與 Pure
 Pursuit 控制器，車輛數量可自由增加。
 
-目前示範由 `vehicle-1` 使用成本式進攻，`vehicle-3` 使用純進度策略。
+目前示範由 `vehicle-1` 使用相對進度進攻 `relative_overtake`，`vehicle-2` 使用純進度策略。
 車數與策略可在 `main.py` 自行調整，未指派策略的車持續跟隨中心線。
 策略只決定橫向目標與平滑路徑；
 方向盤角度及速度控制仍由 Pure Pursuit 負責。
@@ -37,15 +37,31 @@ python3 main.py --realtime --no-defense
 在專案根目錄使用既有 Python 環境，先生成資料，再指定輸出的資料夾訓練：
 
 ```bash
-python3 generate_training_data.py --episodes 5 --seconds 20 --horizon-steps 5
+python3 generate_training_data.py --episodes 5 --seconds 20 --stride-steps 5
 python3 train_gp.py --data data/training/生成的資料夾名稱
 ```
 
-目前時間步長為 0.02 s，`--horizon-steps 5` 表示答案為 0.1 s 後的位移。
+目前預設學習 progress 對手的同時刻 `s → d`，時間間隔為 0。
+在 `training_data/fields.py` 選擇及註冊輸入、輸出；`--list-fields` 可列出可用欄位。
+若選用未來答案，時間步長為 0.02 s，`--horizon-steps 5` 表示取 0.1 s 後的答案。
 訓練依整場模擬切分資料，保存標準化器、GP、誤差報告與評估圖。
 資料及模型保留在本機，不納入 Git；程式不會自動安裝套件。
 詳細操作見 [資料生成說明](training_data/README.md) 與 [GP 訓練說明](GP_TRAINING.md)。
 本次功能與設定調整記錄於 [CHANGELOG.md](CHANGELOG.md)。
+
+## 研究紀錄與報告交接
+
+給 ChatGPT 或報告撰寫者的入口是 [研究紀錄](reports/research_log.md)，
+其中區分目前程式、歷史實驗設定、量化結果與未確認的建議。
+[首次基線證據](reports/experiments/2026-11-11_baseline/summary.json) 保留三組既有 GP 結果的摘要；
+同目錄另存原報告、實驗設定、逐筆測試預測、評估圖及本次檢查日誌。
+原始資料與模型仍維持忽略規則；交接文件和小型證據須另行 commit、push 後，GitHub 才能讀取。
+長期紀錄規則見 [AGENTS.md](AGENTS.md#研究紀錄與報告交接)。
+
+2026-11-11 盤點時，既有 `.venv` 無法啟動，因為它指向已不存在的 Python 3.10 安裝。
+本次檢查改用專案內現有的 Python 3.10.20 搭配 `.venv/Lib/site-packages`，
+實際命令與版本見 [研究紀錄的驗證段落](reports/research_log.md#本次實際驗證與未執行項目)。
+這是此工作區的環境狀態，不代表其他環境也有相同問題；本次未重建環境。
 
 ## 想調整參數，先看 main.py 開頭
 
@@ -59,12 +75,19 @@ python3 train_gp.py --data data/training/生成的資料夾名稱
 | `SIMULATION_SECONDS` | 模擬多久 |
 | `TRACK_*` | 地圖選擇、直道與彎道尺寸、點數與賽道寬度 |
 | `MODEL_CONFIG` / `VEHICLE_GEOMETRY` | 時間步長、軸距、速度限制與車身尺寸 |
+| `COLLISION_CONFIG` | 共用碰撞矩形的長、寬；只改碰撞判斷，不改車身繪圖與路寬限制 |
 | `LOOKAHEAD_DISTANCE` | Pure Pursuit 的前視距離 |
 | `OVERTAKING_CONFIG` | 原本規則式 `overtake` 使用的超車參數 |
 | `COST_OVERTAKING_CONFIG` | 新增 `cost_overtake` 的進度、超車獎勵與預測參數 |
 | `PROGRESS_CONFIG` | `progress` 的候選目標、橫移長度、決策週期與自車預測時長 |
+| `RELATIVE_OVERTAKING_CONFIG` | `relative_overtake` 的候選目標、對象偵測距離與預測參數 |
 | `DEFENSE_CONFIG` | 所有防守車使用的成本、觸發條件與路徑參數 |
 | `OFFSET_PATH_CONFIG` | 臨時路徑的取樣間距與長度 |
+
+碰撞矩形在 `main.py` 設定，例如 `CollisionConfig(length=0.45, width=0.24)`。
+目前 `main.py` 設為 0.60 × 0.40 m；未指定碰撞尺寸時沿用實體車身尺寸（示範車身為
+0.55 × 0.30 m）。縮小或放大時保持原車身中心。預測與實際碰撞偵測共用此設定，
+訓練原始資料也會保存碰撞尺寸；縮小後允許實際車身部分重疊而不判碰撞。
 
 建議一次改一個防守參數，先從以下幾個開始：
 
@@ -136,7 +159,7 @@ TRACK_NAME = "rounded_rectangle"  # 四段直道＋四個 90 度圓弧
 防守的可行候選標籤顯示 `d` 與總成本 `J`，選中者加上 `*`；既有策略文字顯示
 選中路徑的 `race`、`block` 分項。進攻候選顯示 `LEFT`／`RIGHT`、`d` 與
 可行性結果或排除原因，適用原本的規則式 `overtake`。
-新策略 `cost_overtake` 則顯示五條 bicycle model 預測軌跡，通過碰撞篩選的
+策略 `cost_overtake` 則顯示各條 bicycle model 預測軌跡，通過碰撞篩選的
 候選標籤列出 `progress`、`pass` 成本與總成本 `J`。被剔除的候選畫成灰色點線，
 標示碰撞對象與相對該次評估的未來秒數，不顯示成本或選中標記。
 
@@ -172,8 +195,9 @@ STRATEGY_ASSIGNMENTS = {
 | --- | --- | --- |
 | `centerline` | 跟隨中心線，不主動進攻或防守 | `strategy/centerline.py` |
 | `overtake` | 找前方較慢的車，選擇左右超車路徑 | `strategy/overtaking.py` |
-| `cost_overtake` | 五候選 bicycle 預測，以進度與超車獎勵選路徑 | `strategy/cost_overtaking.py` |
+| `cost_overtake` | 固定候選 bicycle 預測，以進度與超車獎勵選路徑 | `strategy/cost_overtaking.py` |
 | `progress` | 五候選 bicycle 預測，只選最大進度，不預測其他車或篩選碰撞 | `strategy/progress.py` |
+| `relative_overtake` | 只最小化預測終點的對手 s 減自車 s，保留碰撞篩選 | `strategy/relative_overtaking.py` |
 | `defend` | 依成本選擇橫向防守位置 | `strategy/defending.py` |
 
 例如想改成第二台車進攻，第三台車防守第二台，只需改成：
@@ -206,25 +230,27 @@ STRATEGY_ASSIGNMENTS = {
 
 `strategy/cost_overtaking.py` 的 `CostBasedOvertakingStrategy` 獨立實作共用
 `update(vehicle, others, track, time_seconds)` 介面，沒有模擬器或 Matplotlib 依賴。
-預設每 0.2 秒評估固定五個橫向目標，依可用路寬篩選後，分別產生平滑參考線。
+目前 `main.py` 的設定為每 0.1 秒評估九個橫向目標（-0.6～+0.6 m，間距 0.15 m），
+依可用路寬篩選後，分別產生平滑參考線。此策略須在指派表選用才會執行。
 目標相同時沿用原動作起點，切換目標時從目前位置建立新動作。
 完成橫移後保留等偏移參考線，避免繞下一圈時重新開始過渡。
 
 每條候選從實際 `(x, y, yaw, velocity)` 開始，用既有 Pure Pursuit 算出轉向與
-加速度，再由 `KinematicBicycleModel` 以實際模型時間步長向前推進，預設預測
-5 秒。每一步都依預測位置重建前方參考路徑，與實際模擬採用相同追蹤流程。
+加速度，再由 `KinematicBicycleModel` 以實際模型時間步長向前推進；目前示範參數預測
+0.8 秒。每一步都依預測位置重建前方參考路徑，與實際模擬採用相同追蹤流程。
 最後不足一個時間步時，僅縮短最後一步，使所有候選在同一預測時間終點評分。
 
 前車選擇偵測範圍內最近的一台，不要求速度較慢。前車預測維持其**當下速度**，
 令加速度為零，以當下的 `d` 作為等偏移參考線，再用該車自己的 Pure Pursuit、
 軸距與模型限制預測轉向；不模擬前車將採取哪一個防守目標。所有其他車都採用
-相同的定速、等偏移假設，每台每輪只預測一次，供五條候選共用。各車的模型與
+相同的定速、等偏移假設，每台每輪只預測一次，供各候選共用。各車的模型與
 控制參數均由 `main.py` 明確傳入。
 
 候選先進行碰撞硬性篩選，通過後才計算成本。檢查涵蓋所有其他車，
 不受超車獎勵的 `detection_range` 限制。比較同一預測時間的旋轉車身矩形，
 包含 `t=0` 與預測終點；車身接觸也視為碰撞。任一時間點重疊就整條剔除。
-使用實際車身尺寸，`safety_margin` 仍只作用於候選橫向目標的路寬限制。
+使用 `COLLISION_CONFIG` 指定的碰撞尺寸（未指定時用實體車身尺寸），
+`safety_margin` 仍只作用於候選橫向目標的路寬限制。
 如果車輛預測步長不同，使用雙方時間點的聯集，對缺少的狀態插值，
 yaw 沿最短角度銜接後再比較，避免直接用相同陣列索引配對不同時間。
 
@@ -248,7 +274,7 @@ J          = J_progress + J_pass
 
 若全部候選被剔除，顯示 `NO_FEASIBLE_PATH`，沿用上一版的 `target_d`
 與完整 `maneuver`，保留原動作起點，模擬繼續執行。首次尚未選過路徑時，
-沿用原本的共同中心線。新一輪拒絕原因仍會更新到候選快照，五條都不標為選中。
+沿用原本的共同中心線。新一輪拒絕原因仍會更新到候選快照，各候選都不標為選中。
 下一次評估有可行候選時，自動恢復成本選擇。
 
 此時沿用的舊路徑也可能存在預測碰撞。碰撞檢查只涵蓋離散預測時間點，
@@ -257,6 +283,9 @@ J          = J_progress + J_pass
 調整 `COST_OVERTAKING_CONFIG` 的 `progress_weight`、`overtaking_weight`、
 `candidate_offsets`、`prediction_horizon`、`decision_period` 與 `transition_length`
 即可改變評分與預測範圍。預測模型使用 `MODEL_CONFIG`，控制器使用各車實際設定。
+
+上述為 `main.py` 示範設定；直接建立 `CostOvertakingConfig()` 時，類別預設仍是
+決策週期 0.2 s、預測 5 s、過渡長度 6 m，請勿與示範設定或歷史實驗混用。
 
 ### 純進度策略
 
@@ -280,6 +309,44 @@ STRATEGY_ASSIGNMENTS = {
 3 m、決策週期 0.1 s、預測時長 1.5 s。預測步長沿用 `MODEL_CONFIG.time_step`。
 相同目標沿用既有橫移動作；每台車保有獨立狀態。候選圖只列出 `progress` 成本。
 無視窗訓練資料入口也支援此策略，並保存其設定至 metadata。
+
+### 相對進度進攻策略
+
+新增的 `relative_overtake` 保留原有策略，使用獨立設定與每車獨立狀態。例如：
+
+```python
+STRATEGY_ASSIGNMENTS = {
+    "vehicle-1": StrategyAssignment("relative_overtake"),
+    "vehicle-2": StrategyAssignment("progress"),
+}
+```
+
+唯一成本為預測終點的有號縱向間距，沒有額外自車進度項或超車成功獎勵：
+
+```text
+J = gap_T = gap_now + delta_s_opponent - delta_s_self
+```
+
+`gap_now` 是當下對手相對自車的有號間距，兩個 `delta_s` 為同一預測時長內累積的
+縱向進度。用累積進度計算，避免跨起終點時跳變；不取絕對值或截斷負值。
+正值表示自車落後，負值表示已領先，成本越小越好。
+
+優先選偵測範圍內最近的前車；沒有新前車時保留原比較對象，超車後或原對象離開
+偵測範圍仍沿用相同成本，不因對象落到後方就停止最佳化。
+同一對象的當下間距也由兩車每次決策間的進度差持續累積，領先半圈或一圈時不會
+跳回最短有號距離；若切換到新前車，才重新建立該對象的間距基準。
+自車候選使用 Pure Pursuit 與自行車模型預測；
+每台其他車維持當下速度，追蹤當下 d 的等偏移參考線，每輪只預測一次。
+碰撞硬性篩選涵蓋所有其他車，通過後才比較相對成本；全部被剔除時沿用原路徑。
+尚未選過對象，或原對象已不在觀測且沒有新前車時，相對成本才停用，不補回自車進度項。
+此時仍篩選碰撞，同分優先沿用
+原目標，原目標不可行時按候選順序選擇其他可行目標（中心線先列入）。
+
+參數集中於 `RELATIVE_OVERTAKING_CONFIG`：預設九條候選由 -0.6 到 +0.6 m、
+間距 0.15 m、偵測距離 6 m、過渡長度 3 m、決策週期 0.1 s、預測時長 0.8 s。
+候選圖只顯示 `relative_gap` 成本，超車後仍顯示並比較負成本；只有沒有比較對象時才不顯示。
+同一次評估中，對手預測對所有候選相同，所以有比較對象時與最大自車進度具有相同排序。
+無視窗資料生成也支援此策略，並將獨立設定保存至 metadata。
 
 ### 隨時替換策略
 
@@ -354,7 +421,7 @@ prediction_step=0.1,
 或 bicycle rollout，沒有模擬追蹤誤差。
 
 碰撞時間範圍由 `collision_horizon` 決定，取樣間隔不大於 `prediction_step`，
-包含當下與終點。使用實際車身的旋轉矩形比較同一時間點，接觸也視為碰撞。
+包含當下與終點。使用設定的旋轉碰撞矩形比較同一時間點（未覆寫時沿用實體尺寸），接觸也視為碰撞。
 只檢查指派的防守對象，與啟用對齊成本的距離、前後位置與 `q_block` 條件分開。
 即使已並排、對方已通過或對齊成本關閉，指定對象仍會接受碰撞檢查。
 
@@ -430,6 +497,10 @@ ego 未來意圖。`v` 是當下車身速度，不直接當成 `ds/dt`。幾何�
 ```bash
 python3 -m unittest
 ```
+
+2026-11-11 完整測試仍有已知的防守整合初始化錯誤：規則式過渡長度 6 m，
+而示範參考路徑長度為 4 m。實際測試結果與限制見
+[研究紀錄](reports/research_log.md)。
 
 沒有圖形介面的環境可在專案內存放 Matplotlib 快取並執行：
 

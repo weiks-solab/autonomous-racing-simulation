@@ -1,10 +1,13 @@
 import unittest
+from dataclasses import replace
 
 from core.pure_pursuit import PurePursuitConfig, PurePursuitController
-from core.vehicle_geometry import VehicleGeometry
+from core.vehicle_geometry import CollisionConfig, VehicleGeometry
 from core.vehicle_model import KinematicBicycleModel, VehicleModelConfig
 from core.vehicle_state import VehicleState
 from sim.simulated_vehicle import SimulatedVehicle, find_vehicle_collisions
+from strategy.collision_check import PredictedVehicle, first_predicted_collision
+from tests.test_predicted_collision import prediction
 
 
 def _vehicle(vehicle_id: str, x: float) -> SimulatedVehicle:
@@ -22,6 +25,20 @@ def _vehicle(vehicle_id: str, x: float) -> SimulatedVehicle:
 
 
 class CollisionCollectionTests(unittest.TestCase):
+    def test_actual_and_predicted_checks_share_the_adjusted_collision_dimensions(self) -> None:
+        vehicles = [_vehicle("a", 0.0), _vehicle("b", 0.3)]
+        self.assertEqual(find_vehicle_collisions(vehicles), {("a", "b")})
+        for vehicle in vehicles:
+            vehicle.geometry = replace(vehicle.geometry, collision=CollisionConfig(0.2, 0.15))
+        self.assertEqual(find_vehicle_collisions(vehicles), set())
+        first, second = vehicles
+        times = (0.0, 0.1)
+        own = prediction(times, (first.state, first.state))
+        other = prediction(times, (second.state, second.state))
+        self.assertIsNone(first_predicted_collision(
+            own, first.geometry, (PredictedVehicle(second.vehicle_id, second.geometry, other),),
+        ))
+
     def test_arbitrary_vehicle_counts_are_supported(self) -> None:
         for count in (1, 2, 4, 5):
             with self.subTest(count=count):

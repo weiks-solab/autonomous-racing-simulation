@@ -10,7 +10,7 @@ import numpy as np
 
 from core.track import Track
 from core.track_geometry import TrackPosition
-from core.vehicle_geometry import VehicleGeometry
+from core.vehicle_geometry import CollisionConfig, VehicleGeometry
 from core.vehicle_state import VehicleState
 from strategy.observations import VehicleObservation
 from strategy.offset_path import LateralManeuver
@@ -34,6 +34,7 @@ RAW_COLUMNS = (
     "s", "d", "centerline_index", "length", "width", "rear_axle_to_center",
     "maneuver_start_s", "maneuver_start_d", "maneuver_target_d", "maneuver_transition_length",
     "collision_pairs",
+    "collision_length", "collision_width",
 )
 
 
@@ -57,6 +58,7 @@ def _write_raw(path: Path, episodes: Iterable[RecordedEpisode]) -> None:
                     state = observation.state
                     position = observation.track_position
                     geometry = observation.geometry
+                    collision = geometry.collision
                     maneuver = observation.maneuver
                     maneuver_values = ("", "", "", "") if maneuver is None else (
                         maneuver.start_s, maneuver.start_d, maneuver.target_d, maneuver.transition_length,
@@ -67,6 +69,8 @@ def _write_raw(path: Path, episodes: Iterable[RecordedEpisode]) -> None:
                         position.s, position.d, position.centerline_index,
                         geometry.length, geometry.width, geometry.rear_axle_to_center,
                         *maneuver_values, collisions,
+                        "" if collision is None else collision.length,
+                        "" if collision is None else collision.width,
                     ))
 
 
@@ -87,6 +91,7 @@ def export_dataset(
         "target_specs": [asdict(spec) for spec in dataset.target_specs],
         "dtype": "float64",
         "sampling": asdict(dataset.sampling),
+        "target_timing": dataset.sampling.target_timing,
         "label_horizon_seconds": dataset.sampling.label_horizon_seconds,
         "reference_point": "rear axle",
         "coordinate_convention": "s follows centerline order; d is positive left; relative = ego - opponent",
@@ -117,6 +122,9 @@ def _read_metadata(directory: Path) -> dict[str, Any]:
         metadata = json.load(stream)
     if metadata.get("format_version") != FORMAT_VERSION:
         raise ValueError("unsupported training data format version")
+    timing = SamplingConfig(**metadata["sampling"]).target_timing
+    if metadata.get("target_timing", timing) != timing:
+        raise ValueError("metadata 的答案時間與 sampling 設定不一致。")
     return metadata
 
 
@@ -151,11 +159,15 @@ def _read_observation(row: dict[str, str]) -> VehicleObservation:
     maneuver = None
     if row["maneuver_start_s"]:
         maneuver = LateralManeuver(*(float(row[name]) for name in RAW_COLUMNS[14:18]))
+    collision = None
+    if row.get("collision_length") or row.get("collision_width"):
+        collision = CollisionConfig(float(row["collision_length"]), float(row["collision_width"]))
     return VehicleObservation(
         row["vehicle_id"],
         VehicleState(*(float(row[name]) for name in ("x", "y", "yaw", "velocity"))),
         TrackPosition(float(row["s"]), float(row["d"]), int(row["centerline_index"])),
-        VehicleGeometry(*(float(row[name]) for name in ("length", "width", "rear_axle_to_center"))),
+        VehicleGeometry(*(float(row[name]) for name in ("length", "width", "rear_axle_to_center")),
+                        collision=collision),
         maneuver,
     )
 
@@ -170,7 +182,8 @@ def load_recordings(directory: str | Path) -> tuple[Track, SamplingConfig, tuple
     frames: dict[tuple[str, int], dict[str, Any]] = {}
     with project_path(directory / "raw_states.csv").open(newline="", encoding="utf-8") as stream:
         reader = csv.DictReader(stream)
-        if reader.fieldnames != list(RAW_COLUMNS):
+        # 舊資料沒有可選的碰撞尺寸欄位，仍可讀取。
+        if reader.fieldnames not in (list(RAW_COLUMNS), list(RAW_COLUMNS[:-2])):
             raise ValueError("raw state columns do not match the bundle format")
         for row in reader:
             key = (row["episode_id"], int(row["step_index"]))

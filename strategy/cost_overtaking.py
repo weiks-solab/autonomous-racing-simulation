@@ -21,7 +21,11 @@ from strategy.offset_path import LateralManeuver, continue_lateral_maneuver
 class CostOvertakingConfig:
     progress_weight: float = 1.0
     overtaking_weight: float = 10.0
-    candidate_offsets: tuple[float, ...] = (-0.6, -0.3, 0.0, 0.3, 0.6)
+    candidate_offsets: tuple[float, ...] = (
+    -0.6, -0.45, -0.3, -0.15,
+     0.0,
+     0.15, 0.3, 0.45, 0.6,
+)
     detection_range: float = 6.0
     transition_length: float = 6.0
     decision_period: float = 0.2

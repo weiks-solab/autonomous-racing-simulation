@@ -1,0 +1,84 @@
+test_collision_size_changes_overlap_without_changing_physical_corners (tests.test_vehicle_geometry.VehicleGeometryTests) ... ok
+test_corners_use_rear_axle_to_center_offset (tests.test_vehicle_geometry.VehicleGeometryTests) ... ok
+test_invalid_collision_dimensions_are_rejected (tests.test_vehicle_geometry.VehicleGeometryTests) ... ok
+test_invalid_geometry_is_rejected (tests.test_vehicle_geometry.VehicleGeometryTests) ... ok
+test_offset_rotates_with_vehicle_yaw (tests.test_vehicle_geometry.VehicleGeometryTests) ... ok
+test_overlapping_rectangles_collide (tests.test_vehicle_geometry.VehicleGeometryTests) ... ok
+test_rotated_rectangles_collide (tests.test_vehicle_geometry.VehicleGeometryTests) ... ok
+test_separated_rectangles_do_not_collide (tests.test_vehicle_geometry.VehicleGeometryTests) ... ok
+test_small_collision_rectangle_keeps_the_rotated_body_center (tests.test_vehicle_geometry.VehicleGeometryTests) ... ok
+test_touching_rectangles_count_as_collision (tests.test_vehicle_geometry.VehicleGeometryTests) ... ok
+test_actual_and_predicted_checks_share_the_adjusted_collision_dimensions (tests.test_collision_detection.CollisionCollectionTests) ... ok
+test_arbitrary_vehicle_counts_are_supported (tests.test_collision_detection.CollisionCollectionTests) ... ok
+test_collision_check_does_not_modify_vehicle_behavior (tests.test_collision_detection.CollisionCollectionTests) ... ok
+test_duplicate_ids_are_rejected (tests.test_collision_detection.CollisionCollectionTests) ... ok
+test_only_overlapping_pairs_are_returned (tests.test_collision_detection.CollisionCollectionTests) ... ok
+test_csv_metadata_and_raw_roundtrip_rebuild_new_schema (tests.test_training_data.TrainingDataIOTests) ... ok
+test_existing_output_is_not_overwritten (tests.test_training_data.TrainingDataIOTests) ... ok
+test_loader_rejects_changed_column_order (tests.test_training_data.TrainingDataIOTests) ... ok
+test_loader_rejects_truncated_raw_recording (tests.test_training_data.TrainingDataIOTests) ... ok
+test_paths_cannot_escape_repository (tests.test_training_data.TrainingDataIOTests) ... ok
+test_raw_recordings_without_collision_size_columns_remain_readable (tests.test_training_data.TrainingDataIOTests) ... ok
+test_raw_roundtrip_preserves_maneuvers_and_geometries (tests.test_training_data.TrainingDataIOTests) ... ok
+test_closed_s_wraps_but_open_s_does_not (tests.test_training_data.TrainingDataTests) ... ok
+test_collector_rejects_gaps_wrong_times_and_mutable_observation_maps (tests.test_training_data.TrainingDataTests) ... ok
+test_collision_inside_horizon_including_third_vehicle_rejects_sample (tests.test_training_data.TrainingDataTests) ... ok
+test_collision_on_terminal_frame_is_checked (tests.test_training_data.TrainingDataTests) ... ok
+test_custom_feature_and_multiple_targets_do_not_require_collector_changes (tests.test_training_data.TrainingDataTests) ... ok
+test_feature_signs_order_and_actual_future_displacement (tests.test_training_data.TrainingDataTests) ... ok
+test_horizon_stride_and_episode_boundaries_are_independent (tests.test_training_data.TrainingDataTests) ... ok
+test_invalid_schemas_pairs_and_time_settings_are_rejected (tests.test_training_data.TrainingDataTests) ... ok
+test_missing_vehicle_inside_horizon_is_not_replaced (tests.test_training_data.TrainingDataTests) ... ok
+test_multiple_directed_pairs_keep_their_vehicle_identity (tests.test_training_data.TrainingDataTests) ... ok
+test_nonfinite_extractor_result_is_counted_and_skipped (tests.test_training_data.TrainingDataTests) ... ok
+test_cli_uses_selected_lists_and_infers_zero_horizon (tests.test_field_registration.FieldRegistrationIOTests) ... ok
+test_legacy_future_selection_still_infers_one_step (tests.test_field_registration.FieldRegistrationIOTests) ... ok
+test_metadata_timing_is_checked_and_old_metadata_is_readable (tests.test_field_registration.FieldRegistrationIOTests) ... ok
+test_multiple_new_targets_require_an_explicit_training_choice (tests.test_field_registration.FieldRegistrationIOTests) ... ok
+test_same_time_collector_output_trains_without_target_argument (tests.test_field_registration.FieldRegistrationIOTests) ... ok
+test_cli_rejects_bad_time_before_starting_simulation (tests.test_field_registration.FieldRegistrationTests) ... ok
+test_custom_future_target_can_read_future_ego (tests.test_field_registration.FieldRegistrationTests) ... ok
+test_duplicate_fields_and_invalid_timing_are_clear_errors (tests.test_field_registration.FieldRegistrationTests) ... ok
+test_editing_the_lists_registers_new_input_and_current_target (tests.test_field_registration.FieldRegistrationTests) ... ok
+test_future_d_and_delta_still_use_future_frames (tests.test_field_registration.FieldRegistrationTests) ... ok
+test_list_fields_does_not_start_simulation (tests.test_field_registration.FieldRegistrationTests) ... ok
+test_progress_is_the_default_opponent_in_a_mixed_scene (tests.test_field_registration.FieldRegistrationTests) ... ok
+test_s_and_d_use_the_same_frame_including_the_terminal_frame (tests.test_field_registration.FieldRegistrationTests) ... ok
+test_wrong_horizons_and_mixed_target_times_are_rejected (tests.test_field_registration.FieldRegistrationTests) ... ok
+test_all_rejected_keeps_previous_path_and_recovers (tests.test_relative_overtaking.RelativeOvertakingTests) ... ok
+test_closed_track_gap_stays_continuous_across_the_finish (tests.test_relative_overtaking.RelativeOvertakingTests) ... ok
+test_collision_filter_is_still_active_without_a_reward_target (tests.test_relative_overtaking.RelativeOvertakingTests) ... ok
+test_each_other_is_predicted_once_and_its_selected_path_is_ignored (tests.test_relative_overtaking.RelativeOvertakingTests) ... ok
+test_gap_changes_continuously_before_and_after_passing_without_a_bonus (tests.test_relative_overtaking.RelativeOvertakingTests) ... ok
+test_invalid_configuration_ids_track_or_time_are_rejected (tests.test_relative_overtaking.RelativeOvertakingTests) ... ok
+test_missing_target_keeps_the_previous_feasible_maneuver (tests.test_relative_overtaking.RelativeOvertakingTests) ... ok
+test_nearest_front_is_the_target_but_third_vehicle_collision_is_filtered (tests.test_relative_overtaking.RelativeOvertakingTests) ... ok
+test_new_front_target_replaces_passed_opponent_and_missing_target_clears_history (tests.test_relative_overtaking.RelativeOvertakingTests) ... ok
+test_no_front_target_does_not_fall_back_to_optimizing_own_progress (tests.test_relative_overtaking.RelativeOvertakingTests) ... ok
+test_only_relative_gap_cost_is_used_and_a_negative_gap_is_preferred (tests.test_relative_overtaking.RelativeOvertakingTests) ... ok
+test_opponent_speed_changes_the_cost_without_using_its_target_speed (tests.test_relative_overtaking.RelativeOvertakingTests) ... ok
+test_passed_opponent_remains_the_target_even_beyond_detection_range (tests.test_relative_overtaking.RelativeOvertakingTests) ... ok
+test_retained_opponent_gap_does_not_wrap_after_half_a_lap_or_a_full_lap (tests.test_relative_overtaking.RelativeOvertakingTests) ... ok
+test_visualization_uses_rollout_and_width_filter_accepts_only_in_bounds_targets (tests.test_relative_overtaking.RelativeOvertakingTests) ... ok
+ERROR
+
+======================================================================
+ERROR: setUpClass (tests.test_defending_integration.DefendingIntegrationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\kevin\OneDrive\Desktop\project\racing_sim\tests\test_defending_integration.py", line 37, in setUpClass
+    cls.active, cls.active_output, cls.track = run_without_window(True)
+  File "C:\Users\kevin\OneDrive\Desktop\project\racing_sim\tests\test_defending_integration.py", line 19, in run_without_window
+    main.run_simulation(defense_enabled=defense_enabled)
+  File "C:\Users\kevin\OneDrive\Desktop\project\racing_sim\main.py", line 334, in run_simulation
+    temporary_tracks = {
+  File "C:\Users\kevin\OneDrive\Desktop\project\racing_sim\main.py", line 335, in <dictcomp>
+    vehicle_id: generate_offset_track(
+  File "C:\Users\kevin\OneDrive\Desktop\project\racing_sim\strategy\offset_path.py", line 120, in generate_offset_track
+    raise ValueError("path_length must cover the complete transition")
+ValueError: path_length must cover the complete transition
+
+----------------------------------------------------------------------
+Ran 62 tests in 3.316s
+
+FAILED (errors=1)

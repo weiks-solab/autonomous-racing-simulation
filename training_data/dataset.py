@@ -52,6 +52,7 @@ def build_dataset(
     registry = create_default_registry() if registry is None else registry
     features = registry.resolve_features(schema)
     targets = registry.resolve_targets(schema)
+    registry.validate_horizon(schema, sampling.label_horizon_steps)
     samples: list[TrainingSample] = []
     skipped: Counter[str] = Counter()
     episode_ids: set[str] = set()

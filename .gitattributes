@@ -1,0 +1,2 @@
+# 封存證據保留原始位元組，讓 SHA-256 核對在不同平台保持一致。
+reports/experiments/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

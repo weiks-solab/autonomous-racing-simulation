@@ -1,0 +1,157 @@
+{
+  "geometry": {
+    "length": 0.55,
+    "width": 0.3,
+    "center_offset": 0.12,
+    "circumscribed_radius": 0.31324910215354174
+  },
+  "micro": {
+    "rectangle": {
+      "microseconds_per_pair": 17.237,
+      "hits": 716
+    },
+    "circle": {
+      "microseconds_per_pair": 0.515,
+      "hits": 1161
+    },
+    "hybrid": {
+      "microseconds_per_pair": 7.976,
+      "hits": 716
+    }
+  },
+  "micro_accuracy": {
+    "pairs": 4000,
+    "rectangle_hits": 716,
+    "circle_hits": 1161,
+    "circle_false_positives": 445,
+    "circle_false_negatives": 0
+  },
+  "planner": [
+    {
+      "case": "separated_straight",
+      "rectangle": {
+        "planner_ms": 57.171,
+        "collision_ms": 4.088,
+        "collision_calls": 369,
+        "feasible": 9,
+        "selected_d": 0.0
+      },
+      "circle": {
+        "planner_ms": 52.651,
+        "collision_ms": 0.221,
+        "collision_calls": 369,
+        "feasible": 9,
+        "selected_d": 0.0
+      },
+      "hybrid": {
+        "planner_ms": 52.14,
+        "collision_ms": 0.232,
+        "collision_calls": 369,
+        "feasible": 9,
+        "selected_d": 0.0
+      },
+      "progress_ms": 48.187
+    },
+    {
+      "case": "closing_straight",
+      "rectangle": {
+        "planner_ms": 56.694,
+        "collision_ms": 4.133,
+        "collision_calls": 311,
+        "feasible": 5,
+        "selected_d": 0.6
+      },
+      "circle": {
+        "planner_ms": 51.354,
+        "collision_ms": 0.168,
+        "collision_calls": 265,
+        "feasible": 2,
+        "selected_d": 0.6
+      },
+      "hybrid": {
+        "planner_ms": 54.474,
+        "collision_ms": 1.288,
+        "collision_calls": 311,
+        "feasible": 5,
+        "selected_d": 0.6
+      },
+      "progress_ms": 48.685
+    },
+    {
+      "case": "side_by_side",
+      "rectangle": {
+        "planner_ms": 57.061,
+        "collision_ms": 4.487,
+        "collision_calls": 265,
+        "feasible": 5,
+        "selected_d": 0.0
+      },
+      "circle": {
+        "planner_ms": 53.778,
+        "collision_ms": 0.143,
+        "collision_calls": 197,
+        "feasible": 4,
+        "selected_d": 0.15
+      },
+      "hybrid": {
+        "planner_ms": 54.732,
+        "collision_ms": 1.311,
+        "collision_calls": 265,
+        "feasible": 5,
+        "selected_d": 0.0
+      },
+      "progress_ms": 48.265
+    },
+    {
+      "case": "near_corner",
+      "rectangle": {
+        "planner_ms": 57.964,
+        "collision_ms": 4.064,
+        "collision_calls": 351,
+        "feasible": 6,
+        "selected_d": 0.6
+      },
+      "circle": {
+        "planner_ms": 52.338,
+        "collision_ms": 0.205,
+        "collision_calls": 336,
+        "feasible": 4,
+        "selected_d": -0.15
+      },
+      "hybrid": {
+        "planner_ms": 53.799,
+        "collision_ms": 0.738,
+        "collision_calls": 351,
+        "feasible": 6,
+        "selected_d": 0.6
+      },
+      "progress_ms": 49.556
+    },
+    {
+      "case": "after_pass",
+      "rectangle": {
+        "planner_ms": 58.014,
+        "collision_ms": 4.931,
+        "collision_calls": 369,
+        "feasible": 9,
+        "selected_d": 0.0
+      },
+      "circle": {
+        "planner_ms": 53.637,
+        "collision_ms": 0.241,
+        "collision_calls": 369,
+        "feasible": 9,
+        "selected_d": 0.0
+      },
+      "hybrid": {
+        "planner_ms": 51.996,
+        "collision_ms": 0.246,
+        "collision_calls": 369,
+        "feasible": 9,
+        "selected_d": 0.0
+      },
+      "progress_ms": 49.33
+    }
+  ],
+  "notes": "Fixed observations; six trials per method, first discarded; no plotting; circle uses body center and enclosing radius; hybrid preserves rectangle decisions."
+}

@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 import math
 import re
 from types import MappingProxyType
-from typing import Mapping
+from typing import Literal, Mapping
 
 import numpy as np
 from numpy.typing import NDArray
@@ -15,6 +15,7 @@ from strategy.observations import VehicleObservation
 SAMPLE_KEY_COLUMNS = ("episode_id", "step_index", "time_s", "ego_id", "opponent_id")
 DEFAULT_FEATURES = ("relative_s", "relative_d", "relative_speed", "opponent_d")
 DEFAULT_TARGETS = ("opponent_delta_d",)
+TargetTiming = Literal["current", "future"]
 
 
 def require_integer(name: str, value: int, minimum: int = 0) -> None:
@@ -49,7 +50,7 @@ class SamplingConfig:
     def __post_init__(self) -> None:
         if not math.isfinite(self.time_step) or self.time_step <= 0.0:
             raise ValueError("time_step must be positive and finite")
-        require_integer("label_horizon_steps", self.label_horizon_steps, 1)
+        require_integer("label_horizon_steps", self.label_horizon_steps)
         require_integer("sample_stride_steps", self.sample_stride_steps, 1)
         if not isinstance(self.reject_collisions, bool):
             raise ValueError("reject_collisions must be a bool")
@@ -57,6 +58,10 @@ class SamplingConfig:
     @property
     def label_horizon_seconds(self) -> float:
         return self.time_step * self.label_horizon_steps
+
+    @property
+    def target_timing(self) -> TargetTiming:
+        return "current" if self.label_horizon_steps == 0 else "future"
 
 
 @dataclass(frozen=True)

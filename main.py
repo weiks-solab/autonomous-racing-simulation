@@ -11,7 +11,7 @@ from core.track_geometry import (
     track_to_world,
     world_to_track,
 )
-from core.vehicle_geometry import VehicleGeometry
+from core.vehicle_geometry import CollisionConfig, VehicleGeometry
 from core.vehicle_model import KinematicBicycleModel, VehicleModelConfig
 from core.vehicle_state import VehicleState
 from sim.simulated_vehicle import (
@@ -30,6 +30,7 @@ from strategy.defending import DefenseConfig
 from strategy.offset_path import LateralManeuver, OffsetPathConfig, generate_offset_track
 from strategy.overtaking import OvertakingConfig
 from strategy.progress import ProgressConfig, ProgressStrategy
+from strategy.relative_overtaking import RelativeOvertakingConfig, RelativeOvertakingStrategy
 
 
 # ===== 常用參數集中在這裡：距離 m、速度 m/s、時間 s =====
@@ -49,19 +50,20 @@ TRACK_WIDTH = 2.0
 # (車輛 ID, 起始 s, 目標速度)。可增加其他車；負 s 會繞回封閉賽道。
 VEHICLE_SPECS = (
     ("vehicle-1", 0.0, 11.0),
- ##   ("vehicle-2", 4.0, 9.0),
-    ("vehicle-3", 4.0, 9.0),
+    ("vehicle-2", 4.0, 9.0),
+ ##   ("vehicle-3", 4.0, 9.0),
 )
 
 # 此次模擬的策略對照表：只改這裡，就能把策略換到另一台車。
 # cost_overtake：五候選成本進攻；overtake：原本的規則式進攻。
 # progress：五候選只比較自車進度，不預測其他車或篩選碰撞。
+# relative_overtake：只比較預測終點的對手 s 減自車 s，保留碰撞篩選。
 # centerline：跟隨中心線；defend：防守指定對象。
 # 未列出的車也會自動使用 centerline。每台車都有自己的策略物件。
 STRATEGY_ASSIGNMENTS = {
-    "vehicle-1": StrategyAssignment("cost_overtake"),
- ##   "vehicle-2": StrategyAssignment("defend", target_vehicle_id="vehicle-1"),
-    "vehicle-3": StrategyAssignment("progress"),
+    "vehicle-1": StrategyAssignment("relative_overtake"),
+    "vehicle-2": StrategyAssignment("progress"),
+ ##   "vehicle-3": StrategyAssignment("progress"),
 }
 
 MODEL_CONFIG = VehicleModelConfig(
@@ -71,12 +73,14 @@ MODEL_CONFIG = VehicleModelConfig(
     min_velocity=0.0,
     max_velocity=10.0,
 )
+COLLISION_CONFIG = CollisionConfig(length=0.6, width=0.4)  # 只調整碰撞判定矩形，單位 m。
 VEHICLE_GEOMETRY = VehicleGeometry(
     length=0.55, width=0.30, rear_axle_to_center=0.12,
+    collision=COLLISION_CONFIG,
 )
 LOOKAHEAD_DISTANCE = 2.0
 SPEED_GAIN = 1.5
-MAX_ACCELERATION = 3.0
+MAX_ACCELERATION = 5.0
 
 # 規則式 overtake 專用；cost_overtake 使用下方的 COST_OVERTAKING_CONFIG。
 OVERTAKING_CONFIG = OvertakingConfig(
@@ -107,13 +111,17 @@ DEFENSE_CONFIG = DefenseConfig(
     safety_margin=0.1,            # 限制候選目標與賽道邊界的留距
 )
 COST_OVERTAKING_CONFIG = CostOvertakingConfig(
-    progress_weight=1.0,           # 前進距離越多，成本越低
-    overtaking_weight=20.0,        # 預測終點超過前車時給一次獎勵
-    candidate_offsets=(-0.6, -0.3, 0.0, 0.3, 0.6),
+    progress_weight=2.0,           # 前進距離越多，成本越低
+    overtaking_weight=10.0,        # 預測終點超過前車時給一次獎勵
+    candidate_offsets=(
+    -0.6, -0.45, -0.3, -0.15,
+     0.0,
+     0.15, 0.3, 0.45, 0.6,
+),
     detection_range=6.0,           # 對此範圍內最近的前車預測
     transition_length=3.0,         # 候選參考路徑的橫移過渡長度
     decision_period=0.1,           # 每次重新比較五條預測軌跡的間隔
-    prediction_horizon=1.5,        # 預測使用 MODEL_CONFIG 的時間步長
+    prediction_horizon=0.8,        # 預測使用 MODEL_CONFIG 的時間步長
     safety_margin=0.1,             # 只依可用路寬篩選橫向目標
 )
 OFFSET_PATH_CONFIG = OffsetPathConfig(sample_spacing=0.2, path_length=4.0)
@@ -123,6 +131,16 @@ PROGRESS_CONFIG = ProgressConfig(
     decision_period=0.1,
     prediction_horizon=1.5,
     safety_margin=0.1,  # 只限制候選目標與路邊的距離，不是車間碰撞留距。
+)
+RELATIVE_OVERTAKING_CONFIG = RelativeOvertakingConfig(
+    candidate_offsets=(
+        -0.6, -0.45, -0.3, -0.15, 0.0, 0.15, 0.3, 0.45, 0.6,
+    ),
+    detection_range=6.0,  # 新前車的選取範圍；超車後仍保留原比較對象。
+    transition_length=3.0,
+    decision_period=0.1,
+    prediction_horizon=0.8,
+    safety_margin=0.1,
 )
 
 
@@ -273,6 +291,9 @@ def run_simulation(
         ),
         "progress": lambda vehicle_id: ProgressStrategy(
             PROGRESS_CONFIG, prediction_configs[vehicle_id],
+        ),
+        "relative_overtake": lambda vehicle_id: RelativeOvertakingStrategy(
+            RELATIVE_OVERTAKING_CONFIG, prediction_configs[vehicle_id], prediction_configs,
         ),
     }
     manager = StrategyManager(

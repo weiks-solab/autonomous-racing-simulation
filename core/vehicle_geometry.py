@@ -10,12 +10,25 @@ from core.vehicle_state import VehicleState
 
 
 @dataclass(frozen=True)
+class CollisionConfig:
+    """Collision rectangle dimensions, centred on the physical body."""
+
+    length: float
+    width: float
+
+    def __post_init__(self) -> None:
+        if any(not math.isfinite(value) or value <= 0.0 for value in (self.length, self.width)):
+            raise ValueError("collision length and width must be positive and finite")
+
+
+@dataclass(frozen=True)
 class VehicleGeometry:
     """Vehicle body dimensions relative to the rear-axle state reference."""
 
     length: float
     width: float
     rear_axle_to_center: float
+    collision: CollisionConfig | None = None
 
     def __post_init__(self) -> None:
         values = (self.length, self.width, self.rear_axle_to_center)
@@ -34,8 +47,10 @@ class VehicleGeometry:
 def oriented_rectangle_corners(
     state: VehicleState,
     geometry: VehicleGeometry,
+    *,
+    collision: bool = False,
 ) -> NDArray[np.float64]:
-    """Return four body corners while preserving the rear-axle reference."""
+    """Return physical or collision corners using the same body centre."""
     cosine = math.cos(state.yaw)
     sine = math.sin(state.yaw)
     body_center = np.array(
@@ -44,8 +59,9 @@ def oriented_rectangle_corners(
             state.y + geometry.rear_axle_to_center * sine,
         )
     )
-    half_length = geometry.length / 2.0
-    half_width = geometry.width / 2.0
+    dimensions = geometry.collision if collision and geometry.collision is not None else geometry
+    half_length = dimensions.length / 2.0
+    half_width = dimensions.width / 2.0
     local_corners = np.array(
         (
             (half_length, half_width),
@@ -65,8 +81,8 @@ def rectangles_overlap(
     geometry_b: VehicleGeometry,
 ) -> bool:
     """Report oriented-body overlap using the Separating Axis Theorem."""
-    corners_a = oriented_rectangle_corners(state_a, geometry_a)
-    corners_b = oriented_rectangle_corners(state_b, geometry_b)
+    corners_a = oriented_rectangle_corners(state_a, geometry_a, collision=True)
+    corners_b = oriented_rectangle_corners(state_b, geometry_b, collision=True)
     axes = (
         _forward_axis(state_a.yaw),
         _left_axis(state_a.yaw),

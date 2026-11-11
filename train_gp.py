@@ -76,6 +76,18 @@ def select_target(dataset: TrainingDataset, target: str) -> tuple[FieldSpec, NDA
     return dataset.target_specs[index], dataset.Y[:, index]
 
 
+def resolve_target_name(dataset: TrainingDataset, requested: str | None = None) -> str:
+    """只有一個答案就自動選用；舊多答案資料仍優先使用位移變化量。"""
+    if requested is not None:
+        return requested
+    names = dataset.schema.target_names
+    if len(names) == 1:
+        return names[0]
+    if TrainingConfig().target in names:
+        return TrainingConfig().target
+    raise ValueError(f"資料有多個答案，請用 --target 指定：{', '.join(names)}")
+
+
 def split_episodes(
     dataset: TrainingDataset, config: TrainingConfig,
 ) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
@@ -110,8 +122,10 @@ def prediction_errors(actual: NDArray[np.float64], predicted: NDArray[np.float64
     return {"mae": float(np.mean(np.abs(difference))), "rmse": float(np.sqrt(np.mean(difference ** 2)))}
 
 
-def train_model(dataset: TrainingDataset, config: TrainingConfig = TrainingConfig()) -> TrainingResult:
+def train_model(dataset: TrainingDataset, config: TrainingConfig | None = None) -> TrainingResult:
     """測試集只用來評分，不參與縮放器與 GP 的擬合。"""
+    if config is None:
+        config = TrainingConfig(target=resolve_target_name(dataset))
     target_spec, y = select_target(dataset, config.target)
     train_indices, test_indices = split_episodes(dataset, config)
     X = dataset.X
@@ -128,6 +142,7 @@ def train_model(dataset: TrainingDataset, config: TrainingConfig = TrainingConfi
     metrics = {
         "gp": prediction_errors(actual, mean),
         "always_zero": prediction_errors(actual, np.zeros_like(actual)),
+        "training_mean": prediction_errors(actual, np.full_like(actual, np.mean(y[train_indices]))),
     }
     return TrainingResult(
         model, target_spec, train_indices, test_indices, mean, std, metrics,
@@ -151,6 +166,7 @@ def build_report(
         "target_spec": asdict(result.target_spec),
         "sampling": asdict(dataset.sampling),
         "label_horizon_seconds": dataset.sampling.label_horizon_seconds,
+        "target_timing": dataset.sampling.target_timing,
         "config": asdict(config),
         "train_sample_count": len(result.train_indices),
         "test_sample_count": len(result.test_indices),
@@ -191,6 +207,26 @@ def save_predictions(path: Path, dataset: TrainingDataset, result: TrainingResul
             ))
 
 
+def _plot_input_mapping(axes: Any, dataset: TrainingDataset, result: TrainingResult) -> None:
+    x = dataset.X[:, 0]
+    _, y = select_target(dataset, result.target_spec.name)
+    # 直接預測整段輸入，不把相距很遠的測試點連成假的直線。
+    grid = np.linspace(float(x.min()), float(x.max()), 400)
+    mean, std = result.model.predict(grid.reshape(-1, 1), return_std=True)
+    axes.scatter(x[result.train_indices], y[result.train_indices], s=12, alpha=0.25,
+                 color="gray", label="Train observations")
+    axes.scatter(x[result.test_indices], y[result.test_indices], s=16, alpha=0.65,
+                 color="black", label="Held-out actual")
+    axes.plot(grid, mean, color="tab:blue", label="GP mean")
+    axes.fill_between(grid, mean - 2 * std, mean + 2 * std,
+                      color="tab:blue", alpha=0.15, label="Mean +/- 2 std")
+    feature = dataset.feature_specs[0]
+    axes.set(xlabel=f"{feature.name} ({feature.unit})",
+             ylabel=f"{result.target_spec.name} ({result.target_spec.unit})", title="Same-time input/output mapping")
+    axes.grid(alpha=0.25)
+    axes.legend()
+
+
 def save_plot(path: Path, dataset: TrainingDataset, result: TrainingResult) -> None:
     """直接寫入圖片，不開啟視窗。"""
     os.environ.setdefault("MPLCONFIGDIR", str(PROJECT_ROOT / ".cache" / "matplotlib"))
@@ -203,9 +239,14 @@ def save_plot(path: Path, dataset: TrainingDataset, result: TrainingResult) -> N
     high = float(max(np.max(actual), np.max(result.mean)))
     padding = max((high - low) * 0.05, abs(high) * 0.01, 1e-6)
     limits = (low - padding, high + padding)
-    figure = Figure(figsize=(6.0, 6.0), layout="constrained")
+    show_mapping = dataset.sampling.target_timing == "current" and len(dataset.schema.feature_names) == 1
+    figure = Figure(figsize=(11.0, 5.5) if show_mapping else (6.0, 6.0), layout="constrained")
     FigureCanvasAgg(figure)
-    axes = figure.subplots()
+    if show_mapping:
+        axes, mapping_axes = figure.subplots(1, 2)
+        _plot_input_mapping(mapping_axes, dataset, result)
+    else:
+        axes = figure.subplots()
     axes.scatter(actual, result.mean, s=16, alpha=0.65, label="Held-out predictions")
     axes.plot(limits, limits, "--", color="gray", label="Perfect prediction")
     axes.set(xlim=limits, ylim=limits, aspect="equal",
@@ -231,6 +272,7 @@ def save_results(
         "feature_specs": report["feature_specs"],
         "target_spec": report["target_spec"],
         "label_horizon_seconds": dataset.sampling.label_horizon_seconds,
+        "target_timing": dataset.sampling.target_timing,
         "versions": report["versions"],
     }
     output.mkdir(parents=True, exist_ok=False)
@@ -246,13 +288,16 @@ def print_result(output: Path, dataset: TrainingDataset, result: TrainingResult)
     unit = result.target_spec.unit
     metrics = result.metrics
     print(f"輸入欄位：{', '.join(dataset.schema.feature_names)}")
-    print(f"答案：{result.target_spec.name}；預測時間：{dataset.sampling.label_horizon_seconds:g} 秒")
+    timing_label = "同時刻對應" if dataset.sampling.target_timing == "current" else "預測時間"
+    print(f"答案：{result.target_spec.name}；{timing_label}：{dataset.sampling.label_horizon_seconds:g} 秒")
     print(f"訓練 {len(result.train_indices)} 筆；測試 {len(result.test_indices)} 筆")
     print(f"GP 測試 MAE：{metrics['gp']['mae']:.6g} {unit}")
     print(f"GP 測試 RMSE：{metrics['gp']['rmse']:.6g} {unit}")
     print(f"固定預測 0 的 MAE：{metrics['always_zero']['mae']:.6g} {unit}")
-    if metrics["gp"]["mae"] >= metrics["always_zero"]["mae"]:
-        print("本次 GP 的 MAE 未優於固定 0 基準，請先檢查資料情境與輸入資訊。")
+    print(f"固定預測訓練平均值的 MAE：{metrics['training_mean']['mae']:.6g} {unit}")
+    baseline = min(metrics["always_zero"]["mae"], metrics["training_mean"]["mae"])
+    if metrics["gp"]["mae"] >= baseline:
+        print("本次 GP 的 MAE 未優於簡單基準，請先檢查資料情境與輸入資訊。")
     if result.fit_warnings:
         print(f"有 {len(result.fit_warnings)} 則調參提示，詳見 report.json 的 fit_warnings。")
     print(f"學到的 kernel：{result.model.named_steps['gp'].kernel_}")
@@ -263,15 +308,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     defaults = TrainingConfig()
     parser.add_argument("--data", required=True, type=Path, help="收集程式輸出的資料夾")
-    parser.add_argument("--target", default=defaults.target, help="這次要學習的答案欄位")
+    parser.add_argument("--target", help="答案欄位；只有一個答案時自動選用")
     parser.add_argument("--test-fraction", type=float, default=defaults.test_fraction, help="測試 episode 比例")
     parser.add_argument("--seed", type=int, default=defaults.seed)
     parser.add_argument("--output", type=Path, help="專案內尚不存在的輸出資料夾")
     args = parser.parse_args(argv)
     try:
-        config = TrainingConfig(target=args.target, test_fraction=args.test_fraction, seed=args.seed)
         data_directory = project_path(args.data)
         dataset = load_dataset(data_directory)
+        config = TrainingConfig(target=resolve_target_name(dataset, args.target),
+                                test_fraction=args.test_fraction, seed=args.seed)
         run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "_" + uuid4().hex[:8]
         output = project_path(args.output if args.output is not None else Path("models/gp") / run_id)
         if output.exists():

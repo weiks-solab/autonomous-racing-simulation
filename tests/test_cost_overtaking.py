@@ -17,7 +17,11 @@ from tests.test_bicycle_prediction import observation, prediction_config
 class CostOvertakingTests(unittest.TestCase):
     def setUp(self) -> None:
         self.track = Track(np.array(((0, 0), (100, 0), (100, 100), (0, 100))), width=2.0)
-        self.config = CostOvertakingConfig(prediction_horizon=1.0, transition_length=3.0)
+        # 固定回歸案例的五條候選，不受示範預設調整為九條影響。
+        self.config = CostOvertakingConfig(
+            prediction_horizon=1.0, transition_length=3.0,
+            candidate_offsets=(-0.6, -0.3, 0.0, 0.3, 0.6),
+        )
         self.prediction = prediction_config()
         self.ego = observation(self.track, "ego", 20.0, 0.0, 6.0)
         self.front = observation(self.track, "front", 22.0, 0.0, 3.0)
