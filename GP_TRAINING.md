@@ -4,6 +4,9 @@
 沿用原有 `samples.csv` 與 `metadata.json` 格式，不需要重新收集或修改 `gp_demo.py`。
 
 目前收集程式預設學習 progress 對手的同時刻 **s → d**。
+訓練完成後，可在 `main.py` 的 `GP_MODEL_PATHS` 指定輸出的 `model.pkl`，
+接入相對進度進攻；操作與預測假設見 [README](README.md#在進攻策略使用-gp)。
+`python plot_gp_route.py` 可離線輸出整圈路線圖；`python main.py --realtime` 會顯示碰撞檢查使用的 GP 預測。
 先在 `training_data/fields.py` 選擇或註冊欄位，再執行：
 
 ```powershell

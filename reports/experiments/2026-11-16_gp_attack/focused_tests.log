@@ -1,0 +1,80 @@
+﻿python.exe : test_current_overlap_is_not_hidden_by_gp (tests.test_gp_prediction.GpPredictionTests) ... ok
+位於 線路:2 字元:223
++ ... estOutput = & .\.venv\Scripts\python.exe -m unittest -v tests.test_gp ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (test_current_ov...onTests) ... ok:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+test_gp_changes_collision_filter_and_preserves_relative_cost (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_loader_checks_schema_and_reuses_same_file (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_main_loads_models_once_and_can_disable_loading (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_observed_speed_across_finish (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_observed_speed_and_independent_attacker_history (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_queries_opponent_future_s_and_uses_gp_curve_heading (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_same_route_at_different_times_is_not_a_collision (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_stopped_vehicle_stays_at_observed_position (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_unconfigured_opponent_keeps_original_prediction (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_wrapped_gp_query_keeps_unwrapped_progress (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_all_rejected_keeps_previous_path_and_recovers (tests.test_relative_overtaking.RelativeOvertakingTests) ... ok
+test_closed_track_gap_stays_continuous_across_the_finish (tests.test_relative_overtaking.RelativeOvertakingTests) ... o
+k
+test_collision_filter_is_still_active_without_a_reward_target (tests.test_relative_overtaking.RelativeOvertakingTests) 
+... ok
+test_each_other_is_predicted_once_and_its_selected_path_is_ignored (tests.test_relative_overtaking.RelativeOvertakingTe
+sts) ... ok
+test_gap_changes_continuously_before_and_after_passing_without_a_bonus (tests.test_relative_overtaking.RelativeOvertaki
+ngTests) ... ok
+test_invalid_configuration_ids_track_or_time_are_rejected (tests.test_relative_overtaking.RelativeOvertakingTests) ... 
+ok
+test_missing_target_keeps_the_previous_feasible_maneuver (tests.test_relative_overtaking.RelativeOvertakingTests) ... o
+k
+test_nearest_front_is_the_target_but_third_vehicle_collision_is_filtered (tests.test_relative_overtaking.RelativeOverta
+kingTests) ... ok
+test_new_front_target_replaces_passed_opponent_and_missing_target_clears_history (tests.test_relative_overtaking.Relati
+veOvertakingTests) ... ok
+test_no_front_target_does_not_fall_back_to_optimizing_own_progress (tests.test_relative_overtaking.RelativeOvertakingTe
+sts) ... ok
+test_only_relative_gap_cost_is_used_and_a_negative_gap_is_preferred (tests.test_relative_overtaking.RelativeOvertakingT
+ests) ... ok
+test_opponent_speed_changes_the_cost_without_using_its_target_speed (tests.test_relative_overtaking.RelativeOvertakingT
+ests) ... ok
+test_passed_opponent_remains_the_target_even_beyond_detection_range (tests.test_relative_overtaking.RelativeOvertakingT
+ests) ... ok
+test_retained_opponent_gap_does_not_wrap_after_half_a_lap_or_a_full_lap (tests.test_relative_overtaking.RelativeOvertak
+ingTests) ... ok
+test_visualization_uses_rollout_and_width_filter_accepts_only_in_bounds_targets (tests.test_relative_overtaking.Relativ
+eOvertakingTests) ... ok
+test_all_rejected_keeps_simulation_running_and_reports_actual_overlap (tests.test_relative_overtaking_integration.Relat
+iveOvertakingIntegrationTests) ... ok
+test_new_strategy_coexists_with_progress_and_original_cost_attack (tests.test_relative_overtaking_integration.RelativeO
+vertakingIntegrationTests) ... ok
+test_relative_cost_stays_active_after_the_actual_overtake (tests.test_relative_overtaking_integration.RelativeOvertakin
+gIntegrationTests) ... ok
+test_training_entry_copies_config_and_retains_progress_opponent_pairing (tests.test_relative_overtaking_integration.Rel
+ativeOvertakingIntegrationTests) ... ok
+test_two_assigned_vehicles_have_independent_predictions_and_controller_configs (tests.test_relative_overtaking_integrat
+ion.RelativeOvertakingIntegrationTests) ... ok
+test_completed_reference_stays_at_target_after_another_lap (tests.test_bicycle_prediction.BicyclePredictionTests) ... o
+k
+test_constant_speed_straight_prediction_and_partial_last_step (tests.test_bicycle_prediction.BicyclePredictionTests) ..
+. ok
+test_first_step_matches_existing_controller_and_bicycle_model (tests.test_bicycle_prediction.BicyclePredictionTests) ..
+. ok
+test_fixed_speed_vehicle_turns_along_track_instead_of_a_straight_line (tests.test_bicycle_prediction.BicyclePredictionT
+ests) ... ok
+test_invalid_horizon_track_and_initial_speed_are_rejected (tests.test_bicycle_prediction.BicyclePredictionTests) ... ok
+test_progress_is_continuous_across_start_finish (tests.test_bicycle_prediction.BicyclePredictionTests) ... ok
+test_stationary_fixed_speed_vehicle_stays_stationary (tests.test_bicycle_prediction.BicyclePredictionTests) ... ok
+test_body_contact_at_time_zero_is_not_ignored (tests.test_predicted_collision.PredictedCollisionTests) ... ok
+test_different_prediction_horizons_are_rejected (tests.test_predicted_collision.PredictedCollisionTests) ... ok
+test_different_time_steps_are_aligned_before_comparing_states (tests.test_predicted_collision.PredictedCollisionTests) 
+... ok
+test_earliest_collision_is_found_across_all_vehicles (tests.test_predicted_collision.PredictedCollisionTests) ... ok
+test_paths_crossing_at_different_times_do_not_collide (tests.test_predicted_collision.PredictedCollisionTests) ... ok
+test_yaw_interpolation_crosses_pi_without_rotating_through_zero (tests.test_predicted_collision.PredictedCollisionTests
+) ... ok
+
+----------------------------------------------------------------------
+Ran 44 tests in 8.725s
+
+OK

@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-16",
+  "branch": "master",
+  "base_commit": "bf1566e9edc403a4385e930976e723480a6702d4",
+  "version_note": "基於 base_commit，含未提交修改。",
+  "scope": "Agg 後端執行即時逐步更新流程；沒有人工操作 GUI。",
+  "simulation_seconds": 2.0,
+  "update_frames": 100,
+  "gp_labels": [
+    "GP vehicle-1 -> vehicle-2\n@ 1.88s, +0.80s"
+  ],
+  "gp_point_counts": [
+    41
+  ],
+  "snapshot_evaluation_times": {
+    "vehicle-1": 1.8800000000000001,
+    "vehicle-2": 1.8800000000000001
+  },
+  "source_sha256": {
+    "plot_gp_route.py": "82c3685fcf9cc9842540d5b050e45e1d1351e488ccc379b89c8f1391d0432e07",
+    "sim/gp_visualization.py": "d8f6800a8fc07c8533ad35b8b0f65ad088f306afffa5b6c3e0028bc62c1270a6",
+    "sim/visualizer.py": "c87c3f26e8c8984afabb737bd1e1ace5ecb78f1daf61f2a8012a85029d9ec0c9",
+    "main.py": "53d6fb15b6bbf13a971b5076a6584bece61e601f18031ceb3efa1ace4ed25187",
+    "strategy/base.py": "af5c8b618684efe9d585b28f0daf31dd7795a97ac94f60863fd65f13ef695066",
+    "strategy/relative_overtaking.py": "6598d6b89584317b9fb40586f656c0f8d6f2e4f48861d55b484305eb83100de3"
+  }
+}

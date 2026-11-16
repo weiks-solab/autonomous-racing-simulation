@@ -1,0 +1,116 @@
+{
+  "date": "2026-11-16",
+  "branch": "master",
+  "base_commit": "bf1566e9edc403a4385e930976e723480a6702d4",
+  "version_note": "基於 base_commit，含未提交修改；歷史訓練版本未記錄。",
+  "scope": "預設完整場景的接入執行驗證；僅替換視覺化，不宣稱策略效果改善。",
+  "seconds": 21.0,
+  "time_step": 0.02,
+  "vehicle_specs": [
+    [
+      "vehicle-1",
+      0.0,
+      11.0
+    ],
+    [
+      "vehicle-2",
+      4.0,
+      9.0
+    ]
+  ],
+  "assignments": {
+    "vehicle-1": {
+      "name": "relative_overtake",
+      "target_vehicle_id": null
+    },
+    "vehicle-2": {
+      "name": "progress",
+      "target_vehicle_id": null
+    }
+  },
+  "relative_config": {
+    "candidate_offsets": [
+      -0.6,
+      -0.45,
+      -0.3,
+      -0.15,
+      0.0,
+      0.15,
+      0.3,
+      0.45,
+      0.6
+    ],
+    "detection_range": 6.0,
+    "transition_length": 3.0,
+    "decision_period": 0.1,
+    "prediction_horizon": 0.8,
+    "safety_margin": 0.1
+  },
+  "model_config": {
+    "wheelbase": 0.33,
+    "time_step": 0.02,
+    "max_steering_angle": 0.8726646259971648,
+    "min_velocity": 0.0,
+    "max_velocity": 10.0
+  },
+  "geometry": {
+    "length": 0.55,
+    "width": 0.3,
+    "rear_axle_to_center": 0.12,
+    "collision": {
+      "length": 0.6,
+      "width": 0.4
+    }
+  },
+  "progress_config": {
+    "candidate_offsets": [
+      -0.6,
+      -0.3,
+      0.0,
+      0.3,
+      0.6
+    ],
+    "transition_length": 3.0,
+    "decision_period": 0.1,
+    "prediction_horizon": 1.5,
+    "safety_margin": 0.1
+  },
+  "controller": {
+    "lookahead_distance": 2.0,
+    "speed_gain": 1.5,
+    "max_acceleration": 5.0
+  },
+  "track": {
+    "name": "rounded_rectangle",
+    "rectangle_length": 20.0,
+    "rectangle_height": 12.0,
+    "corner_radius": 3.0,
+    "point_count": 500,
+    "width": 2.0
+  },
+  "gp_enabled": true,
+  "gp_model_paths": {
+    "vehicle-2": "models/gp/20261111T064250Z_dbc5bc95/model.pkl"
+  },
+  "gp_model_sha256": {
+    "vehicle-2": "6a892efa8ab1e271250a7774f95e46963de0a9cfb284cf2148d5ff79c27a1169"
+  },
+  "source_sha256": {
+    "main.py": "db3b88b565b11f7d43d8f84fa8476b6901973e1fd4db8f3e880baf5018d54508",
+    "strategy/gp_prediction.py": "6798662ffbdc456ab6f19f0fb43315108bc2bac93f42ef59fbb077e5479e41dd",
+    "strategy/relative_overtaking.py": "fadb688f22e7ede8bb1b38733ea64f138d805b1323c9b4dd0a79df7106547700"
+  },
+  "versions": {
+    "python": "3.10.10 (tags/v3.10.10:aad5f6a, Feb  7 2023, 17:20:36) [MSC v.1929 64 bit (AMD64)]",
+    "numpy": "2.2.6",
+    "sklearn": "1.7.2"
+  },
+  "elapsed_seconds": 21.108717200055253,
+  "actual_collision_frames": 0,
+  "actual_collision_pairs": [],
+  "trajectory_point_counts": {
+    "vehicle-1": 1051,
+    "vehicle-2": 1051
+  },
+  "model_not_archived": "model.pkl 僅在本機且被忽略；重現需提供相同模型或另訓練相容模型。"
+}

@@ -1,0 +1,12 @@
+GP opponent prediction: vehicle-2 (models/gp/20261111T064250Z_dbc5bc95/model.pkl)
+vehicle-1 strategy: relative_overtake
+Strategy transitions: 0.00s ATTACK
+Lateral targets: 0.00s +0.00m -> 1.66s +0.45m -> 1.78s +0.60m
+Final strategy reason: lowest predicted relative gap
+Final vehicle-1 d: +0.387 m
+vehicle-2 strategy: progress
+Strategy transitions: 0.00s PROGRESS
+Lateral targets: 0.00s +0.00m -> 0.66s +0.60m
+Final strategy reason: maximum predicted progress; other vehicles ignored
+Final vehicle-2 d: +0.629 m
+Detected collision pairs: none

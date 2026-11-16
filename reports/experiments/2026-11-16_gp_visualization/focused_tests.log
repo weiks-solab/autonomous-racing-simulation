@@ -1,0 +1,39 @@
+test_full_lap_samples_and_plot_share_the_same_gp_values (tests.test_gp_visualization.GpVisualizationTests) ... ok
+test_gp_visibility_and_labels_are_independent_of_candidate_visibility (tests.test_gp_visualization.GpVisualizationTests) ... ok
+test_live_line_matches_prediction_reuses_artists_and_clears_old_data (tests.test_gp_visualization.GpVisualizationTests) ... ok
+test_multiple_observers_do_not_overwrite_one_another (tests.test_gp_visualization.GpVisualizationTests) ... ok
+test_offline_command_exports_png_samples_and_track_metadata (tests.test_gp_visualization.GpVisualizationTests) ... ok
+test_snapshot_reuses_collision_states_and_excludes_non_gp_opponents (tests.test_gp_visualization.GpVisualizationTests) ... ok
+test_current_overlap_is_not_hidden_by_gp (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_gp_changes_collision_filter_and_preserves_relative_cost (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_loader_checks_schema_and_reuses_same_file (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_main_loads_models_once_and_can_disable_loading (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_observed_speed_across_finish (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_observed_speed_and_independent_attacker_history (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_queries_opponent_future_s_and_uses_gp_curve_heading (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_same_route_at_different_times_is_not_a_collision (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_stopped_vehicle_stays_at_observed_position (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_unconfigured_opponent_keeps_original_prediction (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_wrapped_gp_query_keeps_unwrapped_progress (tests.test_gp_prediction.GpPredictionTests) ... ok
+test_all_dynamic_elements_can_be_hidden (tests.test_visualizer.SimulationVisualizerTests) ... ok
+test_all_dynamic_elements_can_be_shown (tests.test_visualizer.SimulationVisualizerTests) ... ok
+test_candidate_costs_rejections_and_timestamp_are_displayed (tests.test_visualizer.SimulationVisualizerTests) ... ok
+test_candidate_paths_and_labels_can_be_hidden (tests.test_visualizer.SimulationVisualizerTests) ... ok
+test_candidate_snapshots_reject_unknown_vehicle_ids (tests.test_visualizer.SimulationVisualizerTests) ... ok
+test_candidate_snapshots_reuse_artists_and_clear_old_lines (tests.test_visualizer.SimulationVisualizerTests) ... ok
+test_collision_status_clears_on_the_next_safe_update (tests.test_visualizer.SimulationVisualizerTests) ... ok
+test_collision_turns_rectangle_red_and_shows_status (tests.test_visualizer.SimulationVisualizerTests) ... ok
+test_rejected_cost_candidate_shows_collision_reason_and_no_selection (tests.test_visualizer.SimulationVisualizerTests) ... ok
+test_single_vehicle_update_api_remains_compatible (tests.test_visualizer.SimulationVisualizerTests) ... ok
+test_strategy_status_and_temporary_path_are_optional (tests.test_visualizer.SimulationVisualizerTests) ... ok
+test_updates_reuse_existing_artists (tests.test_visualizer.SimulationVisualizerTests) ... ok
+test_attack_snapshot_stays_fixed_while_side_is_locked_and_clears_on_return (tests.test_candidate_snapshots.CandidateSnapshotTests) ... ok
+test_candidate_drawing_wraps_at_finish_line (tests.test_candidate_snapshots.CandidateSnapshotTests) ... ok
+test_defense_drawn_samples_match_the_scored_path (tests.test_candidate_snapshots.CandidateSnapshotTests) ... ok
+test_defense_snapshot_updates_only_when_costs_are_recomputed (tests.test_candidate_snapshots.CandidateSnapshotTests) ... ok
+test_rejected_attack_candidates_are_kept_and_refresh_during_prepare (tests.test_candidate_snapshots.CandidateSnapshotTests) ... ok
+
+----------------------------------------------------------------------
+Ran 34 tests in 1.695s
+
+OK

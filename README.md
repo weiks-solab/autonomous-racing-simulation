@@ -4,14 +4,22 @@
 Pursuit 控制器，車輛數量可自由增加。
 
 目前示範由 `vehicle-1` 使用相對進度進攻 `relative_overtake`，`vehicle-2` 使用純進度策略。
+進攻車預設載入本機 s→d GP，預測 `vehicle-2` 的路線後檢查同時間碰撞。
 車數與策略可在 `main.py` 自行調整，未指派策略的車持續跟隨中心線。
 策略只決定橫向目標與平滑路徑；
 方向盤角度及速度控制仍由 Pure Pursuit 負責。
 
+**目前進展：GP 資料收集 → 訓練 → 模型預測已串接，並已實際跑過預測。**
+最新結果與限制見 [每週研究摘要](reports/research_log.md)，已有
+[整圈 GP 路線圖](reports/experiments/2026-11-16_gp_visualization/gp_route.png) 與
+[模擬預測畫面](reports/experiments/2026-11-16_gp_visualization/gp_live_preview.png)。
+
 ## 安裝與執行
 
 基本模擬需要 Python 3.10 以上、NumPy 與 Matplotlib。
-GP 訓練另外使用 scikit-learn，相依清單見 `requirements-gp.txt`。
+GP 訓練與載入 GP 模型需要 scikit-learn，相依清單見 `requirements-gp.txt`。
+目前 GP 接入預設開啟；若只安裝基本套件或沒有模型，先將 `main.py` 的
+`GP_PREDICTION_ENABLED` 設為 `False`。
 
 ```bash
 python3 -m pip install -r requirements.txt
@@ -31,6 +39,75 @@ python3 main.py --realtime --no-defense
 ```
 
 若環境使用 `python` 指令，將上述 `python3` 換成 `python` 即可。
+
+## 在進攻策略使用 GP
+
+直接執行 `python main.py --realtime`。在 `main.py` 上方調整：
+
+```python
+GP_PREDICTION_ENABLED = True  # False：恢復原來的對手預測。
+GP_MODEL_PATHS = {
+    "vehicle-2": "models/gp/20261111T064250Z_dbc5bc95/model.pkl",
+}
+```
+
+字典的 ID 是「要用 GP 預測的對手」，不是進攻車。新增其他 ID 可指定其他模型；
+未指定的車沿用原本定速、等 d 的自行車預測。相同模型只載入一次，各進攻車仍持有獨立觀測歷史。
+模型必須來自可信任的本機訓練，輸入為 `opponent_s`、答案為同時刻 `opponent_current_d`，
+並用相同賽道。模型與 scikit-learn 不存在時會報錯，不會自動訓練或安裝。
+
+決策邏輯：
+
+1. 用相鄰決策觀測的 s 變化估計對手縱向速度，預測期間保持固定；首次觀測以車身速度近似。
+2. 計算 `s(t) = s0 + 縱向速度 × t`，封閉賽道查 GP 時繞回一圈範圍。
+3. 查 `d(t) = GP(s(t))`，轉成 x/y，從 GP 曲線前方 0.05 m 的方向估計航向。
+4. 對手預測供所有候選共用；沿用原本同時間車身矩形重疊檢查，先剔除碰撞候選。
+5. 其餘候選依原成本 `目前間距 + 對手前進量 - 自車前進量` 取最小值；Pure Pursuit 繼續控制自車。
+
+預測的 t=0 保留實際位置與航向，縱向速度為零時維持原位。
+目前直接使用 GP 平均值，未加入起步補償、平滑接續、標準差膨脹或異常回退；
+第一個未來點可能與目前觀測不連續。全部候選被剔除時仍沿用原路徑，不保證無碰撞。
+這次僅接入 `main.py` 的 `relative_overtake`；資料收集入口與其他進攻策略保留原行為。
+原始模型被 Git 忽略，其他電腦需自行提供相容模型並修改路徑，或關閉 GP。
+
+模型載入與預測在 `strategy/gp_prediction.py`，選路與成本仍在 `strategy/relative_overtaking.py`。
+
+### 顯示 GP 路線與即時預測
+
+離線產生涵蓋整圈賽道的 GP 平均路線，不需要執行模擬：
+
+```powershell
+.\.venv\Scripts\python.exe plot_gp_route.py
+```
+
+預設讀取 `GP_MODEL_PATHS["vehicle-2"]`，在目前 `main.py` 的賽道等距取樣 1000 個 s。
+輸出位於 `reports/experiments/<當天日期>_gp_visualization/gp_route.png`，同名 CSV 保存 s/d/x/y，
+JSON 保存模型路徑、SHA-256 與實際賽道。圖片左側是賽道路線，右側是 s→d。
+這是 GP 平均路線，沒有時間資訊，也不是實際行駛軌跡；請使用與模型訓練相同的賽道。
+地圖為顯示整圈而接回起點，沒有替 GP 加上週期性或平滑修正。
+重複輸出相同檔名會更新 PNG、CSV、JSON。
+
+也可以指定另一個模型、取樣數或圖片路徑：
+
+```powershell
+.\.venv\Scripts\python.exe plot_gp_route.py --opponent vehicle-2 --points 2000 --output reports/experiments/my_gp_route/route.png
+# 或使用 --model models/gp/你的資料夾/model.pkl
+```
+
+即時模式已預設開啟 GP 預測顯示：
+
+```powershell
+.\.venv\Scripts\python.exe main.py --realtime
+```
+
+- 紫色點虛線：進攻車碰撞檢查實際使用的對手 GP 預測；圓點是預測終點。
+- `GP vehicle-1 -> vehicle-2`：vehicle-1 對 vehicle-2 的預測。
+- `@ 1.88s, +0.80s`：在模擬 1.88 秒評估，向前預測 0.80 秒。
+
+預測依策略決策週期更新，兩次決策間保持快照；顯示端不重新查 GP，也不修改路徑、成本或控制。
+在 `main.py` 的 `create_display_options()` 用 `show_gp_predictions` 開關曲線、
+`show_gp_prediction_labels` 開關標籤；與候選路徑顯示各自獨立。
+圖片範例與驗證見 [GP 視覺化證據](reports/experiments/2026-11-16_gp_visualization/README.md)。
 
 ## 收集資料與訓練 GP
 
@@ -52,7 +129,8 @@ python3 train_gp.py --data data/training/生成的資料夾名稱
 ## 研究紀錄與報告交接
 
 給 ChatGPT 或報告撰寫者的入口是 [研究紀錄](reports/research_log.md)，
-其中區分目前程式、歷史實驗設定、量化結果與未確認的建議。
+以每週 3～5 個主題摘要研究方法、量化結果與限制，最新有進展的一週置頂；
+完整歷史見 [11/11 長版封存](reports/archive/2026-11-11_research_log_full.md)，詳細證據保留在 `reports/experiments/`。
 [首次基線證據](reports/experiments/2026-11-11_baseline/summary.json) 保留三組既有 GP 結果的摘要；
 同目錄另存原報告、實驗設定、逐筆測試預測、評估圖及本次檢查日誌。
 原始資料與模型仍維持忽略規則；交接文件和小型證據須另行 commit、push 後，GitHub 才能讀取。
@@ -60,7 +138,7 @@ python3 train_gp.py --data data/training/生成的資料夾名稱
 
 2026-11-11 盤點時，既有 `.venv` 無法啟動，因為它指向已不存在的 Python 3.10 安裝。
 本次檢查改用專案內現有的 Python 3.10.20 搭配 `.venv/Lib/site-packages`，
-實際命令與版本見 [研究紀錄的驗證段落](reports/research_log.md#本次實際驗證與未執行項目)。
+實際命令與版本見 [歷史紀錄的驗證段落](reports/archive/2026-11-11_research_log_full.md#本次實際驗證與未執行項目)。
 這是此工作區的環境狀態，不代表其他環境也有相同問題；本次未重建環境。
 
 ## 想調整參數，先看 main.py 開頭
@@ -336,7 +414,8 @@ J = gap_T = gap_now + delta_s_opponent - delta_s_self
 同一對象的當下間距也由兩車每次決策間的進度差持續累積，領先半圈或一圈時不會
 跳回最短有號距離；若切換到新前車，才重新建立該對象的間距基準。
 自車候選使用 Pure Pursuit 與自行車模型預測；
-每台其他車維持當下速度，追蹤當下 d 的等偏移參考線，每輪只預測一次。
+每台其他車每輪只預測一次。未指定 GP 時維持當下速度、追蹤當下 d 的等偏移參考線；
+指定 GP 時改用定縱向速度與 GP 路線，設定方式見上方「在進攻策略使用 GP」。
 碰撞硬性篩選涵蓋所有其他車，通過後才比較相對成本；全部被剔除時沿用原路徑。
 尚未選過對象，或原對象已不在觀測且沒有新前車時，相對成本才停用，不補回自車進度項。
 此時仍篩選碰撞，同分優先沿用

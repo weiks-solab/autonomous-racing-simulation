@@ -6,11 +6,12 @@ from typing import Mapping, Sequence
 
 from core.track import Track
 from core.track_geometry import TrackPosition, signed_longitudinal_gap, track_length
-from strategy.base import CandidatePath, CandidateSnapshot, StrategyDecision
+from strategy.base import CandidatePath, CandidateSnapshot, GpPredictionSnapshot, StrategyDecision
 from strategy.bicycle_prediction import (
     BicyclePrediction, BicyclePredictionConfig, predict_bicycle_trajectory,
 )
 from strategy.collision_check import PredictedCollision, PredictedVehicle, first_predicted_collision
+from strategy.gp_prediction import GpRoute, predict_gp_trajectory
 from strategy.observations import VehicleObservation
 from strategy.offset_path import LateralManeuver, continue_lateral_maneuver
 
@@ -74,10 +75,14 @@ class RelativeOvertakingStrategy:
         config: RelativeOvertakingConfig,
         prediction_config: BicyclePredictionConfig,
         other_prediction_configs: Mapping[str, BicyclePredictionConfig],
+        gp_routes: Mapping[str, GpRoute] | None = None,
     ) -> None:
         self.config = config
         self.prediction_config = prediction_config
         self.other_prediction_configs = dict(other_prediction_configs)
+        self.gp_routes = dict(gp_routes or {})
+        # 觀測歷史屬於各進攻車自己；僅 GP 模型可共用。
+        self.previous_gp_positions: dict[str, tuple[TrackPosition, float]] = {}
         self.decision = StrategyDecision("cruise")
         self.last_evaluation_time = -math.inf
         self.last_candidates: tuple[RelativeCandidate, ...] = ()
@@ -105,8 +110,11 @@ class RelativeOvertakingStrategy:
             return self.decision
 
         target, gap = self._select_target(vehicle, others, track)
+        self.previous_gp_positions = {
+            key: value for key, value in self.previous_gp_positions.items() if key in ids
+        }
         self.last_other_predictions = {
-            other.vehicle_id: self._predict_other(other, track) for other in others
+            other.vehicle_id: self._predict_other(other, track, time_seconds) for other in others
         }
         self.last_target_prediction = (
             None if target is None else self.last_other_predictions[target.vehicle_id]
@@ -186,10 +194,25 @@ class RelativeOvertakingStrategy:
         gap, _, target = min(ahead, key=lambda item: item[:2])
         return target, gap
 
-    def _predict_other(self, other: VehicleObservation, track: Track) -> BicyclePrediction:
+    def _predict_other(
+        self, other: VehicleObservation, track: Track, time_seconds: float,
+    ) -> BicyclePrediction:
         config = self.other_prediction_configs.get(other.vehicle_id)
         if config is None:
             raise ValueError(f"missing prediction configuration for {other.vehicle_id}")
+        if other.vehicle_id in self.gp_routes:
+            # 先估計沿 s 的速度；第一次沒有歷史時，以目前車速近似。
+            speed = other.state.velocity
+            previous = self.previous_gp_positions.get(other.vehicle_id)
+            if previous is not None and time_seconds > previous[1]:
+                distance = signed_longitudinal_gap(previous[0], other.track_position, track_length(track))
+                speed = max(0.0, distance / (time_seconds - previous[1]))
+            self.previous_gp_positions[other.vehicle_id] = (other.track_position, time_seconds)
+            return predict_gp_trajectory(
+                other, track, self.gp_routes[other.vehicle_id], speed,
+                self.config.prediction_horizon, config.model.time_step,
+            )
+        # 未指定 GP 的車保留原本的定速、等 d 自行車預測。
         maneuver = LateralManeuver(
             other.track_position.s, other.track_position.d,
             other.track_position.d, config.path.path_length,
@@ -237,6 +260,11 @@ class RelativeOvertakingStrategy:
     ) -> CandidateSnapshot:
         return CandidateSnapshot(
             evaluated_at=time_seconds, position=vehicle.track_position, distances=(),
+            # 直接交出碰撞檢查用的狀態，不在顯示端重新預測。
+            gp_predictions=tuple(
+                GpPredictionSnapshot(key, prediction.states, prediction.times)
+                for key, prediction in self.last_other_predictions.items() if key in self.gp_routes
+            ),
             candidates=tuple(
                 CandidatePath(
                     maneuver=candidate.maneuver, selected=candidate is best,

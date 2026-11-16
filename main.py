@@ -31,6 +31,7 @@ from strategy.offset_path import LateralManeuver, OffsetPathConfig, generate_off
 from strategy.overtaking import OvertakingConfig
 from strategy.progress import ProgressConfig, ProgressStrategy
 from strategy.relative_overtaking import RelativeOvertakingConfig, RelativeOvertakingStrategy
+from strategy.gp_prediction import load_gp_routes
 
 
 # ===== 常用參數集中在這裡：距離 m、速度 m/s、時間 s =====
@@ -64,6 +65,12 @@ STRATEGY_ASSIGNMENTS = {
     "vehicle-1": StrategyAssignment("relative_overtake"),
     "vehicle-2": StrategyAssignment("progress"),
  ##   "vehicle-3": StrategyAssignment("progress"),
+}
+
+# relative_overtake 用 GP 預測這些對手；其他車沿用原預測。
+GP_PREDICTION_ENABLED = True
+GP_MODEL_PATHS = {
+    "vehicle-2": "models/gp/20261111T064250Z_dbc5bc95/model.pkl",
 }
 
 MODEL_CONFIG = VehicleModelConfig(
@@ -176,6 +183,8 @@ def create_display_options(realtime: bool) -> VisualizationConfig:
         show_temporary_paths=True,
         show_candidate_paths=True,
         show_candidate_labels=False,
+        show_gp_predictions=True,       # 紫色點虛線：進攻車估計的對手 GP 軌跡。
+        show_gp_prediction_labels=True,
 
         # Controller and history information
         show_trajectories=True,
@@ -278,6 +287,15 @@ def run_simulation(
         for vehicle_id, start_s, target_speed in VEHICLE_SPECS
     ]
     validate_unique_vehicle_ids(vehicles)
+    gp_routes = {}
+    if GP_PREDICTION_ENABLED and any(
+        assignment.name == "relative_overtake" for assignment in STRATEGY_ASSIGNMENTS.values()
+    ):
+        paths = {key: path for key, path in GP_MODEL_PATHS.items()
+                 if key in {vehicle.vehicle_id for vehicle in vehicles}}
+        gp_routes = load_gp_routes(paths)
+        for vehicle_id, path in paths.items():
+            print(f"GP opponent prediction: {vehicle_id} ({path})")
     prediction_configs = {
         vehicle.vehicle_id: BicyclePredictionConfig(
             vehicle.model.config, vehicle.controller.config, OFFSET_PATH_CONFIG,
@@ -294,6 +312,7 @@ def run_simulation(
         ),
         "relative_overtake": lambda vehicle_id: RelativeOvertakingStrategy(
             RELATIVE_OVERTAKING_CONFIG, prediction_configs[vehicle_id], prediction_configs,
+            gp_routes=gp_routes,
         ),
     }
     manager = StrategyManager(

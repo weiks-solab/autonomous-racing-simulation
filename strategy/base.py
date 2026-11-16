@@ -26,6 +26,15 @@ class CandidatePath:
 
 
 @dataclass(frozen=True)
+class GpPredictionSnapshot:
+    """實際用於碰撞檢查的對手 GP 預測，只供視覺化讀取。"""
+
+    vehicle_id: str
+    states: tuple[VehicleState, ...]
+    times: tuple[float, ...]
+
+
+@dataclass(frozen=True)
 class CandidateSnapshot:
     """保留評估位置與結果；候選可提供取樣距離或完整預測狀態。"""
 
@@ -33,6 +42,7 @@ class CandidateSnapshot:
     position: TrackPosition
     distances: tuple[float, ...]
     candidates: tuple[CandidatePath, ...]
+    gp_predictions: tuple[GpPredictionSnapshot, ...] = ()
 
 
 @dataclass(frozen=True)

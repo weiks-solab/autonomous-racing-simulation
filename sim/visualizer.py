@@ -37,6 +37,8 @@ class VisualizationConfig:
     show_temporary_paths: bool = True
     show_candidate_paths: bool = True
     show_candidate_labels: bool = True
+    show_gp_predictions: bool = True
+    show_gp_prediction_labels: bool = True
 
     def __post_init__(self) -> None:
         if not math.isfinite(self.pause_seconds) or self.pause_seconds < 0.0:
@@ -98,6 +100,8 @@ class SimulationVisualizer:
             )
         self._vehicle_artists: dict[str, _VehicleArtists] = {}
         self._candidate_snapshots: dict[str, CandidateSnapshot] = {}
+        # 以「觀測者、對手」區分，多台進攻車的預測不互相覆蓋。
+        self._gp_prediction_artists: dict[tuple[str, str], _CandidateArtists] = {}
         if config.equal_axis:
             self.axes.set_aspect("equal", adjustable="box")
         displayed_track = np.vstack((left_boundary, right_boundary))
@@ -258,6 +262,7 @@ class SimulationVisualizer:
             )
             self._update_candidate_artists(vehicle_id, artists, snapshot, state)
 
+        self._update_gp_predictions(candidate_snapshots or {})
         if self.config.realtime:
             self.figure.canvas.draw_idle()
             self.figure.canvas.flush_events()
@@ -401,6 +406,46 @@ class SimulationVisualizer:
             label.set_horizontalalignment("right" if left else "left")
             label.set_position((-8 if left else 8, 13 * (rank - (len(points) - 1) / 2)))
 
+    def _update_gp_predictions(self, snapshots: Mapping[str, CandidateSnapshot]) -> None:
+        active = set()
+        for observer_id, snapshot in snapshots.items():
+            for prediction in snapshot.gp_predictions:
+                if not self.config.show_gp_predictions or not prediction.states:
+                    continue
+                key = (observer_id, prediction.vehicle_id)
+                active.add(key)
+                if key not in self._gp_prediction_artists:
+                    (line,) = self.axes.plot(
+                        [], [], color="tab:purple", linestyle="-.", linewidth=2.5,
+                        marker="o", markersize=5, markevery=[-1], zorder=6,
+                    )
+                    label = self.axes.annotate(
+                        "", xy=(0, 0), xytext=(8, 8), textcoords="offset points",
+                        color="tab:purple", fontsize=8, zorder=9,
+                        bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.85},
+                    )
+                    self._gp_prediction_artists[key] = _CandidateArtists(line, label)
+                artists = self._gp_prediction_artists[key]
+                artists.line.set_data([state.x for state in prediction.states],
+                                      [state.y for state in prediction.states])
+                artists.line.set_visible(True)
+                endpoint = prediction.states[-1]
+                artists.label.xy = (endpoint.x, endpoint.y)
+                # 靠右時把文字放到左邊，讓標籤留在畫面內。
+                on_right = endpoint.x > self._label_mid_x
+                artists.label.set_position((-8 if on_right else 8, 8))
+                artists.label.set_horizontalalignment("right" if on_right else "left")
+                artists.label.set_text(
+                    f"GP {observer_id} -> {prediction.vehicle_id}\n"
+                    f"@ {snapshot.evaluated_at:.2f}s, +{prediction.times[-1]:.2f}s"
+                )
+                artists.label.set_visible(self.config.show_gp_prediction_labels)
+        # 沒有新快照或停用 GP 時，隱藏舊預測；圖元保留供下次重用。
+        for key, artists in self._gp_prediction_artists.items():
+            if key not in active:
+                artists.line.set_visible(False)
+                artists.label.set_visible(False)
+
     def _update_legend(self) -> None:
         handles, _ = self.axes.get_legend_handles_labels()
         if self.config.show_candidate_paths:
@@ -409,6 +454,9 @@ class SimulationVisualizer:
                 Line2D([], [], color="0.4", linewidth=2.5, label="selected / tracking"),
                 Line2D([], [], color="0.5", linestyle=":", label="rejected candidate"),
             ))
+        if self.config.show_gp_predictions:
+            handles.append(Line2D([], [], color="tab:purple", linestyle="-.", linewidth=2.5,
+                                  marker="o", label="GP opponent prediction (end: circle)"))
         self.axes.legend(handles=handles, fontsize=8, loc="upper right")
 
     def _plot_closed_line(
