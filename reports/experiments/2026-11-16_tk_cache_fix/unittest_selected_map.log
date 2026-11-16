@@ -1,0 +1,21 @@
+........................................F..................................................................................................................................................................................................................................................................
+======================================================================
+FAIL: test_rule_based_scene_completes_two_laps_and_reports_defense (tests.test_defending_integration.DefendingIntegrationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\kevin\OneDrive\Desktop\project\racing_sim\tests\test_defending_integration.py", line 54, in test_rule_based_scene_completes_two_laps_and_reports_defense
+    self.assertGreater(float(np.sum(steps)) / length, 2.0)
+AssertionError: 0.45993933491810307 not greater than 2.0
+
+======================================================================
+FAIL: test_main_loads_models_once_and_can_disable_loading (tests.test_gp_prediction.GpPredictionTests) (enabled=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\kevin\OneDrive\Desktop\project\racing_sim\tests\test_gp_prediction.py", line 153, in test_main_loads_models_once_and_can_disable_loading
+    self.assertEqual(load.call_count, int(enabled))
+AssertionError: 0 != 1
+
+----------------------------------------------------------------------
+Ran 300 tests in 19.659s
+
+FAILED (failures=2)

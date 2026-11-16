@@ -1,11 +1,13 @@
 """Assemble vehicles and run their individually assigned driving strategies."""
 
 import argparse
+from dataclasses import replace
 import math
 
 from core.pure_pursuit import PurePursuitConfig, PurePursuitController
 from core.track import Track
 from core.track_factory import TrackConfig, create_track
+from core.track_loader import find_centerline
 from core.track_geometry import (
     TrackPosition,
     track_to_world,
@@ -21,6 +23,7 @@ from sim.simulated_vehicle import (
 )
 from sim.visualizer import SimulationVisualizer, VisualizationConfig
 from sim.strategy_history import StrategyHistory
+from sim.map_background import MapBackground, load_map_background
 from strategy.assignment import StrategyAssignment, StrategyManager
 from strategy.base import CandidateSnapshot
 from strategy.bicycle_prediction import BicyclePredictionConfig
@@ -38,8 +41,10 @@ from strategy.gp_prediction import load_gp_routes
 DEFENSE_ENABLED = True
 SIMULATION_SECONDS = 21.0
 
-# 只改 TRACK_NAME 即可換圖；兩種地圖共用路寬與取樣點數。
-TRACK_NAME = "rounded_rectangle"  # "rounded_rectangle" 或 "oval"
+# 只改 TRACK_NAME 即可換圖；下載圖沿用原本的多車與策略設定。
+TRACK_NAME = "Oschersleben"  # "rounded_rectangle"、"oval" 或 "Oschersleben" 等下載圖名。
+TRACK_MAP_ROOT = "external/f1tenth_racetracks"
+TRACK_SAMPLE_SPACING = 0.4  # 外部圖以公尺間距取樣；內建圖仍使用 TRACK_POINT_COUNT。
 TRACK_RECTANGLE_LENGTH = 20.0    # 中心線左右跨度，不含路寬
 TRACK_RECTANGLE_HEIGHT = 12.0    # 中心線上下跨度，不含路寬
 TRACK_CORNER_RADIUS = 3.0        # 四個 90 度彎的中心線半徑
@@ -155,6 +160,8 @@ def create_demo_track() -> Track:
     """Share the selected map with the simulation and training-data entry points."""
     return create_track(TrackConfig(
         name=TRACK_NAME,
+        map_root=TRACK_MAP_ROOT,
+        sample_spacing=TRACK_SAMPLE_SPACING,
         point_count=TRACK_POINT_COUNT,
         width=TRACK_WIDTH,
         rectangle_length=TRACK_RECTANGLE_LENGTH,
@@ -163,6 +170,14 @@ def create_demo_track() -> Track:
         semi_major_axis=TRACK_SEMI_MAJOR_AXIS,
         semi_minor_axis=TRACK_SEMI_MINOR_AXIS,
     ))
+
+
+def create_demo_background() -> MapBackground | None:
+    """Keep image metadata out of Track and the strategy interfaces."""
+    if TRACK_NAME in ("oval", "rounded_rectangle"):
+        return None
+    path = find_centerline(TRACK_NAME, TRACK_MAP_ROOT)
+    return load_map_background(path.with_name(path.name.replace("_centerline.csv", "_map.yaml")))
 
 
 def create_display_options(realtime: bool) -> VisualizationConfig:
@@ -288,7 +303,10 @@ def run_simulation(
     ]
     validate_unique_vehicle_ids(vehicles)
     gp_routes = {}
-    if GP_PREDICTION_ENABLED and any(
+    imported_track = TRACK_NAME not in ("oval", "rounded_rectangle")
+    if imported_track and GP_PREDICTION_ENABLED:
+        print("GP prediction disabled on imported tracks: the existing s-to-d model belongs to the old track.")
+    if not imported_track and GP_PREDICTION_ENABLED and any(
         assignment.name == "relative_overtake" for assignment in STRATEGY_ASSIGNMENTS.values()
     ):
         paths = {key: path for key, path in GP_MODEL_PATHS.items()
@@ -323,7 +341,12 @@ def run_simulation(
         defense_enabled=defense_enabled,
         strategy_factories=strategy_factories,
     )
-    visualizer = SimulationVisualizer(track, create_display_options(realtime))
+    display_options = create_display_options(realtime)
+    if imported_track:
+        display_options = replace(display_options, show_gp_predictions=False)
+    background = create_demo_background() if display_options.show_map_background else None
+    visualizer = (SimulationVisualizer(track, display_options) if background is None else
+                  SimulationVisualizer(track, display_options, background=background))
     histories = {vehicle.vehicle_id: StrategyHistory() for vehicle in vehicles}
     maneuvers: dict[str, LateralManeuver] = {}
     temporary_tracks: dict[str, Track] = {}

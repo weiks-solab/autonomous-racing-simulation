@@ -5,6 +5,7 @@ import math
 from typing import Collection, Mapping, Sequence
 
 import matplotlib.pyplot as plt
+from matplotlib.artist import Artist
 from matplotlib.lines import Line2D
 from matplotlib.patches import Polygon
 from matplotlib.text import Annotation, Text
@@ -16,6 +17,7 @@ from core.track_geometry import TrackPosition, track_boundaries
 from core.vehicle_geometry import VehicleGeometry, oriented_rectangle_corners
 from core.vehicle_state import VehicleState
 from sim.candidate_paths import candidate_path_label, candidate_path_points
+from sim.map_background import MapBackground
 from strategy.base import CandidateSnapshot
 
 
@@ -39,6 +41,7 @@ class VisualizationConfig:
     show_candidate_labels: bool = True
     show_gp_predictions: bool = True
     show_gp_prediction_labels: bool = True
+    show_map_background: bool = True
 
     def __post_init__(self) -> None:
         if not math.isfinite(self.pause_seconds) or self.pause_seconds < 0.0:
@@ -68,12 +71,19 @@ class _VehicleArtists:
 
 
 class SimulationVisualizer:
-    def __init__(self, track: Track, config: VisualizationConfig) -> None:
+    def __init__(
+        self, track: Track, config: VisualizationConfig,
+        background: MapBackground | None = None,
+    ) -> None:
         self.config = config
         self.track = track
         if config.realtime:
             plt.ion()
         self.figure, self.axes = plt.subplots(figsize=(10, 7))
+        self.map_artist = (
+            background.draw(self.axes)
+            if background is not None and config.show_map_background else None
+        )
         if config.show_centerline:
             self._plot_closed_line(
                 track.centerline,
@@ -117,6 +127,15 @@ class SimulationVisualizer:
         self.axes.set_ylabel("y [m]")
         self.axes.set_title("Racing Overtake Simulator")
         self._update_legend()
+        self._background = None
+        # 線條仍依原 zorder 重畫，避免車身遮住本來位於上層的賽道邊界。
+        self._static_artists = set(self.axes.get_children()) - set(self.axes.lines)
+        self._use_blit = config.realtime and self.figure.canvas.supports_blit
+        if self._use_blit:
+            self.figure.canvas.mpl_connect("draw_event", self._cache_background)
+            self.figure.canvas.mpl_connect("resize_event", self._invalidate_background)
+            self.axes.callbacks.connect("xlim_changed", self._invalidate_background)
+            self.axes.callbacks.connect("ylim_changed", self._invalidate_background)
 
     def update(
         self,
@@ -264,9 +283,46 @@ class SimulationVisualizer:
 
         self._update_gp_predictions(candidate_snapshots or {})
         if self.config.realtime:
-            self.figure.canvas.draw_idle()
+            if self._use_blit:
+                # 新增的車輛、候選與圖例只重畫自身，PNG 與座標軸沿用快取。
+                for artist in self._dynamic_artists():
+                    artist.set_animated(True)
+                if self._background is None:
+                    self.figure.canvas.draw()
+                else:
+                    self.figure.canvas.restore_region(self._background)
+                    self._draw_dynamic_artists()
+                self.figure.canvas.blit(self.figure.bbox)
+            else:
+                self.figure.canvas.draw_idle()
             self.figure.canvas.flush_events()
-            plt.pause(self.config.pause_seconds)
+            if self._use_blit:
+                # pause() 會再次 show，TkAgg 因而要求完整重畫；此處只處理事件。
+                if self.config.pause_seconds > 0.0:
+                    self.figure.canvas.start_event_loop(self.config.pause_seconds)
+            else:
+                plt.pause(self.config.pause_seconds)
+
+    def _dynamic_artists(self) -> list[Artist]:
+        return sorted(
+            (artist for artist in self.axes.get_children() if artist not in self._static_artists),
+            key=lambda artist: artist.get_zorder(),
+        )
+
+    def _draw_dynamic_artists(self) -> None:
+        for artist in self._dynamic_artists():
+            if artist.get_visible():
+                self.axes.draw_artist(artist)
+
+    def _invalidate_background(self, _event: object = None) -> None:
+        self._background = None
+
+    def _cache_background(self, _event: object) -> None:
+        # 存圖使用完整畫面；縮放後則以新尺寸重新建立背景。
+        self._background = None
+        if self._use_blit and not self.figure.canvas.is_saving():
+            self._background = self.figure.canvas.copy_from_bbox(self.figure.bbox)
+            self._draw_dynamic_artists()
 
     def _create_vehicle_artists(self, vehicle_id: str) -> _VehicleArtists:
         color = plt.get_cmap("tab10")(len(self._vehicle_artists) % 10)
@@ -447,6 +503,7 @@ class SimulationVisualizer:
                 artists.label.set_visible(False)
 
     def _update_legend(self) -> None:
+        self._invalidate_background()
         handles, _ = self.axes.get_legend_handles_labels()
         if self.config.show_candidate_paths:
             handles.extend((
@@ -476,6 +533,9 @@ class SimulationVisualizer:
         )
 
     def show(self) -> None:
+        self._use_blit = False
+        for artist in self._dynamic_artists():
+            artist.set_animated(False)
         self.figure.tight_layout()
         if self.config.realtime:
             plt.ioff()

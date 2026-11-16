@@ -215,6 +215,43 @@ TRACK_NAME = "rounded_rectangle"  # 四段直道＋四個 90 度圓弧
 資料匯出仍保存實際中心線、路寬與封閉設定。車輛位置更新、`s/d` 投影、Pure Pursuit
 與每車策略介面沿用原有方式。改變彎道尺寸後仍應檢查追蹤誤差，必要時調整速度與前視距離。
 
+## 接入下載的 F1TENTH 地圖與 PNG 背景
+
+在 `main.py` 只改原有的地圖選項：
+
+```python
+TRACK_NAME = "Oschersleben"  # 或 "oval"、"rounded_rectangle"、其他下載圖的資料夾名稱。
+```
+
+執行原本的命令：
+
+```powershell
+.\.venv\Scripts\python.exe main.py --realtime
+```
+
+車數、起點、速度與策略繼續使用 `VEHICLE_SPECS`、`STRATEGY_ASSIGNMENTS`。
+模擬和資料收集沿用 `create_demo_track()`；`Track`、策略／控制器介面與資料格式維持原樣。
+前一版增加的單車入口、額外命令列選項及結果匯出功能已撤回，先前證據仍保留於 reports。
+
+原始地圖須放在 `external/f1tenth_racetracks/<圖名>/`，包含 `*_centerline.csv`、
+`*_map.yaml` 與對應 PNG；資料夾含空格時直接填入完整名稱，例如 `"Mexico City"`。
+外部圖使用 CSV 的公尺座標及固定對稱路寬（本批共 2.2 m），依 `TRACK_SAMPLE_SPACING`
+重採樣，預設 0.4 m；不套用內建圖的 `TRACK_WIDTH` 或 `TRACK_POINT_COUNT`。
+下載資料本身已是 F1TENTH 尺度，不再次縮小。
+
+PNG 依 YAML 解析度、原點與 yaw 疊加；可在既有 `create_display_options()`
+設定 `show_map_background=False` 關閉。影像只用於顯示，邊界仍採 CSV 路寬。
+即時模式自動快取 PNG 與座標軸背景，縮放後重建；存圖仍完整繪製，不支援 blitting 的後端沿用原方式。
+量測與限制見 [背景快取紀錄](reports/experiments/2026-11-16_background_cache/README.md)。
+TkAgg 快取分支已改用 canvas 事件迴圈，避免 `plt.pause()` 再次 show。
+前次 8.38 ms 是無 GUI 量測；本次修正與真實 Tk 視窗的驗證限制見 [修正紀錄](reports/experiments/2026-11-16_tk_cache_fix/README.md)。
+下載圖停用舊賽道的 s→d GP，沿用原有幾何對手預測，避免跨圖誤用舊模型。
+
+縮減後已重新驗證原有雙車配置在新圖執行；此場有偵測到兩車碰撞。
+設定、結果圖與測試狀態見 [最小接入紀錄](reports/experiments/2026-11-16_map_minimal/README.md)。
+原始地圖與本機環境被 Git 忽略，其他機器需另行取得；來源版本及雜湊見
+[先前地圖盤點](reports/experiments/2026-11-16_map_import/map_inventory.json)。
+
 ## 查看攻防候選路徑
 
 使用即時模式，可以看到進攻與防守決策的候選曲線：

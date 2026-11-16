@@ -1,0 +1,480 @@
+{
+  "date": "2026-11-16",
+  "branch": "master",
+  "base_commit": "1955cacea110dc57ef6dfeea293a521e549f1b8e",
+  "version_note": "基於 base_commit，含未提交修改。",
+  "scope": "各案例只執行一次，2 秒／100 步；Agg 每步強制重畫，無 GUI 等待，非實際 GUI FPS。",
+  "cases": [
+    {
+      "name": "rounded_rectangle",
+      "png": false,
+      "gp_enabled": true,
+      "track_points": 500,
+      "wall_seconds": 4.463191499991808,
+      "timings": {
+        "planner_all_steps": {
+          "calls": 100,
+          "total_ms": 1915.3395998291671,
+          "mean_ms": 19.15339599829167,
+          "p50_ms": 0.011299998732283711,
+          "p95_ms": 106.90069503034465,
+          "max_ms": 108.43949997797608
+        },
+        "planner_replan": {
+          "calls": 18,
+          "total_ms": 1914.4310000701807,
+          "mean_ms": 106.35727778167671,
+          "p50_ms": 106.37895000400022,
+          "p95_ms": 107.91071500862017,
+          "max_ms": 108.43949997797608
+        },
+        "planner_reuse": {
+          "calls": 82,
+          "total_ms": 0.9085997589863837,
+          "mean_ms": 0.011080484865687606,
+          "p50_ms": 0.010899966582655907,
+          "p95_ms": 0.01368998782709241,
+          "max_ms": 0.015700003132224083
+        },
+        "update_artists": {
+          "calls": 100,
+          "total_ms": 39.30870012845844,
+          "mean_ms": 0.3930870012845844,
+          "p50_ms": 0.15239999629557133,
+          "p95_ms": 0.9044900129083544,
+          "max_ms": 12.887899996712804
+        },
+        "draw": {
+          "calls": 100,
+          "total_ms": 1768.5848998371512,
+          "mean_ms": 17.68584899837151,
+          "p50_ms": 17.39935000659898,
+          "p95_ms": 18.548169996938668,
+          "max_ms": 32.94359997380525
+        },
+        "simulation_step_with_frame": {
+          "calls": 100,
+          "total_ms": 3764.3837998621166,
+          "mean_ms": 37.643837998621166,
+          "p50_ms": 17.98689999850467,
+          "p95_ms": 126.7636299948208,
+          "max_ms": 153.9904000237584
+        }
+      }
+    },
+    {
+      "name": "rounded_rectangle",
+      "png": false,
+      "gp_enabled": false,
+      "track_points": 500,
+      "wall_seconds": 3.7579252999858,
+      "timings": {
+        "planner_all_steps": {
+          "calls": 100,
+          "total_ms": 1984.0087000629865,
+          "mean_ms": 19.840087000629865,
+          "p50_ms": 0.011199997970834374,
+          "p95_ms": 110.55702496669255,
+          "max_ms": 121.2715000147
+        },
+        "planner_replan": {
+          "calls": 18,
+          "total_ms": 1983.087000087835,
+          "mean_ms": 110.17150000487972,
+          "p50_ms": 109.59264999837615,
+          "p95_ms": 114.74307497846893,
+          "max_ms": 121.2715000147
+        },
+        "planner_reuse": {
+          "calls": 82,
+          "total_ms": 0.9216999751515687,
+          "mean_ms": 0.011240243599409373,
+          "p50_ms": 0.01079996582120657,
+          "p95_ms": 0.014944997383281592,
+          "max_ms": 0.02169999061152339
+        },
+        "update_artists": {
+          "calls": 100,
+          "total_ms": 55.83059979835525,
+          "mean_ms": 0.5583059979835525,
+          "p50_ms": 0.13744999887421727,
+          "p95_ms": 0.8228649734519422,
+          "max_ms": 31.428799964487553
+        },
+        "draw": {
+          "calls": 100,
+          "total_ms": 1656.6857004654594,
+          "mean_ms": 16.566857004654594,
+          "p50_ms": 16.3198999944143,
+          "p95_ms": 17.667255000560544,
+          "max_ms": 25.994400028139353
+        },
+        "simulation_step_with_frame": {
+          "calls": 100,
+          "total_ms": 3737.3611004441045,
+          "mean_ms": 37.373611004441045,
+          "p50_ms": 16.882600029930472,
+          "p95_ms": 130.28949001454748,
+          "max_ms": 166.84110002825037
+        }
+      }
+    },
+    {
+      "name": "Oschersleben",
+      "png": false,
+      "gp_enabled": false,
+      "track_points": 652,
+      "wall_seconds": 3.653102200012654,
+      "timings": {
+        "planner_all_steps": {
+          "calls": 100,
+          "total_ms": 2083.888100052718,
+          "mean_ms": 20.83888100052718,
+          "p50_ms": 0.011600001016631722,
+          "p95_ms": 116.09840499004349,
+          "max_ms": 126.34149997029454
+        },
+        "planner_replan": {
+          "calls": 18,
+          "total_ms": 2082.959799969103,
+          "mean_ms": 115.7199888871724,
+          "p50_ms": 114.81599998660386,
+          "p95_ms": 120.07615000766235,
+          "max_ms": 126.34149997029454
+        },
+        "planner_reuse": {
+          "calls": 82,
+          "total_ms": 0.9283000836148858,
+          "mean_ms": 0.011320732727010802,
+          "p50_ms": 0.010600022505968809,
+          "p95_ms": 0.015685003018006682,
+          "max_ms": 0.017300015315413475
+        },
+        "update_artists": {
+          "calls": 100,
+          "total_ms": 35.511799913365394,
+          "mean_ms": 0.35511799913365394,
+          "p50_ms": 0.13854997814632952,
+          "p95_ms": 0.8723449922399594,
+          "max_ms": 10.39060001494363
+        },
+        "draw": {
+          "calls": 100,
+          "total_ms": 1465.0202002958395,
+          "mean_ms": 14.650202002958395,
+          "p50_ms": 14.472800015937537,
+          "p95_ms": 15.621980026480742,
+          "max_ms": 22.478399972897023
+        },
+        "simulation_step_with_frame": {
+          "calls": 100,
+          "total_ms": 3626.696500228718,
+          "mean_ms": 36.26696500228718,
+          "p50_ms": 15.091300010681152,
+          "p95_ms": 132.8538949805079,
+          "max_ms": 146.3571999920532
+        }
+      }
+    },
+    {
+      "name": "Oschersleben",
+      "png": true,
+      "gp_enabled": false,
+      "track_points": 652,
+      "wall_seconds": 16.266440300038084,
+      "timings": {
+        "planner_all_steps": {
+          "calls": 100,
+          "total_ms": 2118.373900128063,
+          "mean_ms": 21.183739001280628,
+          "p50_ms": 0.015300000086426735,
+          "p95_ms": 116.82229501020629,
+          "max_ms": 134.3442000215873
+        },
+        "planner_replan": {
+          "calls": 18,
+          "total_ms": 2117.1190001186915,
+          "mean_ms": 117.61772222881619,
+          "p50_ms": 115.80219995812513,
+          "p95_ms": 129.39788000949193,
+          "max_ms": 134.3442000215873
+        },
+        "planner_reuse": {
+          "calls": 82,
+          "total_ms": 1.2549000093713403,
+          "mean_ms": 0.015303658650870003,
+          "p50_ms": 0.015099998563528061,
+          "p95_ms": 0.016200006939470768,
+          "max_ms": 0.02570002106949687
+        },
+        "update_artists": {
+          "calls": 100,
+          "total_ms": 37.778499943669885,
+          "mean_ms": 0.37778499943669885,
+          "p50_ms": 0.159399991389364,
+          "p95_ms": 0.8570650039473549,
+          "max_ms": 11.01140002720058
+        },
+        "draw": {
+          "calls": 100,
+          "total_ms": 14013.643800280988,
+          "mean_ms": 140.13643800280988,
+          "p50_ms": 139.39374999608845,
+          "p95_ms": 146.94844501500484,
+          "max_ms": 159.44179997313768
+        },
+        "simulation_step_with_frame": {
+          "calls": 100,
+          "total_ms": 16214.980800345074,
+          "mean_ms": 162.14980800345074,
+          "p50_ms": 140.5491500045173,
+          "p95_ms": 261.97491503553465,
+          "max_ms": 275.81399999326095
+        }
+      }
+    }
+  ],
+  "profile_total_seconds": 3.2102794999999986,
+  "profile_functions": [
+    {
+      "file": "main.py",
+      "line": 294,
+      "function": "run_simulation",
+      "calls": 1,
+      "self_seconds": 0.0009012,
+      "cumulative_seconds": 3.248208
+    },
+    {
+      "file": "strategy/assignment.py",
+      "line": 194,
+      "function": "update",
+      "calls": 100,
+      "self_seconds": 0.0006085,
+      "cumulative_seconds": 3.1751752000000004
+    },
+    {
+      "file": "strategy/bicycle_prediction.py",
+      "line": 31,
+      "function": "predict_bicycle_trajectory",
+      "calls": 270,
+      "self_seconds": 0.0473014,
+      "cumulative_seconds": 3.0506046
+    },
+    {
+      "file": "strategy/relative_overtaking.py",
+      "line": 93,
+      "function": "update",
+      "calls": 100,
+      "self_seconds": 0.0009084000000000001,
+      "cumulative_seconds": 1.7075883
+    },
+    {
+      "file": "strategy/relative_overtaking.py",
+      "line": 127,
+      "function": "<genexpr>",
+      "calls": 180,
+      "self_seconds": 0.00010870000000000001,
+      "cumulative_seconds": 1.5474365
+    },
+    {
+      "file": "strategy/relative_overtaking.py",
+      "line": 233,
+      "function": "_evaluate_candidate",
+      "calls": 162,
+      "self_seconds": 0.0007822,
+      "cumulative_seconds": 1.5473278000000001
+    },
+    {
+      "file": "strategy/offset_path.py",
+      "line": 105,
+      "function": "generate_offset_track",
+      "calls": 14150,
+      "self_seconds": 0.11007230000000001,
+      "cumulative_seconds": 1.482698
+    },
+    {
+      "file": "strategy/progress.py",
+      "line": 55,
+      "function": "update",
+      "calls": 100,
+      "self_seconds": 0.0006197,
+      "cumulative_seconds": 1.4667329
+    },
+    {
+      "file": "strategy/progress.py",
+      "line": 72,
+      "function": "<genexpr>",
+      "calls": 108,
+      "self_seconds": 6.0200000000000006e-05,
+      "cumulative_seconds": 1.4656785
+    },
+    {
+      "file": "strategy/progress.py",
+      "line": 111,
+      "function": "_evaluate_candidate",
+      "calls": 90,
+      "self_seconds": 0.00036770000000000005,
+      "cumulative_seconds": 1.4656183
+    },
+    {
+      "file": "core/track_geometry.py",
+      "line": 83,
+      "function": "world_to_track",
+      "calls": 14154,
+      "self_seconds": 0.2922843,
+      "cumulative_seconds": 0.7563817
+    },
+    {
+      "file": "core/track_geometry.py",
+      "line": 136,
+      "function": "track_to_world_points",
+      "calls": 14150,
+      "self_seconds": 0.23373890000000003,
+      "cumulative_seconds": 0.7183874
+    },
+    {
+      "file": "core/pure_pursuit.py",
+      "line": 52,
+      "function": "compute_command",
+      "calls": 14150,
+      "self_seconds": 0.0356965,
+      "cumulative_seconds": 0.6898161
+    },
+    {
+      "file": "core/track_geometry.py",
+      "line": 63,
+      "function": "_segments",
+      "calls": 42797,
+      "self_seconds": 0.0860415,
+      "cumulative_seconds": 0.6759297000000001
+    },
+    {
+      "file": ".venv/lib/site-packages/numpy/linalg/_linalg.py",
+      "line": 2575,
+      "function": "norm",
+      "calls": 203745,
+      "self_seconds": 0.31831010000000004,
+      "cumulative_seconds": 0.6366862000000001
+    },
+    {
+      "file": "core/pure_pursuit.py",
+      "line": 83,
+      "function": "_find_target",
+      "calls": 14150,
+      "self_seconds": 0.0211911,
+      "cumulative_seconds": 0.6078901
+    },
+    {
+      "file": "core/track.py",
+      "line": 67,
+      "function": "forward_point_index",
+      "calls": 14150,
+      "self_seconds": 0.14160250000000002,
+      "cumulative_seconds": 0.460199
+    },
+    {
+      "file": "core/track_geometry.py",
+      "line": 78,
+      "function": "track_length",
+      "calls": 14489,
+      "self_seconds": 0.013754400000000002,
+      "cumulative_seconds": 0.287816
+    },
+    {
+      "file": ".venv/lib/site-packages/numpy/_core/numeric.py",
+      "line": 1185,
+      "function": "roll",
+      "calls": 42798,
+      "self_seconds": 0.210131,
+      "cumulative_seconds": 0.28118930000000003
+    },
+    {
+      "file": ".venv/lib/site-packages/numpy/_core/fromnumeric.py",
+      "line": 51,
+      "function": "_wrapfunc",
+      "calls": 113221,
+      "self_seconds": 0.044075500000000004,
+      "cumulative_seconds": 0.2509079
+    },
+    {
+      "file": "core/track.py",
+      "line": 16,
+      "function": "__post_init__",
+      "calls": 14151,
+      "self_seconds": 0.0734912,
+      "cumulative_seconds": 0.24977300000000002
+    },
+    {
+      "file": "strategy/relative_overtaking.py",
+      "line": 116,
+      "function": "<dictcomp>",
+      "calls": 18,
+      "self_seconds": 2.19e-05,
+      "cumulative_seconds": 0.1572983
+    },
+    {
+      "file": "strategy/relative_overtaking.py",
+      "line": 197,
+      "function": "_predict_other",
+      "calls": 18,
+      "self_seconds": 6.730000000000001e-05,
+      "cumulative_seconds": 0.1572764
+    },
+    {
+      "file": ".venv/lib/site-packages/numpy/_core/fromnumeric.py",
+      "line": 2241,
+      "function": "clip",
+      "calls": 42454,
+      "self_seconds": 0.026785200000000002,
+      "cumulative_seconds": 0.1544483
+    },
+    {
+      "file": "strategy/collision_check.py",
+      "line": 30,
+      "function": "first_predicted_collision",
+      "calls": 162,
+      "self_seconds": 0.0041669,
+      "cumulative_seconds": 0.1165814
+    },
+    {
+      "file": "core/vehicle_geometry.py",
+      "line": 77,
+      "function": "rectangles_overlap",
+      "calls": 6742,
+      "self_seconds": 0.020324000000000002,
+      "cumulative_seconds": 0.11373090000000001
+    },
+    {
+      "file": "core/track.py",
+      "line": 61,
+      "function": "nearest_point_index",
+      "calls": 14150,
+      "self_seconds": 0.0442036,
+      "cumulative_seconds": 0.098612
+    },
+    {
+      "file": ".venv/lib/site-packages/numpy/_core/fromnumeric.py",
+      "line": 89,
+      "function": "_wrapreduction_any_all",
+      "calls": 56605,
+      "self_seconds": 0.0374176,
+      "cumulative_seconds": 0.0967143
+    },
+    {
+      "file": ".venv/lib/site-packages/numpy/_core/_methods.py",
+      "line": 99,
+      "function": "_clip",
+      "calls": 42454,
+      "self_seconds": 0.0690173,
+      "cumulative_seconds": 0.09560650000000001
+    },
+    {
+      "file": ".venv/lib/site-packages/numpy/_core/fromnumeric.py",
+      "line": 2589,
+      "function": "all",
+      "calls": 42453,
+      "self_seconds": 0.0177223,
+      "cumulative_seconds": 0.09174990000000001
+    }
+  ]
+}

@@ -1,0 +1,494 @@
+{
+  "date": "2026-11-16",
+  "branch": "master",
+  "base_commit": "1955cacea110dc57ef6dfeea293a521e549f1b8e",
+  "version_note": "基於 base_commit，含未提交修改。",
+  "scope": "靜態載入與像素對齊；非所有地圖循跡驗證。",
+  "upstream_repository": "https://github.com/f1tenth/f1tenth_racetracks.git",
+  "upstream_commit": "b95c4eff766f6367d66b310ea20cd2c9563712c0",
+  "maps": [
+    {
+      "name": "Austin",
+      "source": "external/f1tenth_racetracks/Austin/Austin_centerline.csv",
+      "centerline_file_sha256": "d92d63a1be37b7f6fe420b725883df20d9c78564531ea8e38f3540ed121294d4",
+      "point_count": 1053,
+      "length_m": 420.86479588021973,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.08089,
+      "origin": [
+        -21.25772567260448,
+        -70.80398789934522,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 1053,
+      "centerline_samples_on_light_pixels": 1053
+    },
+    {
+      "name": "BrandsHatch",
+      "source": "external/f1tenth_racetracks/BrandsHatch/BrandsHatch_centerline.csv",
+      "centerline_file_sha256": "3f5031dc5e80e14a15f2f574b0a79e034e2f25451672a49f7c77951d383f6858",
+      "point_count": 891,
+      "length_m": 356.2343813057498,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.05005,
+      "origin": [
+        -39.42711136508635,
+        -88.20832098289893,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 891,
+      "centerline_samples_on_light_pixels": 891
+    },
+    {
+      "name": "Budapest",
+      "source": "external/f1tenth_racetracks/Budapest/Budapest_centerline.csv",
+      "centerline_file_sha256": "2e63ef506d39f9812ce6ea1dec3212166993e4f553993f80c0c861037057b3c3",
+      "point_count": 1007,
+      "length_m": 402.47617015164656,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.06446,
+      "origin": [
+        -60.229461062734515,
+        -21.68761063512184,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 1007,
+      "centerline_samples_on_light_pixels": 1007
+    },
+    {
+      "name": "Catalunya",
+      "source": "external/f1tenth_racetracks/Catalunya/Catalunya_centerline.csv",
+      "centerline_file_sha256": "49aceaa39a1326ac94e7f0236bff13b9cbbebe5f8654dde1613c2422dd63107e",
+      "point_count": 1042,
+      "length_m": 416.650963892621,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.06016,
+      "origin": [
+        -91.90749878749725,
+        -75.75284314488522,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 1042,
+      "centerline_samples_on_light_pixels": 1042
+    },
+    {
+      "name": "Hockenheim",
+      "source": "external/f1tenth_racetracks/Hockenheim/Hockenheim_centerline.csv",
+      "centerline_file_sha256": "57a18172b356ad16fbd499a30b4657d85c21d206754e19c84c72e7ff62ae1a80",
+      "point_count": 900,
+      "length_m": 359.7110804498076,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.06702,
+      "origin": [
+        -19.911213834397966,
+        -50.87622999687852,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 900,
+      "centerline_samples_on_light_pixels": 900
+    },
+    {
+      "name": "IMS",
+      "source": "external/f1tenth_racetracks/IMS/IMS_centerline.csv",
+      "centerline_file_sha256": "f67add1c21116f484e3a5022ebbed8a1bc27a93ddec2aef43a051fe3443c42ee",
+      "point_count": 733,
+      "length_m": 293.0935091767111,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.06367,
+      "origin": [
+        -39.03821531719723,
+        -49.23719918529264,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 733,
+      "centerline_samples_on_light_pixels": 733
+    },
+    {
+      "name": "Melbourne",
+      "source": "external/f1tenth_racetracks/Melbourne/Melbourne_centerline.csv",
+      "centerline_file_sha256": "fc7e88a411f54d6d0df0421d2421bee4f4edfd510aacf285815b0a818cf6b91f",
+      "point_count": 1186,
+      "length_m": 474.16091176936754,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.09009,
+      "origin": [
+        -81.75675943118459,
+        -49.98378618463543,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 1186,
+      "centerline_samples_on_light_pixels": 1186
+    },
+    {
+      "name": "Mexico City",
+      "source": "external/f1tenth_racetracks/Mexico City/MexicoCity_centerline.csv",
+      "centerline_file_sha256": "5d3792ee722f8e8396ed661bc2f6a7140aacf5fafacae222fc23bba2a8af3c80",
+      "point_count": 892,
+      "length_m": 356.47154795710844,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.06991,
+      "origin": [
+        -47.26438405496835,
+        -110.2481836331018,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 892,
+      "centerline_samples_on_light_pixels": 892
+    },
+    {
+      "name": "Montreal",
+      "source": "external/f1tenth_racetracks/Montreal/Montreal_centerline.csv",
+      "centerline_file_sha256": "075a238f5e2a05cb47fc010936e8ae72174705ad2a45358083e0a3d20e2b96f0",
+      "point_count": 713,
+      "length_m": 284.9253659433052,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.07134,
+      "origin": [
+        -89.38488117741169,
+        -31.937534079976547,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 713,
+      "centerline_samples_on_light_pixels": 713
+    },
+    {
+      "name": "Monza",
+      "source": "external/f1tenth_racetracks/Monza/Monza_centerline.csv",
+      "centerline_file_sha256": "35009ee8a3f3a0abf35d98d13d4c603b7a6f4abe02a984f4727547891b1e40d8",
+      "point_count": 1116,
+      "length_m": 446.0088827202194,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.09585,
+      "origin": [
+        -49.83928924498067,
+        -50.50904922690367,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 1116,
+      "centerline_samples_on_light_pixels": 1116
+    },
+    {
+      "name": "MoscowRaceway",
+      "source": "external/f1tenth_racetracks/MoscowRaceway/MoscowRaceway_centerline.csv",
+      "centerline_file_sha256": "517269614cfa2edc8ac7dea835c3dbc551ac39354af14dfc5d19f7dc6f63b939",
+      "point_count": 807,
+      "length_m": 322.5856781852252,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.0554,
+      "origin": [
+        -100.98046127566786,
+        -36.346689411228084,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 807,
+      "centerline_samples_on_light_pixels": 807
+    },
+    {
+      "name": "Nuerburgring",
+      "source": "external/f1tenth_racetracks/Nuerburgring/Nuerburgring_centerline.csv",
+      "centerline_file_sha256": "cdfeee48c86728abac3416c236a60f04859c159aa48f04292e164c61ecc9b68c",
+      "point_count": 1116,
+      "length_m": 446.0147151916864,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.07542,
+      "origin": [
+        -98.11326416920916,
+        -106.53776182200401,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 1116,
+      "centerline_samples_on_light_pixels": 1116
+    },
+    {
+      "name": "Oschersleben",
+      "source": "external/f1tenth_racetracks/Oschersleben/Oschersleben_centerline.csv",
+      "centerline_file_sha256": "62c95fb30fc5d24384fc4c6d307c48ae1a58cea47298c9f2b359c30e8a8cc003",
+      "point_count": 652,
+      "length_m": 260.6322331536404,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.04295,
+      "origin": [
+        -55.07650228661655,
+        -33.57884064395765,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 652,
+      "centerline_samples_on_light_pixels": 652
+    },
+    {
+      "name": "Sakhir",
+      "source": "external/f1tenth_racetracks/Sakhir/Sakhir_centerline.csv",
+      "centerline_file_sha256": "a1b2537ce1bc924eb605464306d41ce762dae7f8fa289f57e84eee1eccfffa8e",
+      "point_count": 1105,
+      "length_m": 441.7566188410167,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.05695,
+      "origin": [
+        -26.16613846019197,
+        -46.60161969973893,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 1105,
+      "centerline_samples_on_light_pixels": 1105
+    },
+    {
+      "name": "SaoPaulo",
+      "source": "external/f1tenth_racetracks/SaoPaulo/SaoPaulo_centerline.csv",
+      "centerline_file_sha256": "1c82b4219546a9455a7787f084444ec3f861a6f9ee1c28079a48dd3300c8edd0",
+      "point_count": 862,
+      "length_m": 344.642684485019,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.04877,
+      "origin": [
+        -27.988851027944648,
+        -33.41588383183014,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 862,
+      "centerline_samples_on_light_pixels": 862
+    },
+    {
+      "name": "Sepang",
+      "source": "external/f1tenth_racetracks/Sepang/Sepang_centerline.csv",
+      "centerline_file_sha256": "f32a869b1bfa4e7b24d53157aeb9954f0567f913915005e99320f9ab2956937d",
+      "point_count": 1218,
+      "length_m": 486.84475420534784,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.05944,
+      "origin": [
+        -66.15462837870969,
+        -58.7392475352799,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 1218,
+      "centerline_samples_on_light_pixels": 1218
+    },
+    {
+      "name": "Shanghai",
+      "source": "external/f1tenth_racetracks/Shanghai/Shanghai_centerline.csv",
+      "centerline_file_sha256": "8628b44a1c461e7e2e8c7f01017e42e0811968a61f3af967743fae76fc376e86",
+      "point_count": 1245,
+      "length_m": 497.422508302858,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.06505,
+      "origin": [
+        -75.7934346866365,
+        -35.95358066976158,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 1245,
+      "centerline_samples_on_light_pixels": 1245
+    },
+    {
+      "name": "Silverstone",
+      "source": "external/f1tenth_racetracks/Silverstone/Silverstone_centerline.csv",
+      "centerline_file_sha256": "4abf0f78b3264bd08e989370cf006343abd7c70862245ab4f4ea2e8ce98444ab",
+      "point_count": 1145,
+      "length_m": 457.8485160247384,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.07712,
+      "origin": [
+        -43.82482139791572,
+        -52.30388391024793,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 1145,
+      "centerline_samples_on_light_pixels": 1145
+    },
+    {
+      "name": "Sochi",
+      "source": "external/f1tenth_racetracks/Sochi/Sochi_centerline.csv",
+      "centerline_file_sha256": "1ceb91463e99a69f9abdbdbc3d79d64ff679341dee9a9ab6d0b4250c5b297a1b",
+      "point_count": 1160,
+      "length_m": 463.6694756090534,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.08501,
+      "origin": [
+        -156.29705697778897,
+        -120.87730224217698,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 1160,
+      "centerline_samples_on_light_pixels": 1160
+    },
+    {
+      "name": "Spa",
+      "source": "external/f1tenth_racetracks/Spa/Spa_centerline.csv",
+      "centerline_file_sha256": "57a09665fe88b421389b29b00b93ce35dc9eb4d1c7052625c1fa8dcfe068670c",
+      "point_count": 1387,
+      "length_m": 554.3243352863954,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.09267,
+      "origin": [
+        -76.27387694462932,
+        -147.33397683885576,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 1387,
+      "centerline_samples_on_light_pixels": 1387
+    },
+    {
+      "name": "Spielberg",
+      "source": "external/f1tenth_racetracks/Spielberg/Spielberg_centerline.csv",
+      "centerline_file_sha256": "5885a2229a8c8b0849e438aceae864e08496292ecb72943462c31bdf58b3d764",
+      "point_count": 859,
+      "length_m": 343.2193253432195,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.05796,
+      "origin": [
+        -84.85359914210505,
+        -36.30299725862132,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 859,
+      "centerline_samples_on_light_pixels": 859
+    },
+    {
+      "name": "YasMarina",
+      "source": "external/f1tenth_racetracks/YasMarina/YasMarina_centerline.csv",
+      "centerline_file_sha256": "647175fbb46494862741779fc4c5e93e10659c630a7819ab948f440d337aa064",
+      "point_count": 996,
+      "length_m": 397.78094357049827,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.07314,
+      "origin": [
+        -63.668374337708805,
+        -64.68282000152614,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 996,
+      "centerline_samples_on_light_pixels": 996
+    },
+    {
+      "name": "Zandvoort",
+      "source": "external/f1tenth_racetracks/Zandvoort/Zandvoort_centerline.csv",
+      "centerline_file_sha256": "09a172c281cb5adc81dccca460a092d4b46c393754a0f0a5353464b609527954",
+      "point_count": 970,
+      "length_m": 387.8515703488133,
+      "width_m": 2.2,
+      "sample_spacing_m": 0.4,
+      "resolution_m_per_pixel": 0.05109,
+      "origin": [
+        -19.704744951133563,
+        -57.90249552267154,
+        0.0
+      ],
+      "image_shape": [
+        2000,
+        2000
+      ],
+      "centerline_samples_inside_image": 970,
+      "centerline_samples_on_light_pixels": 970
+    }
+  ]
+}

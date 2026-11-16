@@ -1,0 +1,136 @@
+{
+  "vehicles": {
+    "vehicle-1": {
+      "sample_count": 1051,
+      "strategy": "relative_overtake",
+      "progress_m": 207.08219451539543,
+      "max_abs_d_m": 0.8641375763316228,
+      "initial_state": {
+        "x": 0.0,
+        "y": 0.0,
+        "yaw": 2.8573275895054557,
+        "velocity": 0.0
+      },
+      "final_state": {
+        "x": 8.723458819098639,
+        "y": 11.029035454074021,
+        "yaw": -0.1040345934795617,
+        "velocity": 10.0
+      }
+    },
+    "vehicle-2": {
+      "sample_count": 1051,
+      "strategy": "progress",
+      "progress_m": 186.89287177588386,
+      "max_abs_d_m": 0.8057226568193497,
+      "initial_state": {
+        "x": -3.83926378101714,
+        "y": 1.1225210020112701,
+        "yaw": 2.856922751528565,
+        "velocity": 0.0
+      },
+      "final_state": {
+        "x": -3.15784444181382,
+        "y": 18.69400986032315,
+        "yaw": 0.002440177083606016,
+        "velocity": 8.999999999999757
+      }
+    }
+  },
+  "track": {
+    "source": {
+      "name": "Oschersleben",
+      "centerline_file": "external/f1tenth_racetracks/Oschersleben/Oschersleben_centerline.csv",
+      "sha256": "62c95fb30fc5d24384fc4c6d307c48ae1a58cea47298c9f2b359c30e8a8cc003"
+    },
+    "width_m": 2.2,
+    "length_m": 260.6322331536404,
+    "point_count": 652
+  },
+  "background_visible": true,
+  "candidate_vehicle_ids": [
+    "vehicle-1",
+    "vehicle-2"
+  ],
+  "date": "2026-11-16",
+  "branch": "master",
+  "base_commit": "1955cacea110dc57ef6dfeea293a521e549f1b8e",
+  "version_note": "基於 base_commit，含未提交修改。",
+  "scope": "只確認原有多車策略在下載圖可執行；不是成功率或改善比較。Agg，未人工操作 GUI。",
+  "simulation_seconds": 21.0,
+  "vehicle_specs": [
+    [
+      "vehicle-1",
+      0.0,
+      11.0
+    ],
+    [
+      "vehicle-2",
+      4.0,
+      9.0
+    ]
+  ],
+  "assignments": {
+    "vehicle-1": {
+      "name": "relative_overtake",
+      "target_vehicle_id": null
+    },
+    "vehicle-2": {
+      "name": "progress",
+      "target_vehicle_id": null
+    }
+  },
+  "model_config": {
+    "wheelbase": 0.33,
+    "time_step": 0.02,
+    "max_steering_angle": 0.8726646259971648,
+    "min_velocity": 0.0,
+    "max_velocity": 10.0
+  },
+  "progress_config": {
+    "candidate_offsets": [
+      -0.6,
+      -0.3,
+      0.0,
+      0.3,
+      0.6
+    ],
+    "transition_length": 3.0,
+    "decision_period": 0.1,
+    "prediction_horizon": 1.5,
+    "safety_margin": 0.1
+  },
+  "relative_overtaking_config": {
+    "candidate_offsets": [
+      -0.6,
+      -0.45,
+      -0.3,
+      -0.15,
+      0.0,
+      0.15,
+      0.3,
+      0.45,
+      0.6
+    ],
+    "detection_range": 6.0,
+    "transition_length": 3.0,
+    "decision_period": 0.1,
+    "prediction_horizon": 0.8,
+    "safety_margin": 0.1
+  },
+  "offset_path_config": {
+    "sample_spacing": 0.2,
+    "path_length": 4.0
+  },
+  "lookahead_distance_m": 2.0,
+  "gp_used": false,
+  "source_sha256": {
+    "main.py": "75049d7996e57ba95d6731fcd9cce8ef97b6458b16da180b431437e6bbba7450",
+    "core/track_factory.py": "280ca26dea93b3c30c1acb38b3fb4ea0e888df0b8b6ae8a61f796c14df793c46",
+    "core/track_loader.py": "0128848deea6c56cf2d40118447b494aad882e484d7357020dd8ffeadf646665",
+    "strategy/relative_overtaking.py": "6598d6b89584317b9fb40586f656c0f8d6f2e4f48861d55b484305eb83100de3",
+    "strategy/progress.py": "f28f6637fe285368411487ebb0d1f7d28022ded1f2f8c7dfdbb861a997ca34ac",
+    "sim/visualizer.py": "3b97384c8e67c4ea0e28ecd4e3b46744b37c5089eebc57699ac56b17ed353682",
+    "sim/map_background.py": "3f9d559b7e1a77411782edee13e1faaf3128efd82705001dcd1db0c20fbc081f"
+  }
+}

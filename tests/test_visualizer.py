@@ -1,5 +1,7 @@
 import unittest
+import io
 from dataclasses import replace
+from unittest.mock import patch
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -39,6 +41,76 @@ class SimulationVisualizerTests(unittest.TestCase):
 
     def tearDown(self) -> None:
         plt.close("all")
+
+    def test_realtime_reuses_background_and_rebuilds_after_view_changes(self) -> None:
+        visualizer = SimulationVisualizer(self.track, VisualizationConfig(realtime=True))
+        canvas = visualizer.figure.canvas
+        with patch("sim.visualizer.plt.pause"), patch.object(canvas, "draw", wraps=canvas.draw) as draw:
+            self._update(visualizer, candidate_snapshot=self.snapshot)
+            cached = visualizer._background
+            self.state = replace(self.state, x=3.8, y=0.2)
+            self._update(visualizer, candidate_snapshot=self.snapshot)
+            self.assertIs(visualizer._background, cached)
+            self.assertEqual(draw.call_count, 1)
+            visualizer.axes.set_xlim(-5, 5)
+            self._update(visualizer)
+            self.assertEqual(draw.call_count, 2)
+            visualizer.figure.set_size_inches(8, 6)
+            canvas.draw()  # GUI resize normally triggers this full draw.
+            self.assertEqual(draw.call_count, 3)
+            self._update(visualizer)
+            self.assertEqual(draw.call_count, 3)
+        plt.ioff()
+
+    def test_blit_save_and_complete_redraw_include_dynamic_artists(self) -> None:
+        visualizer = SimulationVisualizer(self.track, VisualizationConfig(realtime=True))
+        canvas = visualizer.figure.canvas
+        with patch("sim.visualizer.plt.pause"):
+            self._update(visualizer, candidate_snapshot=self.snapshot)
+            self._update(visualizer)  # Old candidate lines must disappear without ghosting.
+            cached_pixels = np.asarray(canvas.buffer_rgba()).copy()
+            png = io.BytesIO()
+            visualizer.figure.savefig(png, format="png", dpi=visualizer.figure.dpi)
+            self.assertIsNone(visualizer._background)
+            png.seek(0)
+            saved_pixels = np.round(plt.imread(png) * 255).astype(np.uint8)
+            visualizer._use_blit = False
+            for artist in visualizer._dynamic_artists():
+                artist.set_animated(False)
+            canvas.draw()
+            complete_pixels = np.asarray(canvas.buffer_rgba()).copy()
+            np.testing.assert_array_equal(saved_pixels, complete_pixels)
+            np.testing.assert_array_equal(cached_pixels, complete_pixels)
+        plt.ioff()
+
+    def test_backend_without_blit_retains_original_update_path(self) -> None:
+        with patch("matplotlib.backends.backend_agg.FigureCanvasAgg.supports_blit", False):
+            visualizer = SimulationVisualizer(self.track, VisualizationConfig(realtime=True))
+        with patch("sim.visualizer.plt.pause"), patch.object(visualizer.figure.canvas, "draw_idle") as draw:
+            self._update(visualizer)
+        draw.assert_called()
+        self.assertFalse(visualizer._use_blit)
+        plt.ioff()
+
+    def test_blit_processes_events_without_pause_or_repeated_show(self) -> None:
+        for interval in (0.001, 0.0):
+            with self.subTest(interval=interval):
+                visualizer = SimulationVisualizer(
+                    self.track, VisualizationConfig(realtime=True, pause_seconds=interval))
+                plt.ioff()
+                canvas = visualizer.figure.canvas
+                with patch("sim.visualizer.plt.pause") as pause, \
+                     patch("sim.visualizer.plt.show") as show, \
+                     patch.object(canvas, "start_event_loop") as loop, \
+                     patch.object(canvas, "draw", wraps=canvas.draw) as draw:
+                    self._update(visualizer)
+                    self._update(visualizer)
+                pause.assert_not_called()
+                show.assert_not_called()
+                self.assertEqual(draw.call_count, 1)
+                self.assertEqual(loop.call_count, 2 if interval > 0 else 0)
+                if interval > 0:
+                    loop.assert_called_with(interval)
 
     def test_all_dynamic_elements_can_be_hidden(self) -> None:
         visualizer = SimulationVisualizer(

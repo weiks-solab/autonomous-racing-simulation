@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-16",
+  "branch": "master",
+  "base_commit": "1955cacea110dc57ef6dfeea293a521e549f1b8e",
+  "command": [
+    ".venv/Scripts/python.exe",
+    "-B",
+    "-m",
+    "unittest"
+  ],
+  "real_tk_verification": "attempted but blocked by TclError: Cannot find a usable init.tcl",
+  "source_sha256": {
+    "main.py": "227616537e74da938267288774783114544bea64668d3b6dd9b9b4746ecafb8d",
+    "sim/visualizer.py": "e5ccc0df32530e91fae370ee7c16f6f24932dd132bc0c3ef0de97dca663e0f65",
+    "tests/test_visualizer.py": "6159f0b8852c00fb88c7433ddb15b43011485e0ffabe1a8cb9782b8e9f0f7e45"
+  },
+  "selected_map_tests_exit_code": 1,
+  "selected_map": "Oschersleben",
+  "controlled_tests_exit_code": 0,
+  "controlled_track_name": "rounded_rectangle",
+  "controlled_test_count": 300,
+  "command_note": "unittest discovery with main.TRACK_NAME patched to the original rounded_rectangle fixture; production selection unchanged",
+  "version_note": "基於 base_commit，含未提交修改。"
+}

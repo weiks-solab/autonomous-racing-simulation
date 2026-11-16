@@ -1,0 +1,92 @@
+{
+  "completed": true,
+  "requested_laps": 2.0,
+  "max_seconds": 300.0,
+  "laps": 2.0002424916454777,
+  "progress_m": 521.3276674463627,
+  "track_length_m": 260.6322331536404,
+  "simulation_seconds": 104.44,
+  "wall_seconds": 1.0936300000175834,
+  "step_count": 5222,
+  "max_abs_d_m": 0.36469233818365976,
+  "rms_d_m": 0.09001111606210242,
+  "max_body_corner_abs_d_m": 0.5095041380306536,
+  "reference_outside_samples": 0,
+  "body_outside_samples": 0,
+  "date": "2026-11-16",
+  "branch": "master",
+  "base_commit": "1955cacea110dc57ef6dfeea293a521e549f1b8e",
+  "version_note": "基於 base_commit，含未提交修改。",
+  "scope": "單車中心線循跡；未驗證多車超車、GP 或 PNG 障礙物碰撞。",
+  "backend": "Agg",
+  "python_version": "3.10.20",
+  "numpy_version": "2.2.6",
+  "matplotlib_version": "3.10.9",
+  "vehicle_id": "solo",
+  "initial_state": {
+    "x": 0.0,
+    "y": 0.0,
+    "yaw": 2.8573275895054557,
+    "velocity": 0.0
+  },
+  "vehicle_geometry": {
+    "length": 0.55,
+    "width": 0.3,
+    "rear_axle_to_center": 0.12,
+    "collision": {
+      "length": 0.6,
+      "width": 0.4
+    }
+  },
+  "model_config": {
+    "wheelbase": 0.33,
+    "time_step": 0.02,
+    "max_steering_angle": 0.8726646259971648,
+    "min_velocity": 0.0,
+    "max_velocity": 10.0
+  },
+  "controller_config": {
+    "lookahead_distance": 2.0,
+    "target_speed": 5.0,
+    "speed_gain": 1.5,
+    "max_acceleration": 5.0,
+    "max_steering_angle": 0.8726646259971648
+  },
+  "track": {
+    "closed": true,
+    "width_m": 2.2,
+    "point_count": 652,
+    "source": {
+      "name": "Oschersleben",
+      "centerline_file": "external/f1tenth_racetracks/Oschersleben/Oschersleben_centerline.csv",
+      "sha256": "62c95fb30fc5d24384fc4c6d307c48ae1a58cea47298c9f2b359c30e8a8cc003",
+      "sample_spacing": 0.4
+    },
+    "direction": "依輸入中心線順序；d 向左為正；未旋轉或縮放 CSV。",
+    "centerline_sha256": "a3e6f1d2f6c71834c9a8ab602bbd4f61d2e5e9266dafced7bf29ce3ff7b84194"
+  },
+  "map": {
+    "resolution_m_per_pixel": 0.04295,
+    "origin": [
+      -55.07650228661655,
+      -33.57884064395765,
+      0.0
+    ],
+    "files": {
+      "external/f1tenth_racetracks/Oschersleben/Oschersleben_map.yaml": "93cecf047467f5120947dfa7b7f6cd078139e44dca04aa0728a1a2dad1bf1f58",
+      "external/f1tenth_racetracks/Oschersleben/Oschersleben_map.png": "3753d0ec3e0cb13602d4c34b172b877a1ba12eb6b4117dfd56da5d1b51ce4634"
+    }
+  },
+  "trajectory_csv_stride_steps": 10,
+  "source_sha256": {
+    "main.py": "95c5da35db0de2b38cf72282243a781311b3df13ea1c1ce259b9450ebf066737",
+    "core/track.py": "11fc0d2ef6383b8b097c9207676d6abd72fe6d62d6a1bca6c6c0f8f10165b0f6",
+    "core/track_factory.py": "b8328cad8d8b8d92ddef7a8b5d6cb976e2bf8534b52972789cfa1cf6915fd511",
+    "core/track_loader.py": "b134317b9661022bada2624f08c9e7e37a39e5cd6017075ac0b4c7ee5c3443ec",
+    "core/pure_pursuit.py": "a82b6b14f65550368b759c5884c740bb89f13317086dbeba5acda31a1f914c01",
+    "core/vehicle_model.py": "72ec5d6b996434fd2be4447ca75b226c4cf36d0f8be4c0a9e7735ab3403c4875",
+    "sim/track_following.py": "5c47e6f2512c040cab1d91cce0d08234eb58b7cfd64545cc2cd9f32f301cd902",
+    "sim/visualizer.py": "3b97384c8e67c4ea0e28ecd4e3b46744b37c5089eebc57699ac56b17ed353682",
+    "sim/map_background.py": "3f9d559b7e1a77411782edee13e1faaf3128efd82705001dcd1db0c20fbc081f"
+  }
+}

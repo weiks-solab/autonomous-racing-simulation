@@ -5,3 +5,4 @@ __pycache__/
 .cache/
 /data/training/
 /models/gp/
+/external/f1tenth_racetracks/

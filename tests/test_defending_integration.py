@@ -1,6 +1,7 @@
 """用完整模擬確認防守生效，也保留被動車與多車支援。"""
 
 from contextlib import redirect_stdout
+from dataclasses import replace
 import io
 import unittest
 from unittest.mock import patch
@@ -15,7 +16,10 @@ from strategy.assignment import StrategyAssignment
 
 def run_without_window(defense_enabled: bool) -> tuple[dict, str, Track]:
     output = io.StringIO()
-    with patch("main.SimulationVisualizer") as visualizer, redirect_stdout(output):
+    # 此回歸場景使用 6 m 超車過渡，參考路徑必須覆蓋完整過渡。
+    path_config = replace(main.OFFSET_PATH_CONFIG, path_length=6.0)
+    with patch("main.OFFSET_PATH_CONFIG", path_config), \
+         patch("main.SimulationVisualizer") as visualizer, redirect_stdout(output):
         main.run_simulation(defense_enabled=defense_enabled)
     final_frame = visualizer.return_value.update_vehicles.call_args.kwargs
     track = visualizer.call_args.args[0]

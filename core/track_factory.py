@@ -6,6 +6,7 @@ import math
 import numpy as np
 
 from core.track import Track
+from core.track_loader import DEFAULT_MAP_ROOT, find_centerline, load_centerline
 
 
 @dataclass(frozen=True)
@@ -20,6 +21,8 @@ class TrackConfig:
     corner_radius: float = 3.0
     semi_major_axis: float = 10.0
     semi_minor_axis: float = 5.0
+    map_root: str = DEFAULT_MAP_ROOT
+    sample_spacing: float = 0.4
 
 
 def create_track(config: TrackConfig) -> Track:
@@ -31,7 +34,7 @@ def create_track(config: TrackConfig) -> Track:
         )
     if config.name == "rounded_rectangle":
         return _rounded_rectangle(config)
-    raise ValueError(f"unknown track name {config.name!r}; use 'oval' or 'rounded_rectangle'")
+    return load_centerline(find_centerline(config.name, config.map_root), config.sample_spacing)
 
 
 def _rounded_rectangle(config: TrackConfig) -> Track:

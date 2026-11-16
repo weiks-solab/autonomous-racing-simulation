@@ -1,0 +1,8 @@
+{
+  "date": "2026-11-16",
+  "scope": "實際 pyplot.pause 及 TkAgg show 程式；視窗與 canvas 使用 mock，未開 GUI。",
+  "figure_stale_before_pause": false,
+  "window_already_shown": true,
+  "draw_idle_requests": 1,
+  "event_loop_calls": 1
+}
