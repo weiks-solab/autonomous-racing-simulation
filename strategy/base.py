@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from typing import Protocol, Sequence
 
+from core.pure_pursuit import validate_speed_limit
 from core.track import Track
 from core.track_geometry import TrackPosition
 from core.vehicle_state import VehicleState
@@ -23,6 +24,10 @@ class CandidatePath:
     blocking_cost: float | None = None
     cost_terms: tuple[tuple[str, float], ...] = ()
     predicted_states: tuple[VehicleState, ...] = ()
+    speed_limit: float | None = None
+
+    def __post_init__(self) -> None:
+        validate_speed_limit(self.speed_limit)
 
 
 @dataclass(frozen=True)
@@ -47,7 +52,7 @@ class CandidateSnapshot:
 
 @dataclass(frozen=True)
 class StrategyDecision:
-    """只描述想去的位置，方向盤與加速度仍由 Pure Pursuit 計算。"""
+    """描述路徑與可選速度上限，方向盤與加速度仍由 Pure Pursuit 計算。"""
 
     mode: str
     target_d: float = 0.0
@@ -56,12 +61,18 @@ class StrategyDecision:
     reason: str = ""
     details: tuple[str, ...] = ()
     candidate_snapshot: CandidateSnapshot | None = None
+    speed_limit: float | None = None  # m/s，None 沿用巡航目標，0 逐步減速至停止。
+
+    def __post_init__(self) -> None:
+        validate_speed_limit(self.speed_limit)
 
     @property
     def display_text(self) -> str:
         lines = [self.mode.upper(), f"target_d={self.target_d:+.2f}"]
         if self.target_vehicle_id is not None:
             lines.append(f"target={self.target_vehicle_id}")
+        if self.speed_limit is not None:
+            lines.append(f"speed_limit={self.speed_limit:.2f} m/s")
         return "\n".join((*lines, *self.details))
 
 

@@ -1,0 +1,13 @@
+C:\Users\kevin\OneDrive\Desktop\project\racing_sim\sim\visualizer.py:542: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  plt.show()
+rear strategy: probe_follow
+Strategy transitions: 0.00s FOLLOW -> 3.80s PROBE_LEFT -> 11.50s RETURN -> 13.70s PROBE_RIGHT -> 17.70s RETURN
+Lateral targets: 0.00s +0.00m -> 3.80s +0.60m -> 11.50s +0.00m -> 13.70s -0.60m -> 17.70s +0.00m
+Final strategy reason: lowest gap, speed, probe and switch cost
+Final rear d: -0.025 m
+front strategy: defend
+Strategy transitions: 0.00s DEFEND
+Lateral targets: 0.00s +0.00m -> 4.20s +0.30m -> 4.82s +0.60m -> 6.48s +0.30m -> 6.90s +0.60m -> 9.62s +0.30m -> 10.26s +0.60m -> 12.14s +0.30m -> 12.78s +0.00m -> 14.46s -0.30m -> 14.88s -0.60m -> 18.12s -0.30m -> 18.76s +0.00m
+Final strategy reason: lowest cost
+Final front d: +0.025 m
+Detected collision pairs: none

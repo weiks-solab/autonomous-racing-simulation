@@ -1,0 +1,162 @@
+{
+  "date": "2026-11-16",
+  "branch": "master",
+  "base_commit": "6dc4a2b9cb76c5f83810efadeeb3a0eca0d75968",
+  "version_note": "基於 base_commit；本次只新增量測紀錄，未改正式程式。",
+  "scope": "各一次8秒400步；Agg，不含GUI事件等待，非實際GUI FPS。",
+  "cases": [
+    {
+      "track": "rounded_rectangle",
+      "gp_enabled": true,
+      "point_count": 500,
+      "full_draws": 1,
+      "measurements": {
+        "replan": {
+          "calls": 72,
+          "mean_ms": 175.26109027757127,
+          "p95_ms": 248.5102299862774,
+          "max_ms": 269.52969998819754
+        },
+        "reuse": {
+          "calls": 328,
+          "mean_ms": 0.017091769067763645,
+          "p95_ms": 0.027530014631338414,
+          "max_ms": 0.17960002878680825
+        },
+        "render": {
+          "calls": 400,
+          "mean_ms": 14.524073999928078,
+          "p95_ms": 24.87926004105247,
+          "max_ms": 46.85099999187514
+        },
+        "step": {
+          "calls": 400,
+          "mean_ms": 46.71284800002468,
+          "p95_ms": 211.94477502140182,
+          "max_ms": 298.51310001686215
+        },
+        "opponent_prediction": {
+          "calls": 72,
+          "mean_ms": 3.011583333621578,
+          "p95_ms": 3.8469249790068716,
+          "max_ms": 4.10249998094514
+        }
+      },
+      "steady_render": {
+        "calls": 399,
+        "mean_ms": 14.443054135286607,
+        "p95_ms": 24.86208996269852,
+        "max_ms": 29.714400006923825
+      },
+      "length_m": 58.84834817896297,
+      "centerline_span_m": [
+        20.0,
+        12.0
+      ]
+    },
+    {
+      "track": "rounded_rectangle",
+      "gp_enabled": false,
+      "point_count": 500,
+      "full_draws": 1,
+      "measurements": {
+        "replan": {
+          "calls": 72,
+          "mean_ms": 186.32636250145475,
+          "p95_ms": 231.69689500064123,
+          "max_ms": 279.5555000193417
+        },
+        "reuse": {
+          "calls": 328,
+          "mean_ms": 0.01530335377049973,
+          "p95_ms": 0.02396500785835087,
+          "max_ms": 0.25779998395591974
+        },
+        "render": {
+          "calls": 400,
+          "mean_ms": 13.000055499724112,
+          "p95_ms": 21.165000036126003,
+          "max_ms": 67.24859995301813
+        },
+        "step": {
+          "calls": 400,
+          "mean_ms": 47.169971251278184,
+          "p95_ms": 223.99266499851365,
+          "max_ms": 300.90129998279735
+        },
+        "opponent_prediction": {
+          "calls": 72,
+          "mean_ms": 9.578977774557037,
+          "p95_ms": 16.10749000974465,
+          "max_ms": 16.570599982514977
+        }
+      },
+      "steady_render": {
+        "calls": 399,
+        "mean_ms": 12.864094235430143,
+        "p95_ms": 21.162249968620017,
+        "max_ms": 24.261599988676608
+      },
+      "length_m": 58.84834817896297,
+      "centerline_span_m": [
+        20.0,
+        12.0
+      ]
+    },
+    {
+      "track": "Oschersleben",
+      "gp_enabled": false,
+      "point_count": 652,
+      "full_draws": 1,
+      "measurements": {
+        "replan": {
+          "calls": 72,
+          "mean_ms": 188.96040833189747,
+          "p95_ms": 249.45186999393627,
+          "max_ms": 303.7045000237413
+        },
+        "reuse": {
+          "calls": 328,
+          "mean_ms": 0.015400913891825461,
+          "p95_ms": 0.025765021564438936,
+          "max_ms": 0.14810002176091075
+        },
+        "render": {
+          "calls": 400,
+          "mean_ms": 11.782875999779208,
+          "p95_ms": 19.525205009267665,
+          "max_ms": 238.96590003278106
+        },
+        "step": {
+          "calls": 400,
+          "mean_ms": 46.45472675023484,
+          "p95_ms": 225.47608002787442,
+          "max_ms": 476.6721000196412
+        },
+        "opponent_prediction": {
+          "calls": 72,
+          "mean_ms": 10.482376390427817,
+          "p95_ms": 17.674659966723993,
+          "max_ms": 18.175699980929494
+        }
+      },
+      "steady_render": {
+        "calls": 399,
+        "mean_ms": 11.213494987165168,
+        "p95_ms": 19.462420005584132,
+        "max_ms": 23.67920003598556
+      },
+      "length_m": 260.6322331536404,
+      "centerline_span_m": [
+        73.27498570858917,
+        32.7556556601353
+      ]
+    }
+  ],
+  "source_sha256": {
+    "main.py": "227616537e74da938267288774783114544bea64668d3b6dd9b9b4746ecafb8d",
+    "sim/visualizer.py": "e5ccc0df32530e91fae370ee7c16f6f24932dd132bc0c3ef0de97dca663e0f65",
+    "core/track_geometry.py": "99ba16e5789e29236d3d4317127f0d32896bdec1ae53ff458b59b42dd064f7a2",
+    "strategy/relative_overtaking.py": "6598d6b89584317b9fb40586f656c0f8d6f2e4f48861d55b484305eb83100de3"
+  }
+}

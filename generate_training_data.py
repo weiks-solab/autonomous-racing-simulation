@@ -46,6 +46,7 @@ def _demo_settings(
         controller_config=PurePursuitConfig(
             demo.LOOKAHEAD_DISTANCE, 0.0, demo.SPEED_GAIN,
             demo.MAX_ACCELERATION, demo.MODEL_CONFIG.max_steering_angle,
+            max_deceleration=demo.MAX_DECELERATION,
         ),
         overtaking_config=demo.OVERTAKING_CONFIG,
         defense_config=demo.DEFENSE_CONFIG,
@@ -54,6 +55,7 @@ def _demo_settings(
         defense_enabled=demo.DEFENSE_ENABLED and not no_defense,
         progress_config=demo.PROGRESS_CONFIG,
         relative_overtaking_config=demo.RELATIVE_OVERTAKING_CONFIG,
+        probe_following_config=demo.PROBE_FOLLOWING_CONFIG,
     )
     return settings, demo.VEHICLE_SPECS, dict(demo.STRATEGY_ASSIGNMENTS)
 
@@ -80,7 +82,7 @@ def _select_pairs(
             pairs = tuple(
                 VehiclePair(ego_id, other_id)
                 for ego_id, assignment in assignments.items()
-                if assignment.name in ("overtake", "cost_overtake", "relative_overtake", "progress")
+                if assignment.name in ("overtake", "cost_overtake", "relative_overtake", "progress", "probe_follow")
                 for other_id in vehicle_ids if other_id != ego_id
             )
     if not pairs:
@@ -100,6 +102,7 @@ def _run_metadata(
         "model_config", "geometry", "controller_config", "overtaking_config",
         "defense_config", "cost_overtaking_config", "offset_path_config", "progress_config",
         "relative_overtaking_config",
+        "probe_following_config",
     )
     return {
         "seed": seed,

@@ -1,0 +1,69 @@
+{
+  "executed_at_taipei": "2026-11-17T16:45:44+08:00",
+  "branch": "master",
+  "base_commit": "6dc4a2b9cb76c5f83810efadeeb3a0eca0d75968",
+  "worktree": "含未提交修改",
+  "python": "3.10.20",
+  "track_name": "Oschersleben",
+  "track_sample_spacing_m": 0.4,
+  "seconds": 15.0,
+  "vehicle_specs": [
+    [
+      "vehicle-1",
+      4.0,
+      10.0
+    ],
+    [
+      "vehicle-2",
+      0.0,
+      12.0
+    ]
+  ],
+  "strategy_assignments": {
+    "vehicle-1": {
+      "name": "defend",
+      "target_vehicle_id": "vehicle-2"
+    },
+    "vehicle-2": {
+      "name": "probe_follow",
+      "target_vehicle_id": null
+    }
+  },
+  "model_config": {
+    "wheelbase": 0.33,
+    "time_step": 0.02,
+    "max_steering_angle": 0.8726646259971648,
+    "min_velocity": 0.0,
+    "max_velocity": 30.0
+  },
+  "probe_config": {
+    "target_gap": 2.5,
+    "detection_range": 10.0,
+    "prediction_horizon": 1.0,
+    "decision_period": 0.1,
+    "transition_length": 3.0,
+    "speed_step": 1.0,
+    "probe_offset": 0.6,
+    "probe_gap_tolerance": 1.0,
+    "lateral_tolerance": 0.1,
+    "hold_seconds": 1.0,
+    "clearance": 0.3,
+    "safety_margin": 0.1,
+    "gap_scale": 1.0,
+    "speed_scale": 1.0,
+    "lateral_scale": 0.6,
+    "gap_weight": 2.0,
+    "speed_weight": 1.0,
+    "probe_weight": 2.0,
+    "switch_weight": 0.5
+  },
+  "main_command": "python main.py --realtime",
+  "backend": "Agg",
+  "main_exit_code": 0,
+  "collision_pairs_reported": [],
+  "probe_modes_observed": [
+    "follow"
+  ],
+  "full_test_count": 330,
+  "full_test_exit_code": 0
+}

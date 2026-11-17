@@ -6,8 +6,8 @@ Pursuit 控制器，車輛數量可自由增加。
 目前示範由 `vehicle-1` 使用相對進度進攻 `relative_overtake`，`vehicle-2` 使用純進度策略。
 進攻車預設載入本機 s→d GP，預測 `vehicle-2` 的路線後檢查同時間碰撞。
 車數與策略可在 `main.py` 自行調整，未指派策略的車持續跟隨中心線。
-策略只決定橫向目標與平滑路徑；
-方向盤角度及速度控制仍由 Pure Pursuit 負責。
+策略決定橫向目標、平滑路徑與可選的速度上限。
+方向盤角度及加減速度由 Pure Pursuit 控制器計算。
 
 **目前進展：GP 資料收集 → 訓練 → 模型預測已串接，並已實際跑過預測。**
 最新結果與限制見 [每週研究摘要](reports/research_log.md)，已有
@@ -26,7 +26,7 @@ python3 -m pip install -r requirements.txt
 python3 main.py
 ```
 
-預設在圓角矩形賽道模擬 21 秒，再顯示賽道邊界、各車軌跡與車身。即時觀看：
+依 `main.py` 的選圖模擬 21 秒，再顯示賽道邊界、各車軌跡與車身。即時觀看：
 
 ```bash
 python3 main.py --realtime
@@ -39,6 +39,117 @@ python3 main.py --realtime --no-defense
 ```
 
 若環境使用 `python` 指令，將上述 `python3` 換成 `python` 即可。
+
+## 策略速度要求與離散速度候選
+
+`StrategyDecision.speed_limit` 的單位為 m/s。`None` 沿用控制器的巡航目標，
+非負有限數值將本次目標設為 `min(巡航目標, speed_limit)`。
+實際車速透過加減速度與 kinematic bicycle 逐步更新，巡航設定會保留供取消限制後使用。
+負值、NaN 與 infinity 會拋出 `ValueError`。
+
+在策略的 `update()` 中，可以沿用目前路徑並回傳指定的速度要求。
+以下例子假設 `decision` 是已有的決策。
+
+```python
+from dataclasses import replace
+
+slower = replace(decision, speed_limit=2.0)    # 目標速度上限 2 m/s
+stopping = replace(decision, speed_limit=0.0)  # 透過正常控制逐步停止
+cruising = replace(decision, speed_limit=None) # 恢復原巡航目標
+```
+
+控制器共用 `core/pure_pursuit.py` 的 `compute_speed_acceleration()`，使用
+`a_cmd = clip(speed_gain * (v_ref - v), -max_deceleration, max_acceleration)`。
+加速與減速上限的單位均為 m/s²，設定值須為正且有限。
+舊呼叫省略 `max_deceleration` 時，會沿用 `max_acceleration` 的對稱限制。
+`main.py` 可分別調整 `MAX_ACCELERATION` 與 `MAX_DECELERATION`。
+
+`predict_bicycle_trajectory(..., speed_limit=...)` 每一步使用相同控制器與模型。
+相對進度策略將速度要求存進 `RelativeCandidate`，選中後連同 maneuver 放入
+`StrategyDecision`，再由 `main.py` 或資料收集入口傳入 `SimulatedVehicle.step()`。
+候選快照及其標籤也保留速度要求，方便辨識同一路徑的不同速度。
+
+### 啟用相對進度策略的速度候選
+
+在 `main.py` 的 `RELATIVE_OVERTAKING_CONFIG` 將 `speed_candidates_enabled` 設為 `True`，
+並用 `speed_candidate_delta` 調整速度差，預設為 1.0 m/s。開關預設為 `False`。
+
+- 原本橫向候選照常以巡航目標 rollout。
+- 有前方目標時，在目前追蹤的 maneuver 增加前車車速與 `max(前車車速 - 速度差, 0)` 候選。
+  尚無 maneuver 時使用原本的回中心線候選，進行中的橫移保留其起點。
+- 僅加入低於巡航目標且互不重複的速度要求，每輪最多增加兩個候選。
+- 全部候選共用初始狀態、預測視野及對手預測，經既有同時間矩形碰撞檢查後，
+  以原有終點相對間距成本取最小值。
+- 全部候選都被剔除時記錄 `no_feasible_path`，繼續持有上一個路徑與速度要求。
+
+對手的 `constant_speed=True` 維持零加速度，GP 對手預測沿用原有假設。
+目前功能提供速度要求與短視野候選比較，自動避碰、緊急煞車與完整 fallback 尚未實作。
+
+執行速度要求的回歸測試與全部測試。
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest tests.test_speed_requests -v
+.\.venv\Scripts\python.exe -m unittest
+```
+
+固定決策測試透過正式 `main.py` 執行流程，逐步比較直線與彎道上的 x、y、yaw、velocity，
+絕對容許誤差為 `1e-10`。停止測試以 `1e-6 m/s` 判斷接近停止。
+本次案例與測試日誌保存於 [速度要求驗證](reports/experiments/2026-11-17_speed_requests/README.md)。
+
+雙車閉迴路案例可執行 `reports/experiments/2026-11-17_speed_requests/verify_closed_loop.py`，
+使用相同初始條件，在 1 秒內持續重規劃並記錄實際減速與碰撞結果。
+命令與量測見 [閉迴路驗證紀錄](reports/experiments/2026-11-17_speed_requests/README.md#1117-追加的雙車閉迴路驗證)。
+
+## 試探跟車策略 probe_follow
+
+用圓角矩形賽道觀看新的雙車場景，使用基本 `requirements.txt` 即可執行。
+
+```powershell
+.\.venv\Scripts\python.exe main.py --probe-follow --realtime
+```
+
+省略 `--realtime` 會先計算，再顯示結果。
+此場景從靜止起步，前車在前方 4 m，巡航目標為 3 m/s，後車巡航上限為 4 m/s。
+後車使用 `probe_follow`，前車使用既有 `defend` 回應後車的實際橫向位置。
+
+在 `main.py` 上方調整 `PROBE_VEHICLE_SPECS`、`PROBE_STRATEGY_ASSIGNMENTS` 與
+`PROBE_FOLLOWING_CONFIG`。一般策略對照表也可指派 `StrategyAssignment("probe_follow")`，
+每台車會建立自己的策略物件。
+
+使用一般 `STRATEGY_ASSIGNMENTS` 配置時，執行 `python main.py --realtime`。
+`--probe-follow` 會使用專用的 `PROBE_VEHICLE_SPECS` 與 `PROBE_STRATEGY_ASSIGNMENTS`。
+
+策略在目前階段允許的可行候選中，以四項成本的總和取最小值。
+
+- `gap` 追蹤目標後軸車距，`main.py` 明確設定前車 s 減後車 s 為 2.5 m，對預測期間的平方誤差取平均。
+- `speed` 懲罰預測終點的沿賽道相對速度，減少到達目標時仍快速接近的情形。
+- `probe` 鼓勵靠近本輪的左右試探位置。
+- `switch` 懲罰相鄰決策的橫向目標變化。
+
+車距接近目標的 ±1 m 後，依「左、回中、右、回中」循環試探。
+開始一個階段後固定其橫向目標，首次實際到達目標的 ±0.1 m 內才開始計時，
+繼續維持該目標 2 秒後進入下一階段；回中階段也使用相同保持時間。
+在 `main.py` 的 `PROBE_FOLLOWING_CONFIG.hold_seconds` 可調整，例如改為 `3.0` 表示 3 秒。
+保持期間的車距波動與追蹤誤差不重置計時，速度仍照常重規劃。
+該目標有可行候選時，只比較同一目標的速度；全部不可行時中止保持，允許選其他可行路徑。
+返回中心線後，下一次向側邊試探仍須車距進入上述範圍。
+每輪比較回中、目前目標與本次試探目標，搭配前車速度 −1、0、+1 m/s，
+並加入後車原巡航速度供追近；以原巡航目標為上限、以 0 為下限，去除重複值。
+例如前車 10 m/s、後車巡航 12 m/s 時，比較 9、10、11、12 m/s，每條路徑最多四種速度。
+因此後車可在落後時追近，接近後再由成本選擇匹配或減速。
+
+所有候選沿用 Pure Pursuit 與 bicycle rollout，保留進行中的橫移起點。
+既有車身碰撞檢查與整段預測的車頭／車尾縱向投影留距各自剔除候選，留距預設 0.3 m。
+對手沿用定速、等 d 預測，實際防守由前車自己的策略執行。
+全部候選被剔除時回報 `no_feasible_path` 並沿用前一個決策，此行為的限制仍須留意。
+
+先前低速圓角場景完成 21 秒閉迴路測試；加入巡航候選後，另完成 10／12 m/s 的 15 秒前後比較。
+延長保持後，當下 1 m 初距的 15 秒場景出現左、右、左，首次到達後分別維持目標約 2.06、2.08、2.02 秒。
+目標車距是成本偏好，實際車距與橫向位置仍有波動，起步時將前車視為定速的限制仍存在。
+逐步 CSV 保存決策當下的雙車狀態、試探目標、速度要求與執行加速度，可供後續 GP 互動資料處理。
+GP 互動模型的離線資料收集及訓練入口為 `interaction_gp.py`，預測 0.5 秒後的前車橫向位移；
+命令、輸入與限制見 [GP 訓練文件](GP_TRAINING.md#試探互動第一階段05-秒反應預測)。規劃器接入仍待實作。
+設定、成本公式、量化結果與圖表見 [試探跟車驗證](reports/experiments/2026-11-17_probe_following/README.md)。
 
 ## 在進攻策略使用 GP
 
@@ -155,10 +266,11 @@ python3 train_gp.py --data data/training/生成的資料夾名稱
 | `MODEL_CONFIG` / `VEHICLE_GEOMETRY` | 時間步長、軸距、速度限制與車身尺寸 |
 | `COLLISION_CONFIG` | 共用碰撞矩形的長、寬；只改碰撞判斷，不改車身繪圖與路寬限制 |
 | `LOOKAHEAD_DISTANCE` | Pure Pursuit 的前視距離 |
+| `SPEED_GAIN` / `MAX_ACCELERATION` / `MAX_DECELERATION` | 比例速度控制增益與加減速度上限 |
 | `OVERTAKING_CONFIG` | 原本規則式 `overtake` 使用的超車參數 |
 | `COST_OVERTAKING_CONFIG` | 新增 `cost_overtake` 的進度、超車獎勵與預測參數 |
 | `PROGRESS_CONFIG` | `progress` 的候選目標、橫移長度、決策週期與自車預測時長 |
-| `RELATIVE_OVERTAKING_CONFIG` | `relative_overtake` 的候選目標、對象偵測距離與預測參數 |
+| `RELATIVE_OVERTAKING_CONFIG` | `relative_overtake` 的候選目標、對象偵測距離、預測參數與速度候選開關 |
 | `DEFENSE_CONFIG` | 所有防守車使用的成本、觸發條件與路徑參數 |
 | `OFFSET_PATH_CONFIG` | 臨時路徑的取樣間距與長度 |
 

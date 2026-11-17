@@ -1,0 +1,6 @@
+test_closed_loop_replanning_slows_without_collision (tests.test_speed_requests.SpeedCandidateIntegrationTests) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.229s
+
+OK

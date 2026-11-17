@@ -34,12 +34,15 @@ class SimulatedVehicle:
             raise ValueError("vehicle_id must be a non-empty string")
         self.trajectory.append(self.state)
 
-    def step(self, track: Track) -> tuple[ControlCommand, PursuitTarget]:
+    def step(
+        self, track: Track, speed_limit: float | None = None,
+    ) -> tuple[ControlCommand, PursuitTarget]:
         """Advance this vehicle by one independent control and model step."""
         command, target = self.controller.compute_command(
             self.state,
             track,
             self.model.config.wheelbase,
+            speed_limit=speed_limit,
         )
         self.state = self.model.step(self.state, command)
         self.trajectory.append(self.state)

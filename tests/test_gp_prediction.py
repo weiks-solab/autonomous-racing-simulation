@@ -144,6 +144,7 @@ class GpPredictionTests(unittest.TestCase):
         assignments = {"ego": StrategyAssignment("relative_overtake")}
         for enabled in (True, False):
             with self.subTest(enabled=enabled), patch("main.VEHICLE_SPECS", specs), \
+                 patch("main.TRACK_NAME", "rounded_rectangle"), \
                  patch("main.STRATEGY_ASSIGNMENTS", assignments), patch("main.SIMULATION_SECONDS", 0.14), \
                  patch("main.GP_PREDICTION_ENABLED", enabled), \
                  patch("main.GP_MODEL_PATHS", {"front": "models/example.pkl"}), \

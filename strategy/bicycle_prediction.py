@@ -3,7 +3,7 @@
 from dataclasses import dataclass, replace
 import math
 
-from core.pure_pursuit import PurePursuitConfig, PurePursuitController
+from core.pure_pursuit import PurePursuitConfig, PurePursuitController, validate_speed_limit
 from core.track import Track
 from core.track_geometry import signed_longitudinal_gap, track_length, world_to_track
 from core.vehicle_model import KinematicBicycleModel, VehicleModelConfig
@@ -35,8 +35,10 @@ def predict_bicycle_trajectory(
     config: BicyclePredictionConfig,
     horizon: float,
     constant_speed: bool = False,
+    speed_limit: float | None = None,
 ) -> BicyclePrediction:
-    """逐步重建前方參考線並追蹤；定速模式只將加速度設為零。"""
+    """逐步追蹤路徑與速度要求。對手定速模式仍只將加速度設為零。"""
+    validate_speed_limit(speed_limit)
     if not math.isfinite(horizon) or horizon <= 0.0:
         raise ValueError("prediction horizon must be positive and finite")
     if not track.closed:
@@ -53,7 +55,9 @@ def predict_bicycle_trajectory(
     for step in range(step_count):
         maneuver = continue_lateral_maneuver(maneuver, position.s, length)
         reference = generate_offset_track(track, position, maneuver, config.path)
-        command, _ = controller.compute_command(state, reference, config.model.wheelbase)
+        command, _ = controller.compute_command(
+            state, reference, config.model.wheelbase, speed_limit=speed_limit,
+        )
         if constant_speed:
             command = ControlCommand(command.steering_angle, 0.0)
         # 最後一步可較短，讓所有候選都在相同的預測終點評分。

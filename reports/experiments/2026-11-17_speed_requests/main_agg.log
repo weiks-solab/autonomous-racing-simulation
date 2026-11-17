@@ -1,0 +1,14 @@
+C:\Users\kevin\OneDrive\Desktop\project\racing_sim\sim\visualizer.py:542: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  plt.show()
+GP prediction disabled on imported tracks: the existing s-to-d model belongs to the old track.
+vehicle-1 strategy: relative_overtake
+Strategy transitions: 0.00s ATTACK
+Lateral targets: 0.00s +0.00m -> 2.42s +0.15m -> 2.52s +0.60m -> 2.94s +0.00m -> 3.04s -0.60m -> 4.32s -0.45m -> 4.44s -0.15m -> 4.56s +0.60m -> 5.60s +0.45m -> 5.72s +0.30m -> 6.06s +0.60m -> 7.10s +0.00m -> 7.22s -0.60m -> 8.24s +0.00m -> 8.36s -0.60m -> 9.50s -0.45m -> 10.66s -0.60m -> 11.24s -0.15m -> 11.36s +0.60m -> 11.94s -0.60m -> 13.54s -0.30m -> 15.28s +0.60m -> 15.62s +0.00m -> 15.74s -0.60m -> 16.96s -0.45m -> 17.08s +0.00m -> 17.20s +0.60m -> 18.30s +0.30m -> 18.62s +0.60m -> 19.74s -0.60m
+Final strategy reason: lowest predicted relative gap
+Final vehicle-1 d: -0.452 m
+vehicle-2 strategy: progress
+Strategy transitions: 0.00s PROGRESS
+Lateral targets: 0.00s +0.60m -> 0.54s -0.60m -> 3.46s +0.60m -> 5.72s -0.60m -> 10.08s +0.00m -> 10.78s -0.60m -> 14.58s +0.60m -> 14.94s -0.60m -> 17.20s +0.00m -> 17.30s -0.60m -> 17.86s +0.60m -> 19.96s +0.00m -> 20.08s -0.60m
+Final strategy reason: maximum predicted progress; other vehicles ignored
+Final vehicle-2 d: -0.600 m
+Detected collision pairs: none

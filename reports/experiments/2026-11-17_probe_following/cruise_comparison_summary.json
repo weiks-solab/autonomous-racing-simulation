@@ -1,0 +1,148 @@
+{
+  "executed_at_taipei": "2026-11-17T18:24:21+08:00",
+  "branch": "master",
+  "base_commit": "6dc4a2b9cb76c5f83810efadeeb3a0eca0d75968",
+  "worktree": "含未提交修改",
+  "seconds": 15.0,
+  "scenario": {
+    "vehicles": [
+      {
+        "vehicle_id": "vehicle-1",
+        "start_s": 3.0,
+        "start_d": 0.0,
+        "initial_speed": 0.0,
+        "target_speed": 10.0,
+        "heading_error": 0.0
+      },
+      {
+        "vehicle_id": "vehicle-2",
+        "start_s": 0.0,
+        "start_d": 0.0,
+        "initial_speed": 0.0,
+        "target_speed": 12.0,
+        "heading_error": 0.0
+      }
+    ],
+    "assignments": {
+      "vehicle-1": {
+        "name": "defend",
+        "target_vehicle_id": "vehicle-2"
+      },
+      "vehicle-2": {
+        "name": "probe_follow",
+        "target_vehicle_id": null
+      }
+    }
+  },
+  "track": {
+    "name": "rounded_rectangle",
+    "length": 20.0,
+    "height": 12.0,
+    "radius": 3.0,
+    "width": 2.0,
+    "point_count": 500
+  },
+  "configs": {
+    "probe_following_config": {
+      "target_gap": 2.5,
+      "detection_range": 10.0,
+      "prediction_horizon": 1.0,
+      "decision_period": 0.1,
+      "transition_length": 3.0,
+      "speed_step": 1.0,
+      "probe_offset": 0.6,
+      "probe_gap_tolerance": 1.0,
+      "lateral_tolerance": 0.1,
+      "hold_seconds": 1.0,
+      "clearance": 0.3,
+      "safety_margin": 0.1,
+      "gap_scale": 1.0,
+      "speed_scale": 1.0,
+      "lateral_scale": 0.6,
+      "gap_weight": 2.0,
+      "speed_weight": 1.0,
+      "probe_weight": 2.0,
+      "switch_weight": 0.5
+    },
+    "defense_config": {
+      "q_block": 15.0,
+      "progress_weight": 2.0,
+      "smooth_weight": 1.0,
+      "detection_range": 6.0,
+      "return_tolerance": 0.08,
+      "transition_length": 2.0,
+      "decision_period": 0.2,
+      "candidate_offsets": [
+        -0.6,
+        -0.3,
+        0.0,
+        0.3,
+        0.6
+      ],
+      "prediction_horizon": 1,
+      "prediction_step": 0.1,
+      "path_sample_spacing": 0.2,
+      "safety_margin": 0.1,
+      "collision_check_enabled": false,
+      "collision_horizon": 1.5
+    },
+    "controller_config": {
+      "lookahead_distance": 2.0,
+      "target_speed": 0.0,
+      "speed_gain": 1.5,
+      "max_acceleration": 5.0,
+      "max_steering_angle": 0.8726646259971648,
+      "max_deceleration": 5.0
+    },
+    "model_config": {
+      "wheelbase": 0.33,
+      "time_step": 0.02,
+      "max_steering_angle": 0.8726646259971648,
+      "min_velocity": 0.0,
+      "max_velocity": 30.0
+    },
+    "geometry": {
+      "length": 0.55,
+      "width": 0.3,
+      "rear_axle_to_center": 0.12,
+      "collision": {
+        "length": 0.6,
+        "width": 0.4
+      }
+    },
+    "offset_path_config": {
+      "sample_spacing": 0.2,
+      "path_length": 4.0
+    }
+  },
+  "baseline": {
+    "initial_gap_m": 2.9999999999999964,
+    "maximum_gap_m": 8.804679235011843,
+    "final_gap_m": 3.6844683544634513,
+    "first_return_to_probe_window_s": null,
+    "replanning_count": 150,
+    "cruise_selections": 0,
+    "mode_duration_s": {
+      "follow": 14.4,
+      "probe_left": 0.6
+    },
+    "maximum_prediction_first_step_error": 0.0,
+    "collision_pairs": [],
+    "passing_samples": 0
+  },
+  "with_cruise": {
+    "initial_gap_m": 2.9999999999999964,
+    "maximum_gap_m": 7.619617726388938,
+    "final_gap_m": 1.877589235093101,
+    "first_return_to_probe_window_s": 7.16,
+    "replanning_count": 150,
+    "cruise_selections": 31,
+    "mode_duration_s": {
+      "follow": 7.6000000000000005,
+      "probe_left": 7.4
+    },
+    "maximum_prediction_first_step_error": 0.0,
+    "collision_pairs": [],
+    "passing_samples": 0
+  }
+}

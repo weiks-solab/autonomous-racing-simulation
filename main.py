@@ -33,16 +33,17 @@ from strategy.defending import DefenseConfig
 from strategy.offset_path import LateralManeuver, OffsetPathConfig, generate_offset_track
 from strategy.overtaking import OvertakingConfig
 from strategy.progress import ProgressConfig, ProgressStrategy
+from strategy.probe_following import ProbeFollowingConfig, ProbeFollowingStrategy
 from strategy.relative_overtaking import RelativeOvertakingConfig, RelativeOvertakingStrategy
 from strategy.gp_prediction import load_gp_routes
 
 
 # ===== 常用參數集中在這裡：距離 m、速度 m/s、時間 s =====
 DEFENSE_ENABLED = True
-SIMULATION_SECONDS = 21.0
+SIMULATION_SECONDS = 15.0
 
 # 只改 TRACK_NAME 即可換圖；下載圖沿用原本的多車與策略設定。
-TRACK_NAME = "Oschersleben"  # "rounded_rectangle"、"oval" 或 "Oschersleben" 等下載圖名。
+TRACK_NAME = "rounded_rectangle"  # "rounded_rectangle"、"oval" 或 "Oschersleben" 等下載圖名。
 TRACK_MAP_ROOT = "external/f1tenth_racetracks"
 TRACK_SAMPLE_SPACING = 0.4  # 外部圖以公尺間距取樣；內建圖仍使用 TRACK_POINT_COUNT。
 TRACK_RECTANGLE_LENGTH = 20.0    # 中心線左右跨度，不含路寬
@@ -55,8 +56,8 @@ TRACK_WIDTH = 2.0
 
 # (車輛 ID, 起始 s, 目標速度)。可增加其他車；負 s 會繞回封閉賽道。
 VEHICLE_SPECS = (
-    ("vehicle-1", 0.0, 11.0),
-    ("vehicle-2", 4.0, 9.0),
+    ("vehicle-1", 1.0, 10.0),
+    ("vehicle-2", 0.0, 12.0),
  ##   ("vehicle-3", 4.0, 9.0),
 )
 
@@ -64,11 +65,12 @@ VEHICLE_SPECS = (
 # cost_overtake：五候選成本進攻；overtake：原本的規則式進攻。
 # progress：五候選只比較自車進度，不預測其他車或篩選碰撞。
 # relative_overtake：只比較預測終點的對手 s 減自車 s，保留碰撞篩選。
+# probe_follow：追蹤目標車距，並輪流左右試探前車。
 # centerline：跟隨中心線；defend：防守指定對象。
 # 未列出的車也會自動使用 centerline。每台車都有自己的策略物件。
 STRATEGY_ASSIGNMENTS = {
-    "vehicle-1": StrategyAssignment("relative_overtake"),
-    "vehicle-2": StrategyAssignment("progress"),
+    "vehicle-1": StrategyAssignment("defend", target_vehicle_id="vehicle-2"),
+    "vehicle-2": StrategyAssignment("probe_follow"),
  ##   "vehicle-3": StrategyAssignment("progress"),
 }
 
@@ -83,7 +85,7 @@ MODEL_CONFIG = VehicleModelConfig(
     time_step=0.02,
     max_steering_angle=math.radians(50.0),
     min_velocity=0.0,
-    max_velocity=10.0,
+    max_velocity=30.0,
 )
 COLLISION_CONFIG = CollisionConfig(length=0.6, width=0.4)  # 只調整碰撞判定矩形，單位 m。
 VEHICLE_GEOMETRY = VehicleGeometry(
@@ -93,6 +95,7 @@ VEHICLE_GEOMETRY = VehicleGeometry(
 LOOKAHEAD_DISTANCE = 2.0
 SPEED_GAIN = 1.5
 MAX_ACCELERATION = 5.0
+MAX_DECELERATION = 5.0  # 正值，控制器輸出的減速度最多為此大小，單位 m/s²。
 
 # 規則式 overtake 專用；cost_overtake 使用下方的 COST_OVERTAKING_CONFIG。
 OVERTAKING_CONFIG = OvertakingConfig(
@@ -141,7 +144,7 @@ PROGRESS_CONFIG = ProgressConfig(
     candidate_offsets=(-0.6, -0.3, 0.0, 0.3, 0.6),
     transition_length=3.0,
     decision_period=0.1,
-    prediction_horizon=1.5,
+    prediction_horizon=3.0,
     safety_margin=0.1,  # 只限制候選目標與路邊的距離，不是車間碰撞留距。
 )
 RELATIVE_OVERTAKING_CONFIG = RelativeOvertakingConfig(
@@ -153,13 +156,30 @@ RELATIVE_OVERTAKING_CONFIG = RelativeOvertakingConfig(
     decision_period=0.1,
     prediction_horizon=0.8,
     safety_margin=0.1,
+    speed_candidates_enabled=False,  # True 時在目前路徑增加低速候選。
+    speed_candidate_delta=1.0,       # 第二個速度要求為 max(前車速度 - 此差值, 0)，m/s。
 )
 
 
-def create_demo_track() -> Track:
+# python main.py --probe-follow 使用這組圓角矩形雙車場景。
+PROBE_VEHICLE_SPECS = (("rear", 0.0, 4.0), ("front", 4.0, 3.0))
+PROBE_STRATEGY_ASSIGNMENTS = {
+    "rear": StrategyAssignment("probe_follow"),
+    "front": StrategyAssignment("defend", target_vehicle_id="rear"),
+}
+PROBE_FOLLOWING_CONFIG = ProbeFollowingConfig(
+    target_gap=2.5,          # 期望的後軸縱向車距，m。
+    speed_step=1.0,          # 前車速度 ±1 m/s 與速度匹配，另比較原巡航速度。
+    probe_offset=0.6,        # 左右試探偏移，m。
+    hold_seconds=2.0,        # 首次到達目標後，維持該橫向目標 2 s；不可行時可中止。
+    gap_weight=2.0, speed_weight=1.0, probe_weight=2.0, switch_weight=0.5,
+)
+
+
+def create_demo_track(name: str | None = None) -> Track:
     """Share the selected map with the simulation and training-data entry points."""
     return create_track(TrackConfig(
-        name=TRACK_NAME,
+        name=TRACK_NAME if name is None else name,
         map_root=TRACK_MAP_ROOT,
         sample_spacing=TRACK_SAMPLE_SPACING,
         point_count=TRACK_POINT_COUNT,
@@ -227,6 +247,7 @@ def _create_vehicle(
         speed_gain=SPEED_GAIN,
         max_acceleration=MAX_ACCELERATION,
         max_steering_angle=model_config.max_steering_angle,
+        max_deceleration=MAX_DECELERATION,
     )
     return SimulatedVehicle(
         vehicle_id=vehicle_id,
@@ -294,20 +315,24 @@ def _create_observations(
 def run_simulation(
     realtime: bool = False,
     defense_enabled: bool = DEFENSE_ENABLED,
+    probe_follow_demo: bool = False,
 ) -> None:
-    track = create_demo_track()
+    track = (create_demo_track("rounded_rectangle") if probe_follow_demo
+             else create_demo_track())
+    vehicle_specs = PROBE_VEHICLE_SPECS if probe_follow_demo else VEHICLE_SPECS
+    assignments = PROBE_STRATEGY_ASSIGNMENTS if probe_follow_demo else STRATEGY_ASSIGNMENTS
     model_config = MODEL_CONFIG
     vehicles = [
         _create_vehicle(vehicle_id, start_s, target_speed, model_config, track)
-        for vehicle_id, start_s, target_speed in VEHICLE_SPECS
+        for vehicle_id, start_s, target_speed in vehicle_specs
     ]
     validate_unique_vehicle_ids(vehicles)
     gp_routes = {}
-    imported_track = TRACK_NAME not in ("oval", "rounded_rectangle")
+    imported_track = not probe_follow_demo and TRACK_NAME not in ("oval", "rounded_rectangle")
     if imported_track and GP_PREDICTION_ENABLED:
         print("GP prediction disabled on imported tracks: the existing s-to-d model belongs to the old track.")
     if not imported_track and GP_PREDICTION_ENABLED and any(
-        assignment.name == "relative_overtake" for assignment in STRATEGY_ASSIGNMENTS.values()
+        assignment.name == "relative_overtake" for assignment in assignments.values()
     ):
         paths = {key: path for key, path in GP_MODEL_PATHS.items()
                  if key in {vehicle.vehicle_id for vehicle in vehicles}}
@@ -322,6 +347,9 @@ def run_simulation(
     }
     # 工廠每次建立獨立策略；新增策略可在此註冊，再由對照表選用。
     strategy_factories = {
+        "probe_follow": lambda vehicle_id: ProbeFollowingStrategy(
+            PROBE_FOLLOWING_CONFIG, prediction_configs[vehicle_id], prediction_configs,
+        ),
         "cost_overtake": lambda vehicle_id: CostBasedOvertakingStrategy(
             COST_OVERTAKING_CONFIG, prediction_configs[vehicle_id], prediction_configs,
         ),
@@ -335,13 +363,16 @@ def run_simulation(
     }
     manager = StrategyManager(
         [vehicle.vehicle_id for vehicle in vehicles],
-        STRATEGY_ASSIGNMENTS,
+        assignments,
         OVERTAKING_CONFIG,
         DEFENSE_CONFIG,
         defense_enabled=defense_enabled,
         strategy_factories=strategy_factories,
     )
     display_options = create_display_options(realtime)
+    if probe_follow_demo:
+        display_options = replace(display_options, show_centerline=True,
+                                  show_strategy_status=True, show_gp_predictions=False)
     if imported_track:
         display_options = replace(display_options, show_gp_predictions=False)
     background = create_demo_background() if display_options.show_map_background else None
@@ -381,7 +412,10 @@ def run_simulation(
             for vehicle_id, maneuver in maneuvers.items()
         }
         for vehicle in vehicles:
-            vehicle.step(temporary_tracks.get(vehicle.vehicle_id, track))
+            vehicle.step(
+                temporary_tracks.get(vehicle.vehicle_id, track),
+                speed_limit=decisions[vehicle.vehicle_id].speed_limit,
+            )
         current_collisions = find_vehicle_collisions(vehicles)
         detected_collisions.update(current_collisions)
         if realtime:
@@ -422,6 +456,11 @@ if __name__ == "__main__":
         help="animate the simulation as it runs",
     )
     parser.add_argument(
+        "--probe-follow",
+        action="store_true",
+        help="run the rounded-rectangle probe-following and defense demo",
+    )
+    parser.add_argument(
         "--no-defense",
         action="store_true",
         help="replace every defend assignment with centerline following",
@@ -430,4 +469,5 @@ if __name__ == "__main__":
     run_simulation(
         realtime=arguments.realtime,
         defense_enabled=DEFENSE_ENABLED and not arguments.no_defense,
+        probe_follow_demo=arguments.probe_follow,
     )

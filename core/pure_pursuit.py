@@ -14,14 +14,19 @@ class PurePursuitConfig:
     speed_gain: float
     max_acceleration: float
     max_steering_angle: float
+    max_deceleration: float | None = None
 
     def __post_init__(self) -> None:
+        # 舊設定只有加速度上限，省略減速度時保留對稱限制。
+        if self.max_deceleration is None:
+            object.__setattr__(self, "max_deceleration", self.max_acceleration)
         values = (
             self.lookahead_distance,
             self.target_speed,
             self.speed_gain,
             self.max_acceleration,
             self.max_steering_angle,
+            self.max_deceleration,
         )
         if not all(math.isfinite(value) for value in values):
             raise ValueError("controller configuration must be finite")
@@ -33,6 +38,8 @@ class PurePursuitConfig:
             raise ValueError("speed_gain must be non-negative")
         if self.max_acceleration <= 0.0:
             raise ValueError("max_acceleration must be positive")
+        if self.max_deceleration <= 0.0:
+            raise ValueError("max_deceleration must be positive")
         if not 0.0 < self.max_steering_angle < math.pi / 2.0:
             raise ValueError("max_steering_angle must be between 0 and pi/2")
 
@@ -54,6 +61,7 @@ class PurePursuitController:
         state: VehicleState,
         track: Track,
         wheelbase: float,
+        speed_limit: float | None = None,
     ) -> tuple[ControlCommand, PursuitTarget]:
         if not math.isfinite(wheelbase) or wheelbase <= 0.0:
             raise ValueError("wheelbase must be positive and finite")
@@ -73,11 +81,7 @@ class PurePursuitController:
             -self.config.max_steering_angle,
             self.config.max_steering_angle,
         )
-        acceleration = _clamp(
-            self.config.speed_gain * (self.config.target_speed - state.velocity),
-            -self.config.max_acceleration,
-            self.config.max_acceleration,
-        )
+        acceleration = compute_speed_acceleration(state.velocity, self.config, speed_limit)
         return ControlCommand(steering, acceleration), target
 
     def _find_target(self, state: VehicleState, track: Track) -> PursuitTarget:
@@ -92,6 +96,29 @@ class PurePursuitController:
             x=float(point[0]),
             y=float(point[1]),
         )
+
+
+def validate_speed_limit(speed_limit: float | None) -> None:
+    """速度要求以 m/s 表示。None 表示恢復原巡航目標。"""
+    if speed_limit is not None and (not math.isfinite(speed_limit) or speed_limit < 0.0):
+        raise ValueError("speed_limit must be non-negative and finite, or None")
+
+
+def compute_speed_acceleration(
+    velocity: float,
+    config: PurePursuitConfig,
+    speed_limit: float | None = None,
+) -> float:
+    """預測與執行共用的比例速度控制，每次依巡航設定與速度要求計算。"""
+    validate_speed_limit(speed_limit)
+    target_speed = config.target_speed
+    if speed_limit is not None:
+        target_speed = min(target_speed, speed_limit)
+    return _clamp(
+        config.speed_gain * (target_speed - velocity),
+        -config.max_deceleration,
+        config.max_acceleration,
+    )
 
 
 def _clamp(value: float, lower: float, upper: float) -> float:

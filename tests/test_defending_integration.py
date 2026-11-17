@@ -37,7 +37,8 @@ class DefendingIntegrationTests(unittest.TestCase):
             "vehicle-1": StrategyAssignment("overtake"),
             "vehicle-2": StrategyAssignment("defend", target_vehicle_id="vehicle-1"),
         }
-        with patch("main.VEHICLE_SPECS", specs), patch("main.STRATEGY_ASSIGNMENTS", assignments):
+        with patch("main.VEHICLE_SPECS", specs), patch("main.STRATEGY_ASSIGNMENTS", assignments), \
+             patch("main.TRACK_NAME", "rounded_rectangle"), patch("main.SIMULATION_SECONDS", 21.0):
             cls.active, cls.active_output, cls.track = run_without_window(True)
             cls.passive, cls.passive_output, _ = run_without_window(False)
 

@@ -1,0 +1,186 @@
+{
+  "executed_at_taipei": "2026-11-17T18:33:46+08:00",
+  "branch": "master",
+  "base_commit": "6dc4a2b9cb76c5f83810efadeeb3a0eca0d75968",
+  "worktree": "含未提交修改",
+  "track_name": "rounded_rectangle",
+  "seconds": 15.0,
+  "vehicle_specs": [
+    [
+      "vehicle-1",
+      1.0,
+      10.0
+    ],
+    [
+      "vehicle-2",
+      0.0,
+      12.0
+    ]
+  ],
+  "assignments": {
+    "vehicle-1": {
+      "name": "defend",
+      "target_vehicle_id": "vehicle-2"
+    },
+    "vehicle-2": {
+      "name": "probe_follow",
+      "target_vehicle_id": null
+    }
+  },
+  "track_parameters": {
+    "length": 20.0,
+    "height": 12.0,
+    "radius": 3.0,
+    "width": 2.0,
+    "point_count": 500
+  },
+  "configs": {
+    "probe_following_config": {
+      "target_gap": 2.5,
+      "detection_range": 10.0,
+      "prediction_horizon": 1.0,
+      "decision_period": 0.1,
+      "transition_length": 3.0,
+      "speed_step": 1.0,
+      "probe_offset": 0.6,
+      "probe_gap_tolerance": 1.0,
+      "lateral_tolerance": 0.1,
+      "hold_seconds": 1.0,
+      "clearance": 0.3,
+      "safety_margin": 0.1,
+      "gap_scale": 1.0,
+      "speed_scale": 1.0,
+      "lateral_scale": 0.6,
+      "gap_weight": 2.0,
+      "speed_weight": 1.0,
+      "probe_weight": 2.0,
+      "switch_weight": 0.5
+    },
+    "defense_config": {
+      "q_block": 15.0,
+      "progress_weight": 2.0,
+      "smooth_weight": 1.0,
+      "detection_range": 6.0,
+      "return_tolerance": 0.08,
+      "transition_length": 2.0,
+      "decision_period": 0.2,
+      "candidate_offsets": [
+        -0.6,
+        -0.3,
+        0.0,
+        0.3,
+        0.6
+      ],
+      "prediction_horizon": 1,
+      "prediction_step": 0.1,
+      "path_sample_spacing": 0.2,
+      "safety_margin": 0.1,
+      "collision_check_enabled": false,
+      "collision_horizon": 1.5
+    },
+    "model_config": {
+      "wheelbase": 0.33,
+      "time_step": 0.02,
+      "max_steering_angle": 0.8726646259971648,
+      "min_velocity": 0.0,
+      "max_velocity": 30.0
+    },
+    "controller_config": {
+      "lookahead_distance": 2.0,
+      "target_speed": 0.0,
+      "speed_gain": 1.5,
+      "max_acceleration": 5.0,
+      "max_steering_angle": 0.8726646259971648,
+      "max_deceleration": 5.0
+    },
+    "geometry": {
+      "length": 0.55,
+      "width": 0.3,
+      "rear_axle_to_center": 0.12,
+      "collision": {
+        "length": 0.6,
+        "width": 0.4
+      }
+    },
+    "offset_path_config": {
+      "sample_spacing": 0.2,
+      "path_length": 4.0
+    }
+  },
+  "lateral_target_segments": [
+    {
+      "target_d_m": 0.6,
+      "start_s": 0.5,
+      "end_s": 1.4000000000000001,
+      "first_arrival_s": null,
+      "held_after_arrival_s": null,
+      "simulation_ended": false
+    },
+    {
+      "target_d_m": 0.6,
+      "start_s": 6.2,
+      "end_s": 7.5,
+      "first_arrival_s": 6.58,
+      "held_after_arrival_s": 0.9199999999999999,
+      "simulation_ended": false
+    },
+    {
+      "target_d_m": 0.6,
+      "start_s": 7.9,
+      "end_s": 8.8,
+      "first_arrival_s": 8.26,
+      "held_after_arrival_s": 0.5400000000000009,
+      "simulation_ended": false
+    },
+    {
+      "target_d_m": 0.6,
+      "start_s": 8.9,
+      "end_s": 10.6,
+      "first_arrival_s": 9.3,
+      "held_after_arrival_s": 1.299999999999999,
+      "simulation_ended": false
+    },
+    {
+      "target_d_m": 0.6,
+      "start_s": 10.700000000000001,
+      "end_s": 11.5,
+      "first_arrival_s": 10.700000000000001,
+      "held_after_arrival_s": 0.7999999999999989,
+      "simulation_ended": false
+    },
+    {
+      "target_d_m": 0.6,
+      "start_s": 11.700000000000001,
+      "end_s": 13.3,
+      "first_arrival_s": 12.1,
+      "held_after_arrival_s": 1.200000000000001,
+      "simulation_ended": false
+    },
+    {
+      "target_d_m": 0.6,
+      "start_s": 13.5,
+      "end_s": 14.0,
+      "first_arrival_s": 13.88,
+      "held_after_arrival_s": 0.11999999999999922,
+      "simulation_ended": false
+    },
+    {
+      "target_d_m": 0.6,
+      "start_s": 14.1,
+      "end_s": 14.3,
+      "first_arrival_s": 14.1,
+      "held_after_arrival_s": 0.20000000000000107,
+      "simulation_ended": false
+    },
+    {
+      "target_d_m": 0.6,
+      "start_s": 14.5,
+      "end_s": 15.0,
+      "first_arrival_s": 14.92,
+      "held_after_arrival_s": 0.08000000000000007,
+      "simulation_ended": true
+    }
+  ],
+  "collision_pairs": [],
+  "no_feasible_path_steps": 0
+}

@@ -1,0 +1,212 @@
+{
+  "executed_at_taipei": "2026-11-17T18:01:59+08:00",
+  "branch": "master",
+  "base_commit": "6dc4a2b9cb76c5f83810efadeeb3a0eca0d75968",
+  "worktree": "含未提交修改",
+  "track": "rounded_rectangle",
+  "seconds": 15.0,
+  "vehicle_specs": [
+    [
+      "vehicle-1",
+      3.0,
+      10.0
+    ],
+    [
+      "vehicle-2",
+      0.0,
+      12.0
+    ]
+  ],
+  "probe_class_default_target_gap_m": 1.5,
+  "effective_probe_config": {
+    "target_gap": 2.5,
+    "detection_range": 10.0,
+    "prediction_horizon": 1.0,
+    "decision_period": 0.1,
+    "transition_length": 3.0,
+    "speed_step": 1.0,
+    "probe_offset": 0.6,
+    "probe_gap_tolerance": 1.0,
+    "lateral_tolerance": 0.1,
+    "hold_seconds": 1.0,
+    "clearance": 0.3,
+    "safety_margin": 0.1,
+    "gap_scale": 1.0,
+    "speed_scale": 1.0,
+    "lateral_scale": 0.6,
+    "gap_weight": 2.0,
+    "speed_weight": 1.0,
+    "probe_weight": 2.0,
+    "switch_weight": 0.5
+  },
+  "defense_config": {
+    "q_block": 15.0,
+    "progress_weight": 2.0,
+    "smooth_weight": 1.0,
+    "detection_range": 6.0,
+    "return_tolerance": 0.08,
+    "transition_length": 2.0,
+    "decision_period": 0.2,
+    "candidate_offsets": [
+      -0.6,
+      -0.3,
+      0.0,
+      0.3,
+      0.6
+    ],
+    "prediction_horizon": 1,
+    "prediction_step": 0.1,
+    "path_sample_spacing": 0.2,
+    "safety_margin": 0.1,
+    "collision_check_enabled": false,
+    "collision_horizon": 1.5
+  },
+  "model_config": {
+    "wheelbase": 0.33,
+    "time_step": 0.02,
+    "max_steering_angle": 0.8726646259971648,
+    "min_velocity": 0.0,
+    "max_velocity": 30.0
+  },
+  "controller_template": {
+    "lookahead_distance": 2.0,
+    "target_speed": 0.0,
+    "speed_gain": 1.5,
+    "max_acceleration": 5.0,
+    "max_steering_angle": 0.8726646259971648,
+    "max_deceleration": 5.0
+  },
+  "gap_range_m": [
+    2.9999999999999964,
+    8.804679235011843
+  ],
+  "samples": [
+    {
+      "time_s": 0.0,
+      "gap_m": 2.9999999999999964,
+      "rear_velocity_mps": 0.0,
+      "front_velocity_mps": 0.0,
+      "speed_limit_mps": 0.0
+    },
+    {
+      "time_s": 1.0,
+      "gap_m": 4.358390567044548,
+      "rear_velocity_mps": 2.9366905310175873,
+      "front_velocity_mps": 4.999999999999998,
+      "speed_limit_mps": 5.999999999999998
+    },
+    {
+      "time_s": 2.0,
+      "gap_m": 6.4105201652004915,
+      "rear_velocity_mps": 7.28937283676209,
+      "front_velocity_mps": 8.792238529913982,
+      "speed_limit_mps": 9.792238529913982
+    },
+    {
+      "time_s": 3.0,
+      "gap_m": 7.954611174594913,
+      "rear_velocity_mps": 9.75758250416875,
+      "front_velocity_mps": 9.73662904169556,
+      "speed_limit_mps": 10.73662904169556
+    },
+    {
+      "time_s": 5.0,
+      "gap_m": 7.7567797722513845,
+      "rear_velocity_mps": 10.899714905088286,
+      "front_velocity_mps": 9.987476050417904,
+      "speed_limit_mps": 10.987476050417904
+    },
+    {
+      "time_s": 10.0,
+      "gap_m": 6.6088638115279394,
+      "rear_velocity_mps": 10.999899754254004,
+      "front_velocity_mps": 9.99999382446088,
+      "speed_limit_mps": 10.99999382446088
+    },
+    {
+      "time_s": 15.0,
+      "gap_m": 3.6844683544635757,
+      "rear_velocity_mps": 10.332329553929306,
+      "front_velocity_mps": 9.999999996954852,
+      "speed_limit_mps": 9.999999996453909
+    }
+  ],
+  "mode_counts_at_replans": {
+    "follow": 144,
+    "probe_left": 6
+  },
+  "replans_selecting_fastest_candidate": 139,
+  "replanning_count": 150,
+  "unused_cruise_comparisons": [
+    {
+      "time_s": 4.0,
+      "gap_m": 8.534124722204314,
+      "selected_speed_limit_mps": 10.942567913121737,
+      "selected_cost_terms": {
+        "gap": 62.39813903623348,
+        "speed": 0.196971133391394,
+        "probe": 0.0008062255645666282,
+        "switch": 0.0
+      },
+      "unused_cruise_speed_mps": 12.0,
+      "unused_cruise_feasible": true,
+      "unused_cruise_reason": "",
+      "unused_cruise_cost_terms": {
+        "gap": 58.43436897247976,
+        "speed": 0.1412720246799066,
+        "probe": 0.0007153548502265244,
+        "switch": 0.0
+      }
+    },
+    {
+      "time_s": 8.0,
+      "gap_m": 7.519327539627266,
+      "selected_speed_limit_mps": 10.999870132209862,
+      "selected_cost_terms": {
+        "gap": 46.17443640884546,
+        "speed": 1.5202869906593743,
+        "probe": 0.07706876381361531,
+        "switch": 0.0
+      },
+      "unused_cruise_speed_mps": 12.0,
+      "unused_cruise_feasible": true,
+      "unused_cruise_reason": "",
+      "unused_cruise_cost_terms": {
+        "gap": 42.88328643214112,
+        "speed": 0.20995019958752115,
+        "probe": 0.041277622612495214,
+        "switch": 0.0
+      }
+    },
+    {
+      "time_s": 12.0,
+      "gap_m": 6.609902916486433,
+      "selected_speed_limit_mps": 10.999999706337626,
+      "selected_cost_terms": {
+        "gap": 25.30148683622482,
+        "speed": 0.9999695348819251,
+        "probe": 0.000803637794524943,
+        "switch": 0.0
+      },
+      "unused_cruise_speed_mps": 12.0,
+      "unused_cruise_feasible": true,
+      "unused_cruise_reason": "",
+      "unused_cruise_cost_terms": {
+        "gap": 23.033882760266856,
+        "speed": 3.1512164076398883,
+        "probe": 0.0007970506455339447,
+        "switch": 0.0
+      }
+    }
+  ],
+  "first_step": {
+    "before_mps": 0.0,
+    "after_mps": 0.0,
+    "acceleration_mps2": 0.0
+  },
+  "collision_pairs": [],
+  "progress_last_5s_m": {
+    "vehicle-2": 54.75465132520577,
+    "vehicle-1": 51.83025586814141
+  }
+}

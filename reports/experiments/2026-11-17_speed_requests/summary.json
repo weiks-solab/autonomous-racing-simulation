@@ -1,0 +1,295 @@
+{
+  "executed_at_taipei": "2026-11-17T14:21:08+08:00",
+  "branch": "master",
+  "base_commit": "6dc4a2b9cb76c5f83810efadeeb3a0eca0d75968",
+  "worktree": "含未提交修改",
+  "python": "3.10.20",
+  "numpy": "2.2.6",
+  "matplotlib": "3.10.9",
+  "backend": "Agg",
+  "main_smoke_settings": {
+    "track_name": "Oschersleben",
+    "seconds": 21.0,
+    "vehicle_specs": [
+      [
+        "vehicle-1",
+        0.0,
+        20.0
+      ],
+      [
+        "vehicle-2",
+        4.0,
+        18.0
+      ]
+    ],
+    "strategy_assignments": {
+      "vehicle-1": {
+        "name": "relative_overtake",
+        "target_vehicle_id": null
+      },
+      "vehicle-2": {
+        "name": "progress",
+        "target_vehicle_id": null
+      }
+    },
+    "model_config": {
+      "wheelbase": 0.33,
+      "time_step": 0.02,
+      "max_steering_angle": 0.8726646259971648,
+      "min_velocity": 0.0,
+      "max_velocity": 30.0
+    },
+    "relative_overtaking_config": {
+      "candidate_offsets": [
+        -0.6,
+        -0.45,
+        -0.3,
+        -0.15,
+        0.0,
+        0.15,
+        0.3,
+        0.45,
+        0.6
+      ],
+      "detection_range": 6.0,
+      "transition_length": 3.0,
+      "decision_period": 0.1,
+      "prediction_horizon": 0.8,
+      "safety_margin": 0.1,
+      "speed_candidates_enabled": false,
+      "speed_candidate_delta": 1.0
+    },
+    "progress_config": {
+      "candidate_offsets": [
+        -0.6,
+        -0.3,
+        0.0,
+        0.3,
+        0.6
+      ],
+      "transition_length": 3.0,
+      "decision_period": 0.1,
+      "prediction_horizon": 3.0,
+      "safety_margin": 0.1
+    },
+    "path_config": {
+      "sample_spacing": 0.2,
+      "path_length": 4.0
+    },
+    "max_acceleration": 5.0,
+    "max_deceleration": 5.0
+  },
+  "lower_speed_case": {
+    "track_centerline_m": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        100.0,
+        0.0
+      ],
+      [
+        100.0,
+        100.0
+      ],
+      [
+        0.0,
+        100.0
+      ]
+    ],
+    "track_width_m": 2.0,
+    "initial_states_xy_yaw_velocity": {
+      "ego": [
+        20.0,
+        0.0,
+        0.0,
+        6.0
+      ],
+      "front": [
+        22.5,
+        0.0,
+        0.0,
+        3.0
+      ]
+    },
+    "model_config": {
+      "wheelbase": 0.33,
+      "time_step": 0.02,
+      "max_steering_angle": 0.8726646259971648,
+      "min_velocity": 0.0,
+      "max_velocity": 10.0
+    },
+    "controller_config": {
+      "lookahead_distance": 2.0,
+      "target_speed": 6.0,
+      "speed_gain": 1.5,
+      "max_acceleration": 3.0,
+      "max_steering_angle": 0.8726646259971648,
+      "max_deceleration": 3.0
+    },
+    "path_config": {
+      "sample_spacing": 0.2,
+      "path_length": 7.0
+    },
+    "strategy_config": {
+      "candidate_offsets": [
+        0.0
+      ],
+      "detection_range": 6.0,
+      "transition_length": 3.0,
+      "decision_period": 0.1,
+      "prediction_horizon": 1.0,
+      "safety_margin": 0.1,
+      "speed_candidates_enabled": true,
+      "speed_candidate_delta": 1.0
+    },
+    "vehicle_geometry": {
+      "length": 0.55,
+      "width": 0.3,
+      "rear_axle_to_center": 0.12,
+      "collision": null
+    },
+    "selected_maneuver": {
+      "start_s": 20.0,
+      "start_d": 0.0,
+      "target_d": 0.0,
+      "transition_length": 3.0
+    },
+    "dt_s": 0.02,
+    "horizon_s": 1.0,
+    "cruise_speed_mps": 6.0,
+    "speed_gain_per_s": 1.5,
+    "max_acceleration_mps2": 3.0,
+    "max_deceleration_mps2": 3.0,
+    "front_prediction": "constant_speed bicycle, fixed current d",
+    "candidates": [
+      {
+        "speed_limit_mps": null,
+        "target_d_m": 0.0,
+        "feasible_within_horizon": false,
+        "collision_time_s": 0.66,
+        "relative_gap_cost_m": null,
+        "end_velocity_mps": 6.0
+      },
+      {
+        "speed_limit_mps": 3.0,
+        "target_d_m": 0.0,
+        "feasible_within_horizon": true,
+        "collision_time_s": null,
+        "relative_gap_cost_m": 0.806304588034493,
+        "end_velocity_mps": 3.724656882051612
+      },
+      {
+        "speed_limit_mps": 2.0,
+        "target_d_m": 0.0,
+        "feasible_within_horizon": true,
+        "collision_time_s": null,
+        "relative_gap_cost_m": 0.9491581071913799,
+        "end_velocity_mps": 3.2039371607868716
+      }
+    ],
+    "selected_speed_limit_mps": 3.0,
+    "first_actual_acceleration_mps2": -3.0,
+    "first_actual_velocity_mps": 5.94,
+    "compared_states_including_initial": 51,
+    "max_abs_error_xy_yaw_velocity": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "fixed_decision_paths": [
+    {
+      "shape": "straight",
+      "speed_limit_mps": null,
+      "horizon_s": 1.0,
+      "dt_s": 0.02,
+      "compared_states_including_initial": 51,
+      "max_abs_error_xy_yaw_velocity": [
+        0.0,
+        5.551115123125783e-17,
+        1.5178830414797062e-18,
+        0.0
+      ]
+    },
+    {
+      "shape": "straight",
+      "speed_limit_mps": 2.0,
+      "horizon_s": 1.0,
+      "dt_s": 0.02,
+      "compared_states_including_initial": 51,
+      "max_abs_error_xy_yaw_velocity": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "shape": "straight",
+      "speed_limit_mps": 0.0,
+      "horizon_s": 1.0,
+      "dt_s": 0.02,
+      "compared_states_including_initial": 51,
+      "max_abs_error_xy_yaw_velocity": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "shape": "curve",
+      "speed_limit_mps": null,
+      "horizon_s": 1.0,
+      "dt_s": 0.02,
+      "compared_states_including_initial": 51,
+      "max_abs_error_xy_yaw_velocity": [
+        0.0,
+        8.881784197001252e-16,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "shape": "curve",
+      "speed_limit_mps": 2.0,
+      "horizon_s": 1.0,
+      "dt_s": 0.02,
+      "compared_states_including_initial": 51,
+      "max_abs_error_xy_yaw_velocity": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "shape": "curve",
+      "speed_limit_mps": 0.0,
+      "horizon_s": 1.0,
+      "dt_s": 0.02,
+      "compared_states_including_initial": 51,
+      "max_abs_error_xy_yaw_velocity": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "stop_and_resume": {
+    "initial_velocity_mps": 6.0,
+    "stop_duration_s": 12.0,
+    "stop_tolerance_mps": 1e-06,
+    "stopped_velocity_mps": 1.7619742376359213e-07,
+    "resume_duration_s": 6.0,
+    "resumed_velocity_mps": 5.998361376285948,
+    "first_resume_acceleration_mps2": 3.0,
+    "original_cruise_speed_mps": 6.0
+  },
+  "test_exit_code": 0,
+  "main_exit_code": 0
+}

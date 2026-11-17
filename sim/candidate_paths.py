@@ -38,6 +38,8 @@ def candidate_path_points(
 def candidate_path_label(candidate: CandidatePath) -> str:
     """顯示各策略提供的成本或可行性，不加入額外評估。"""
     label = f"{candidate.name + ' ' if candidate.name else ''}d={candidate.maneuver.target_d:+.2f}"
+    if candidate.speed_limit is not None:
+        label += f" speed_limit={candidate.speed_limit:.2f}m/s"
     if not candidate.feasible:
         label += f" {candidate.reason}"
     elif candidate.cost_terms:

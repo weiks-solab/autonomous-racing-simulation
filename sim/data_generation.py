@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field, replace
 import math
 from types import MappingProxyType
-from typing import Mapping, Sequence
+from typing import Callable, Mapping, Sequence
 
 import numpy as np
 
@@ -12,7 +12,8 @@ from core.track import Track
 from core.track_geometry import track_length, track_to_world, world_to_track
 from core.vehicle_geometry import VehicleGeometry, oriented_rectangle_corners
 from core.vehicle_model import KinematicBicycleModel, VehicleModelConfig
-from core.vehicle_state import VehicleState
+from core.vehicle_state import ControlCommand, VehicleState
+from strategy.base import StrategyDecision
 from sim.simulated_vehicle import SimulatedVehicle, find_vehicle_collisions, validate_unique_vehicle_ids
 from strategy.assignment import StrategyAssignment, StrategyManager
 from strategy.bicycle_prediction import BicyclePredictionConfig
@@ -22,6 +23,7 @@ from strategy.observations import VehicleObservation, create_vehicle_observation
 from strategy.offset_path import LateralManeuver, OffsetPathConfig, generate_offset_track
 from strategy.overtaking import OvertakingConfig
 from strategy.progress import ProgressConfig, ProgressStrategy
+from strategy.probe_following import ProbeFollowingConfig, ProbeFollowingStrategy
 from strategy.relative_overtaking import RelativeOvertakingConfig, RelativeOvertakingStrategy
 from training_data.collector import TrainingDataCollector
 from training_data.schema import require_id, require_integer
@@ -75,6 +77,7 @@ class SimulationSettings:
     defense_enabled: bool = True
     progress_config: ProgressConfig = field(default_factory=ProgressConfig)
     relative_overtaking_config: RelativeOvertakingConfig = field(default_factory=RelativeOvertakingConfig)
+    probe_following_config: ProbeFollowingConfig = field(default_factory=ProbeFollowingConfig)
 
 
 @dataclass(frozen=True)
@@ -148,6 +151,7 @@ def _effective_offset_config(scenario: EpisodeScenario, settings: SimulationSett
         "cost_overtake": settings.cost_overtaking_config.transition_length,
         "progress": settings.progress_config.transition_length,
         "relative_overtake": settings.relative_overtaking_config.transition_length,
+        "probe_follow": settings.probe_following_config.transition_length,
     }
     # 資料入口也支援原本的 overtake；參考線必須涵蓋完整橫移。
     length = max(
@@ -172,6 +176,9 @@ def _create_manager(
         settings.overtaking_config, settings.defense_config,
         defense_enabled=settings.defense_enabled,
         strategy_factories={
+            "probe_follow": lambda vehicle_id: ProbeFollowingStrategy(
+                settings.probe_following_config, prediction_configs[vehicle_id], prediction_configs,
+            ),
             "cost_overtake": lambda vehicle_id: CostBasedOvertakingStrategy(
                 settings.cost_overtaking_config, prediction_configs[vehicle_id], prediction_configs,
             ),
@@ -200,6 +207,7 @@ def _observe(
 def run_episode(
     scenario: EpisodeScenario, settings: SimulationSettings,
     collector: TrainingDataCollector, seconds: float,
+    step_observer: Callable[[int, VehicleObservation, StrategyDecision, ControlCommand], None] | None = None,
 ) -> None:
     """Run actual controls and motion; record initial and terminal frames too."""
     time_step = settings.model_config.time_step
@@ -224,7 +232,14 @@ def run_episode(
             for vehicle_id, maneuver in maneuvers.items()
         }
         for vehicle in vehicles:
-            vehicle.step(temporary_tracks.get(vehicle.vehicle_id, settings.track))
+            command, _ = vehicle.step(
+                temporary_tracks.get(vehicle.vehicle_id, settings.track),
+                speed_limit=decisions[vehicle.vehicle_id].speed_limit,
+            )
+            # 只記錄控制前狀態與本步動作；觀察器不參與規劃。
+            if step_observer is not None:
+                step_observer(step_index, observations[vehicle.vehicle_id],
+                              decisions[vehicle.vehicle_id], command)
         # 所有車先前進，再統一觀察；不會混用更新前後的狀態。
         observations = _observe(vehicles, settings.track, maneuvers)
         collector.record(

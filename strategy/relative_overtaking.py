@@ -4,6 +4,7 @@ from dataclasses import dataclass, replace
 import math
 from typing import Mapping, Sequence
 
+from core.pure_pursuit import validate_speed_limit
 from core.track import Track
 from core.track_geometry import TrackPosition, signed_longitudinal_gap, track_length
 from strategy.base import CandidatePath, CandidateSnapshot, GpPredictionSnapshot, StrategyDecision
@@ -26,6 +27,8 @@ class RelativeOvertakingConfig:
     decision_period: float = 0.1
     prediction_horizon: float = 0.8
     safety_margin: float = 0.1
+    speed_candidates_enabled: bool = False
+    speed_candidate_delta: float = 1.0
 
     def __post_init__(self) -> None:
         positive = (self.detection_range, self.transition_length,
@@ -36,6 +39,8 @@ class RelativeOvertakingConfig:
             raise ValueError("safety_margin must be non-negative and finite")
         if not all(math.isfinite(value) for value in self.candidate_offsets):
             raise ValueError("candidate_offsets must be finite")
+        if not math.isfinite(self.speed_candidate_delta) or self.speed_candidate_delta < 0.0:
+            raise ValueError("speed_candidate_delta must be non-negative and finite")
 
 
 @dataclass(frozen=True)
@@ -44,6 +49,10 @@ class RelativeCandidate:
     prediction: BicyclePrediction
     predicted_gap: float | None
     collision: PredictedCollision | None = None
+    speed_limit: float | None = None
+
+    def __post_init__(self) -> None:
+        validate_speed_limit(self.speed_limit)
 
     @property
     def feasible(self) -> bool:
@@ -128,6 +137,15 @@ class RelativeOvertakingStrategy:
             self._evaluate_candidate(vehicle, track, target_d, gap, obstacles)
             for target_d in self._candidate_targets(vehicle, track)
         )
+        # 只在目前路徑補 1–2 個速度候選，不展開橫向與速度的全部組合。
+        current = self.decision.maneuver
+        current_target_d = 0.0 if current is None else current.target_d
+        self.last_candidates += tuple(
+            self._evaluate_candidate(
+                vehicle, track, current_target_d, gap, obstacles, speed_limit=speed_limit,
+            )
+            for speed_limit in self._speed_limits(target, gap)
+        )
         feasible = [candidate for candidate in self.last_candidates if candidate.feasible]
         # 同分優先保留原目標；沒有比較對象時也不偷偷加入自車進度項。
         best = min(feasible, key=lambda candidate: (
@@ -148,6 +166,7 @@ class RelativeOvertakingStrategy:
             target_d=best.maneuver.target_d,
             target_vehicle_id=None if target is None else target.vehicle_id,
             maneuver=best.maneuver,
+            speed_limit=best.speed_limit,
             reason="no target vehicle; prefer previous feasible target" if target is None
             else "lowest predicted relative gap",
             details=("no target vehicle; collision filtering only",) if target is None
@@ -233,6 +252,7 @@ class RelativeOvertakingStrategy:
     def _evaluate_candidate(
         self, vehicle: VehicleObservation, track: Track, target_d: float, gap: float,
         obstacles: Sequence[PredictedVehicle],
+        speed_limit: float | None = None,
     ) -> RelativeCandidate:
         maneuver = self.decision.maneuver
         if maneuver is None or maneuver.target_d != target_d:
@@ -246,14 +266,28 @@ class RelativeOvertakingStrategy:
             )
         prediction = predict_bicycle_trajectory(
             vehicle, track, maneuver, self.prediction_config, self.config.prediction_horizon,
+            speed_limit=speed_limit,
         )
         collision = first_predicted_collision(prediction, vehicle.geometry, obstacles)
         if collision is not None:
-            return RelativeCandidate(maneuver, prediction, None, collision)
+            return RelativeCandidate(maneuver, prediction, None, collision, speed_limit=speed_limit)
         opponent = self.last_target_prediction
         # 用累積進度算終點間距，跨起終點不跳變；保留負值表示自車領先。
         predicted_gap = None if opponent is None else gap + opponent.progress[-1] - prediction.progress[-1]
-        return RelativeCandidate(maneuver, prediction, predicted_gap)
+        return RelativeCandidate(maneuver, prediction, predicted_gap, speed_limit=speed_limit)
+
+    def _speed_limits(
+        self, target: VehicleObservation | None, gap: float,
+    ) -> tuple[float, ...]:
+        """前車速度用來建立候選，可行性由完整 rollout 的碰撞檢查判定。"""
+        if not self.config.speed_candidates_enabled or target is None or gap <= 0.0:
+            return ()
+        front_speed = max(0.0, target.state.velocity)
+        lower_speed = max(0.0, front_speed - self.config.speed_candidate_delta)
+        cruise_speed = self.prediction_config.controller.target_speed
+        return tuple(dict.fromkeys(
+            speed for speed in (front_speed, lower_speed) if speed < cruise_speed
+        ))
 
     def _snapshot(
         self, vehicle: VehicleObservation, time_seconds: float, best: RelativeCandidate | None,
@@ -273,6 +307,7 @@ class RelativeOvertakingStrategy:
                     cost_terms=(("relative_gap", candidate.total_cost),)
                     if candidate.feasible and candidate.predicted_gap is not None else (),
                     predicted_states=candidate.prediction.states,
+                    speed_limit=candidate.speed_limit,
                 )
                 for candidate in self.last_candidates
             ),
