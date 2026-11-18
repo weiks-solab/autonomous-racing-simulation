@@ -28,11 +28,14 @@ class RelativeOvertakingIntegrationTests(unittest.TestCase):
         return visualizer.return_value.update_vehicles.call_args.kwargs, output.getvalue()
 
     def test_new_strategy_coexists_with_progress_and_original_cost_attack(self) -> None:
-        frame, output = self.run_scene({
-            "rear": StrategyAssignment("relative_overtake"),
-            "front": StrategyAssignment("progress"),
-            "third": StrategyAssignment("cost_overtake"),
-        })
+        # 此案例檢查原本九條橫向候選，不依賴使用者在 main 啟用的速度選項。
+        config = replace(main.RELATIVE_OVERTAKING_CONFIG, speed_candidates_enabled=False)
+        with patch("main.RELATIVE_OVERTAKING_CONFIG", config):
+            frame, output = self.run_scene({
+                "rear": StrategyAssignment("relative_overtake"),
+                "front": StrategyAssignment("progress"),
+                "third": StrategyAssignment("cost_overtake"),
+            })
         for vehicle_id, name in (("rear", "relative_overtake"), ("front", "progress"),
                                  ("third", "cost_overtake")):
             self.assertIn(f"{vehicle_id} strategy: {name}", output)

@@ -1,6 +1,7 @@
 """Matplotlib visualization for a completed or live simulation."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from itertools import combinations
 import math
 from typing import Collection, Mapping, Sequence
 
@@ -14,7 +15,7 @@ import numpy as np
 from core.pure_pursuit import PursuitTarget
 from core.track import Track
 from core.track_geometry import TrackPosition, track_boundaries
-from core.vehicle_geometry import VehicleGeometry, oriented_rectangle_corners
+from core.vehicle_geometry import VehicleGeometry, oriented_rectangle_corners, rectangles_overlap
 from core.vehicle_state import VehicleState
 from sim.candidate_paths import candidate_path_label, candidate_path_points
 from sim.map_background import MapBackground
@@ -42,6 +43,7 @@ class VisualizationConfig:
     show_gp_predictions: bool = True
     show_gp_prediction_labels: bool = True
     show_map_background: bool = True
+    show_envelope_overlap: bool = True
 
     def __post_init__(self) -> None:
         if not math.isfinite(self.pause_seconds) or self.pause_seconds < 0.0:
@@ -182,6 +184,14 @@ class SimulationVisualizer:
                 raise ValueError("collision_pairs contain an unknown vehicle ID")
             colliding_ids.update((first_id, second_id))
 
+        # 畫面另查實體車身；不改規劃器傳入的碰撞判定結果。
+        body_colliding_ids: set[str] = set()
+        if geometries is not None:
+            bodies = {key: replace(geometry, collision=None) for key, geometry in geometries.items()}
+            for first_id, second_id in combinations(states, 2):
+                if rectangles_overlap(states[first_id], bodies[first_id], states[second_id], bodies[second_id]):
+                    body_colliding_ids.update((first_id, second_id))
+
         for vehicle_id, state in states.items():
             artists = self._vehicle_artists.get(vehicle_id)
             if artists is None:
@@ -236,19 +246,17 @@ class SimulationVisualizer:
             else:
                 artists.track_position_text.set_visible(False)
 
-            is_colliding = vehicle_id in colliding_ids
-            if is_colliding:
-                artists.footprint.set_facecolor("red")
-                artists.footprint.set_edgecolor("red")
-                artists.footprint.set_alpha(0.65)
-            else:
-                artists.footprint.set_facecolor(artists.color)
-                artists.footprint.set_edgecolor(artists.color)
-                artists.footprint.set_alpha(0.25)
+            is_colliding = vehicle_id in body_colliding_ids
+            envelope_overlap = self.config.show_envelope_overlap and vehicle_id in colliding_ids
+            color = "red" if is_colliding else "darkorange" if envelope_overlap else artists.color
+            artists.footprint.set_facecolor(color)
+            artists.footprint.set_edgecolor(color)
+            artists.footprint.set_alpha(0.65 if is_colliding or envelope_overlap else 0.25)
 
-            if self.config.show_collision_status and is_colliding:
+            if self.config.show_collision_status and (is_colliding or envelope_overlap):
                 artists.collision_text.set_position((state.x, state.y + 0.45))
-                artists.collision_text.set_text("COLLISION")
+                artists.collision_text.set_text("COLLISION" if is_colliding else "ENVELOPE OVERLAP")
+                artists.collision_text.set_color(color)
                 artists.collision_text.set_visible(True)
             else:
                 artists.collision_text.set_visible(False)

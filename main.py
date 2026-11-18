@@ -40,7 +40,7 @@ from strategy.gp_prediction import load_gp_routes
 
 # ===== 常用參數集中在這裡：距離 m、速度 m/s、時間 s =====
 DEFENSE_ENABLED = True
-SIMULATION_SECONDS = 15.0
+SIMULATION_SECONDS = 21.0
 
 # 只改 TRACK_NAME 即可換圖；下載圖沿用原本的多車與策略設定。
 TRACK_NAME = "rounded_rectangle"  # "rounded_rectangle"、"oval" 或 "Oschersleben" 等下載圖名。
@@ -56,8 +56,8 @@ TRACK_WIDTH = 2.0
 
 # (車輛 ID, 起始 s, 目標速度)。可增加其他車；負 s 會繞回封閉賽道。
 VEHICLE_SPECS = (
-    ("vehicle-1", 1.0, 10.0),
-    ("vehicle-2", 0.0, 12.0),
+    ("vehicle-1", 0.0, 11.0),
+    ("vehicle-2", 4.0, 9.0),
  ##   ("vehicle-3", 4.0, 9.0),
 )
 
@@ -68,14 +68,15 @@ VEHICLE_SPECS = (
 # probe_follow：追蹤目標車距，並輪流左右試探前車。
 # centerline：跟隨中心線；defend：防守指定對象。
 # 未列出的車也會自動使用 centerline。每台車都有自己的策略物件。
+# "defend", target_vehicle_id="vehicle-2"
 STRATEGY_ASSIGNMENTS = {
-    "vehicle-1": StrategyAssignment("defend", target_vehicle_id="vehicle-2"),
-    "vehicle-2": StrategyAssignment("probe_follow"),
+    "vehicle-1": StrategyAssignment("relative_overtake"),
+    "vehicle-2": StrategyAssignment("defend", target_vehicle_id="vehicle-1"),
  ##   "vehicle-3": StrategyAssignment("progress"),
 }
 
 # relative_overtake 用 GP 預測這些對手；其他車沿用原預測。
-GP_PREDICTION_ENABLED = True
+GP_PREDICTION_ENABLED = False
 GP_MODEL_PATHS = {
     "vehicle-2": "models/gp/20261111T064250Z_dbc5bc95/model.pkl",
 }
@@ -87,7 +88,7 @@ MODEL_CONFIG = VehicleModelConfig(
     min_velocity=0.0,
     max_velocity=30.0,
 )
-COLLISION_CONFIG = CollisionConfig(length=0.6, width=0.4)  # 只調整碰撞判定矩形，單位 m。
+COLLISION_CONFIG = CollisionConfig(length=0.6, width=1.2)  # 只調整碰撞判定矩形，單位 m。
 VEHICLE_GEOMETRY = VehicleGeometry(
     length=0.55, width=0.30, rear_axle_to_center=0.12,
     collision=COLLISION_CONFIG,
@@ -144,7 +145,7 @@ PROGRESS_CONFIG = ProgressConfig(
     candidate_offsets=(-0.6, -0.3, 0.0, 0.3, 0.6),
     transition_length=3.0,
     decision_period=0.1,
-    prediction_horizon=3.0,
+    prediction_horizon=1.5,
     safety_margin=0.1,  # 只限制候選目標與路邊的距離，不是車間碰撞留距。
 )
 RELATIVE_OVERTAKING_CONFIG = RelativeOvertakingConfig(
@@ -153,11 +154,12 @@ RELATIVE_OVERTAKING_CONFIG = RelativeOvertakingConfig(
     ),
     detection_range=6.0,  # 新前車的選取範圍；超車後仍保留原比較對象。
     transition_length=3.0,
-    decision_period=0.1,
-    prediction_horizon=0.8,
+    decision_period=0.05,
+    prediction_horizon=1.0,
     safety_margin=0.1,
-    speed_candidates_enabled=False,  # True 時在目前路徑增加低速候選。
+    speed_candidates_enabled=True,  # True 時在目前路徑增加低速候選。
     speed_candidate_delta=1.0,       # 第二個速度要求為 max(前車速度 - 此差值, 0)，m/s。
+    extra_speed_candidate_deltas=(4.0,),  # 再加前車 -4 m/s；可填 (2.0, 4.0)，最低為 0。
 )
 
 
@@ -214,6 +216,7 @@ def create_display_options(realtime: bool) -> VisualizationConfig:
         show_vehicle_footprints=True,
         show_vehicle_heading=False,
         show_collision_status=True,
+        show_envelope_overlap=False,  # False 隱藏橘色重疊提示，保留實體碰撞紅色標示。
         show_strategy_status=False,
         show_temporary_paths=True,
         show_candidate_paths=True,

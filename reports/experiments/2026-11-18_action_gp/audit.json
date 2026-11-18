@@ -1,0 +1,40 @@
+{
+  "feature_order": [
+    "gap",
+    "rear_d",
+    "front_d",
+    "relative_speed",
+    "front_speed",
+    "front_lateral_speed",
+    "front_curvature",
+    "d_target"
+  ],
+  "horizon_seconds": 0.5,
+  "checked_samples": 4026,
+  "fit_count": 2309,
+  "all_training_samples_used": true,
+  "episode_counts": {
+    "validation": 4,
+    "test": 4,
+    "train": 12
+  },
+  "split_disjoint": true,
+  "scaler_train_only": true,
+  "raw_label_checks_passed": true,
+  "executed_d_target_checks_passed": true,
+  "reloaded_model_metrics": {
+    "validation": {
+      "mae": 0.07569025790916642,
+      "rmse": 0.11113388172390332
+    },
+    "test": {
+      "mae": 0.08596811177087668,
+      "rmse": 0.13014198385212228
+    }
+  },
+  "samples_with_action_change_in_next_0p5s": 2182,
+  "action_change_fraction": 0.5419771485345256,
+  "role_front_is_behind_samples": 1425,
+  "model_sha256": "3a9472f159968efe5d00e357a76354fa7dd56505667a34646798e6c3a02ca9b9",
+  "meaning": "d_target 是當下已執行候選；下一個 0.5 s 仍可能改目標。未驗證未執行候選的反事實預測。"
+}

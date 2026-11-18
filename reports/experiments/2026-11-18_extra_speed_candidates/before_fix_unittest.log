@@ -1,0 +1,13 @@
+................................................................................................................................................................................................................................F.........................................................................................................................
+======================================================================
+FAIL: test_new_strategy_coexists_with_progress_and_original_cost_attack (tests.test_relative_overtaking_integration.RelativeOvertakingIntegrationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\kevin\OneDrive\Desktop\project\racing_sim\tests\test_relative_overtaking_integration.py", line 40, in test_new_strategy_coexists_with_progress_and_original_cost_attack
+    self.assertEqual(len(snapshot.candidates), 9)
+AssertionError: 11 != 9
+
+----------------------------------------------------------------------
+Ran 346 tests in 35.815s
+
+FAILED (failures=1)

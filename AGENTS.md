@@ -134,6 +134,9 @@ All generated files must remain inside this repository.
 
 ## 研究紀錄與報告交接
 
+研究紀錄及其他 Markdown 文件請用字簡潔清楚，避免長篇敘述。
+優先保留修改、關鍵設定、量測結果與限制；詳細數據放證據檔，以連結引用，避免重複。
+
 ### 目的與適用範圍
 
 使用者會讓 ChatGPT 透過 GitHub 讀取本專案，分析研究結果並撰寫給教授看的進度報告。

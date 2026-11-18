@@ -2,6 +2,7 @@
 
 最新有實質進展的一週置頂；同週同主題合併更新，每週保留 3～5 點。
 完整歷史見 [11/11 長版封存](archive/2026-11-11_research_log_full.md)，操作與一般變更見 [README](../README.md)／[CHANGELOG](../CHANGELOG.md)。
+固定設定與重現命令另見 [實驗參數紀錄](experiments/parameter_records/README.md)；參數快照不代表已執行或驗證結果。
 
 11/17 本次提交收錄程式、測試與小型實驗證據，推送前 342 項測試全部通過（[日誌](experiments/2026-11-17_interaction_gp/push_unittest.log)）。
 下文的「未提交／未推送」是量測當時的狀態；原始資料與模型仍僅在本機。
@@ -11,15 +12,17 @@
 日期：2026-11-16；分支：`master`；基於 `bf1566e9edc403a4385e930976e723480a6702d4`，含未提交修改。
 以下 GP 項目沿用既有紀錄；本次外部地圖工作基於 `1955cacea110dc57ef6dfeea293a521e549f1b8e`，含未提交修改。
 11/17 的速度要求、候選比較與試探跟車基於 `6dc4a2b9cb76c5f83810efadeeb3a0eca0d75968`，含未提交修改。
+11/18 額外速度候選基於 `de3581a06604976980aa6efa36c1cf61b84fa84c`，含未提交修改。
+11/18 八輸入 GP 亦基於 `de3581a06604976980aa6efa36c1cf61b84fa84c`，含當下未提交參數與本次訓練擴充；設定與程式雜湊另存於該實驗證據。
 
 - **目標車距與左右試探已實作**，`probe_follow` 以目標相對進度成本選速度；先前加入巡航候選的固定 3 m 初距、10／12 m/s 案例，15 s 末距由 3.684 降至 1.878 m。
+  11/18 依使用者要求，在 relative_overtake 增加前車 −4 m/s 候選；固定直線案例的原候選都預測碰撞，新候選可行且預測／執行一致，但當下 main 的 21 s 前後比較都未選低速，尚不能支持持續無碰撞跟車。（[設定與限制](experiments/2026-11-18_extra_speed_candidates/README.md)、[比較數據](experiments/2026-11-18_extra_speed_candidates/summary.json)）
   依使用者希望偏出去待久一點的要求，本次固定階段的橫向目標，首次到達後保持 2 s，該側不可行時可中止；當下 1 m 初距的 15 s 圓角場景由 9 段短促左側目標，變為左、右、左三段，首次到達後保持目標 2.06、2.08、2.02 s，未偵測碰撞或 no_feasible_path。
   完整 337 項測試通過；保持的是目標，彎道實際偏移仍有波動，起步落後及有限視野限制仍存在，GP 互動模型後續離線結果見下項。（[本次方法與限制](experiments/2026-11-17_probe_following/README.md#1117-試探目標保持)、[保持量測](experiments/2026-11-17_probe_following/hold_after_summary.json)、[前後比較圖](experiments/2026-11-17_probe_following/hold_comparison.png)、[本次測試](experiments/2026-11-17_probe_following/hold_unittest.log)、[先前巡航候選比較](experiments/2026-11-17_probe_following/cruise_comparison_summary.json)）
 
-- **GP 路線預測與互動模型：**依使用者要求，本次完成七項狀態輸入預測 0.5 s 前車橫向位移的離線流程；20 場共 2900 筆、800 筆擬合，獨立 4 場測試 MAE 0.059223 m，優於不橫移 0.160928 m 及橫向等速 0.165610 m，342 項測試通過。
-  兩倍標準差涵蓋率僅 89.14%，固定試探順序／防守配置，尚未接入規劃器或驗證泛化；原始資料與模型僅在本機。（[本次方法與限制](experiments/2026-11-17_interaction_gp/README.md)、[報告](experiments/2026-11-17_interaction_gp/report.json)、[圖表](experiments/2026-11-17_interaction_gp/evaluation.png)）既有 s→d 模型已載入進攻策略的紀錄如下。
-  11/16 既有執行紀錄顯示 21 秒、1050 步場景完成且未偵測到實際重疊，僅支持此單一場景可執行，超車成功率或安全性改善仍待驗證。（[訓練評估](experiments/2026-11-11_baseline/gp_current_sd/report.json)、[評估圖](experiments/2026-11-11_baseline/gp_current_sd/evaluation.png)、[預測執行紀錄](experiments/2026-11-16_gp_attack/smoke_summary.json)）
-  已有 1000 點 GP 平均整圈圖與 2 秒、100 幀更新流程的對手預測畫面，圖像由 Agg 保存，互動 GUI 尚未人工驗證。（[圖表說明](experiments/2026-11-16_gp_visualization/README.md)、[畫面來源](experiments/2026-11-16_gp_visualization/live_summary.json)）
+- **GP 路線預測與互動模型：**11/18 依使用者要求，沿用當下進攻／防守參數並加入已執行候選 d_target，完成八輸入、0.5 s 位移 GP；20 場各 25 s 共 4026 筆，12 場全部 2309 筆擬合，4 場驗證 MAE 0.075690 m、4 場測試 MAE／RMSE **0.085968／0.130142 m**，測試零位移基準為 0.351976／0.468345 m。（[方法、設定與結果](experiments/2026-11-18_action_gp/README.md)、[報告](experiments/2026-11-18_action_gp/report.json)、[圖表](experiments/2026-11-18_action_gp/evaluation.png)）
+  全部標籤、當下動作、切分與模型重讀核對通過，但 54.20% 樣本在後續標籤窗內改過目標，尚未接入規劃器或驗證未執行候選的反事實反應，最大測試誤差仍為 0.640401 m，原始資料與模型僅在本機。（[核對](experiments/2026-11-18_action_gp/audit.json)）
+  先前七輸入試探場景與本次策略、速度、碰撞矩形及資料量不同，不能直接作受控改善比較；既有單一 s→d 的策略接入與紫色軌跡顯示另有歷史證據。（[11/17 七輸入結果](experiments/2026-11-17_interaction_gp/README.md)、[11/16 s→d 接入](experiments/2026-11-16_gp_attack/README.md)、[整圈與即時圖](experiments/2026-11-16_gp_visualization/README.md)）
 
 - **外部地圖接入與單車循跡：**依使用者要求加入下載的中心線 CSV 與 PNG／YAML 顯示，沿用 Pure Pursuit；Oschersleben 以 5 m/s 目標速度完成兩圈，最大橫向誤差 **0.3647 m**、RMS **0.0900 m**，逐步車身角點越界樣本為 **0**。
   依使用者要求再縮減為原架構的單一 `TRACK_NAME` 選項，撤回單車入口與資料格式擴充；原有雙車配置在縮減後完成 21 秒執行，但有偵測到兩車碰撞，未驗證策略效果改善。（[單車歷史結果](experiments/2026-11-16_map_import/README.md)、[兩圈軌跡圖](experiments/2026-11-16_map_import/oschersleben/following.png)、[目前最小接入與限制](experiments/2026-11-16_map_minimal/README.md)）

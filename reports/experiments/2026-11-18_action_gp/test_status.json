@@ -1,0 +1,10 @@
+{
+  "command": [
+    ".venv/Scripts/python.exe",
+    "-m",
+    "unittest",
+    "-v"
+  ],
+  "exit_code": 1,
+  "python": "3.10.20 (main, May 10 2026, 19:31:32) [MSC v.1944 64 bit (AMD64)]"
+}

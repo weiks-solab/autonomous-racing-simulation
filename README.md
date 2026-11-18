@@ -72,12 +72,23 @@ cruising = replace(decision, speed_limit=None) # 恢復原巡航目標
 ### 啟用相對進度策略的速度候選
 
 在 `main.py` 的 `RELATIVE_OVERTAKING_CONFIG` 將 `speed_candidates_enabled` 設為 `True`，
-並用 `speed_candidate_delta` 調整速度差，預設為 1.0 m/s。開關預設為 `False`。
+並用 `speed_candidate_delta` 調整原本的速度差，預設為 1.0 m/s。策略類別的開關預設為 `False`。
+`extra_speed_candidate_deltas` 可再增加較低速候選，目前 main 加入前車 −4 m/s：
+
+```python
+speed_candidates_enabled=True,
+speed_candidate_delta=1.0,             # 保留前車 -1 m/s
+extra_speed_candidate_deltas=(4.0,),  # 再加前車 -4 m/s
+```
+
+速度差填正值，`4.0` 表示減去 4 m/s；單一值的 tuple 也要保留逗號。
+例如前車 9 m/s，會在目前路徑比較 9、8、5 m/s，原本橫向候選仍使用巡航目標。
+改成 `(2.0, 4.0)` 可增加兩個速度差；填 `()` 則恢復原本只有匹配與 −1 m/s 的行為。
 
 - 原本橫向候選照常以巡航目標 rollout。
-- 有前方目標時，在目前追蹤的 maneuver 增加前車車速與 `max(前車車速 - 速度差, 0)` 候選。
+- 有前方目標時，在目前追蹤的 maneuver 增加前車車速與 `max(前車車速 - 各速度差, 0)` 候選。
   尚無 maneuver 時使用原本的回中心線候選，進行中的橫移保留其起點。
-- 僅加入低於巡航目標且互不重複的速度要求，每輪最多增加兩個候選。
+- 僅加入低於巡航目標且互不重複的速度要求，負的目標速度截為 0；速度差本身必須非負且有限。
 - 全部候選共用初始狀態、預測視野及對手預測，經既有同時間矩形碰撞檢查後，
   以原有終點相對間距成本取最小值。
 - 全部候選都被剔除時記錄 `no_feasible_path`，繼續持有上一個路徑與速度要求。
@@ -149,6 +160,9 @@ cruising = replace(decision, speed_limit=None) # 恢復原巡航目標
 逐步 CSV 保存決策當下的雙車狀態、試探目標、速度要求與執行加速度，可供後續 GP 互動資料處理。
 GP 互動模型的離線資料收集及訓練入口為 `interaction_gp.py`，預測 0.5 秒後的前車橫向位移；
 命令、輸入與限制見 [GP 訓練文件](GP_TRAINING.md#試探互動第一階段05-秒反應預測)。規劃器接入仍待實作。
+另有 `train_action_gp.py` 沿用目前 main 設定，增加後車已執行候選的 `d_target` 作為第八項輸入，
+固定 20 場按 12／4／4 分開，預設每場 25 秒並使用全部有效訓練樣本；
+操作與欄位定義見 [八輸入 GP](GP_TRAINING.md#八輸入動作條件式互動-gp)。
 設定、成本公式、量化結果與圖表見 [試探跟車驗證](reports/experiments/2026-11-17_probe_following/README.md)。
 
 ## 在進攻策略使用 GP
@@ -255,6 +269,7 @@ python3 train_gp.py --data data/training/生成的資料夾名稱
 ## 想調整參數，先看 main.py 開頭
 
 常用設定集中在 `main.py` 的「常用參數」區，每個防守參數都有簡短中文註解。
+歷次實驗的固定參數與重現方式，另存於 [實驗參數紀錄](reports/experiments/parameter_records/README.md)。
 
 | 設定 | 用途 |
 | --- | --- |
@@ -275,9 +290,11 @@ python3 train_gp.py --data data/training/生成的資料夾名稱
 | `OFFSET_PATH_CONFIG` | 臨時路徑的取樣間距與長度 |
 
 碰撞矩形在 `main.py` 設定，例如 `CollisionConfig(length=0.45, width=0.24)`。
-目前 `main.py` 設為 0.60 × 0.40 m；未指定碰撞尺寸時沿用實體車身尺寸（示範車身為
-0.55 × 0.30 m）。縮小或放大時保持原車身中心。預測與實際碰撞偵測共用此設定，
-訓練原始資料也會保存碰撞尺寸；縮小後允許實際車身部分重疊而不判碰撞。
+未指定碰撞尺寸時沿用實體車身尺寸（示範車身為 0.55 × 0.30 m）。縮小或放大時保持原車身中心。
+規劃器、終端與訓練資料的重疊紀錄仍使用碰撞矩形，訓練原始資料也會保存此尺寸。
+畫面另外區分：實體車身重疊顯示紅色 `COLLISION`，只有判定矩形重疊顯示橘色 `ENVELOPE OVERLAP`；
+實體碰撞優先顯示，離開後恢復原色。此標示不影響策略或車輛運動。
+在 `main.py` 的 `create_display_options()` 設 `show_envelope_overlap=False`，可隱藏橘色文字與車身變色，實體碰撞的紅色標示仍保留。
 
 建議一次改一個防守參數，先從以下幾個開始：
 

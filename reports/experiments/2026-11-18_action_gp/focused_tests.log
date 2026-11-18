@@ -1,0 +1,13 @@
+test_current_scene_collection_and_all_training_samples_use_12_4_4 (tests.test_action_gp.ActionGpTests) ... ok
+test_eighth_feature_is_current_executed_target_not_future_action (tests.test_action_gp.ActionGpTests) ... ok
+test_missing_action_is_an_error_and_legacy_features_remain_seven (tests.test_action_gp.ActionGpTests) ... ok
+test_curvature_is_signed_and_wraps (tests.test_interaction_gp.InteractionTests) ... ok
+test_episode_split_is_disjoint_and_repeatable (tests.test_interaction_gp.InteractionTests) ... ok
+test_features_use_only_current_and_past (tests.test_interaction_gp.InteractionTests) ... ok
+test_half_second_labels_and_collision_interval (tests.test_interaction_gp.InteractionTests) ... ok
+test_training_bundle_reload_and_train_only_scaler (tests.test_interaction_gp.InteractionTests) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.491s
+
+OK

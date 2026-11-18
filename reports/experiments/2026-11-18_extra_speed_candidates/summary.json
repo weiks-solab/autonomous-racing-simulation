@@ -1,0 +1,146 @@
+{
+  "executed_at_taipei": "2026-11-18T15:26:27.370345+08:00",
+  "branch": "master",
+  "base_commit": "de3581a06604976980aa6efa36c1cf61b84fa84c",
+  "worktree": "含未提交修改",
+  "track": "rounded_rectangle",
+  "seconds": 21.0,
+  "vehicle_specs": [
+    [
+      "vehicle-1",
+      0.0,
+      11.0
+    ],
+    [
+      "vehicle-2",
+      4.0,
+      9.0
+    ]
+  ],
+  "assignments": {
+    "vehicle-1": {
+      "name": "relative_overtake",
+      "target_vehicle_id": null
+    },
+    "vehicle-2": {
+      "name": "defend",
+      "target_vehicle_id": "vehicle-1"
+    }
+  },
+  "gp_enabled": false,
+  "track_parameters": {
+    "length": 20.0,
+    "height": 12.0,
+    "radius": 3.0,
+    "width": 2.0,
+    "point_count": 500
+  },
+  "model": {
+    "wheelbase": 0.33,
+    "time_step": 0.02,
+    "max_steering_angle": 0.8726646259971648,
+    "min_velocity": 0.0,
+    "max_velocity": 30.0
+  },
+  "geometry": {
+    "length": 0.55,
+    "width": 0.3,
+    "rear_axle_to_center": 0.12,
+    "collision": {
+      "length": 0.6,
+      "width": 0.4
+    }
+  },
+  "defense": {
+    "q_block": 15.0,
+    "progress_weight": 2.0,
+    "smooth_weight": 1.0,
+    "detection_range": 6.0,
+    "return_tolerance": 0.08,
+    "transition_length": 2.0,
+    "decision_period": 0.2,
+    "candidate_offsets": [
+      -0.6,
+      -0.3,
+      0.0,
+      0.3,
+      0.6
+    ],
+    "prediction_horizon": 1,
+    "prediction_step": 0.1,
+    "path_sample_spacing": 0.2,
+    "safety_margin": 0.1,
+    "collision_check_enabled": false,
+    "collision_horizon": 1.5
+  },
+  "offset_path": {
+    "sample_spacing": 0.2,
+    "path_length": 4.0
+  },
+  "control": {
+    "lookahead": 2.0,
+    "gain": 1.5,
+    "max_acceleration": 5.0,
+    "max_deceleration": 5.0
+  },
+  "baseline": {
+    "config": {
+      "candidate_offsets": [
+        -0.6,
+        -0.45,
+        -0.3,
+        -0.15,
+        0.0,
+        0.15,
+        0.3,
+        0.45,
+        0.6
+      ],
+      "detection_range": 6.0,
+      "transition_length": 3.0,
+      "decision_period": 0.05,
+      "prediction_horizon": 1.0,
+      "safety_margin": 0.1,
+      "speed_candidates_enabled": true,
+      "speed_candidate_delta": 1.0,
+      "extra_speed_candidate_deltas": []
+    },
+    "planning_count": 350,
+    "limited_selections": 0,
+    "extra_selections": 0,
+    "no_feasible_count": 0,
+    "first_collision_s": null,
+    "first_no_feasible": null
+  },
+  "with_extra": {
+    "config": {
+      "candidate_offsets": [
+        -0.6,
+        -0.45,
+        -0.3,
+        -0.15,
+        0.0,
+        0.15,
+        0.3,
+        0.45,
+        0.6
+      ],
+      "detection_range": 6.0,
+      "transition_length": 3.0,
+      "decision_period": 0.05,
+      "prediction_horizon": 1.0,
+      "safety_margin": 0.1,
+      "speed_candidates_enabled": true,
+      "speed_candidate_delta": 1.0,
+      "extra_speed_candidate_deltas": [
+        4.0
+      ]
+    },
+    "planning_count": 350,
+    "limited_selections": 0,
+    "extra_selections": 0,
+    "no_feasible_count": 0,
+    "first_collision_s": null,
+    "first_no_feasible": null
+  }
+}

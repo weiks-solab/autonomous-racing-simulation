@@ -9,7 +9,7 @@ import numpy as np
 from core.pure_pursuit import PursuitTarget
 from core.track import Track
 from core.track_geometry import world_to_track
-from core.vehicle_geometry import VehicleGeometry
+from core.vehicle_geometry import CollisionConfig, VehicleGeometry, rectangles_overlap
 from core.vehicle_state import VehicleState
 from sim.visualizer import SimulationVisualizer, VisualizationConfig
 from strategy.base import CandidatePath, CandidateSnapshot
@@ -151,7 +151,8 @@ class SimulationVisualizerTests(unittest.TestCase):
 
     def test_collision_turns_rectangle_red_and_shows_status(self) -> None:
         visualizer = SimulationVisualizer(self.track, VisualizationConfig())
-        self._update(visualizer, collision_pairs={("vehicle", "other")}, include_other=True)
+        self._update(visualizer, collision_pairs={("vehicle", "other")}, include_other=True,
+                     other_state=self.state)
         artists = visualizer._vehicle_artists["vehicle"]
         self.assertTrue(artists.collision_text.get_visible())
         self.assertEqual(
@@ -162,11 +163,51 @@ class SimulationVisualizerTests(unittest.TestCase):
 
     def test_collision_status_clears_on_the_next_safe_update(self) -> None:
         visualizer = SimulationVisualizer(self.track, VisualizationConfig())
-        self._update(visualizer, collision_pairs={("vehicle", "other")}, include_other=True)
+        self._update(visualizer, collision_pairs={("vehicle", "other")}, include_other=True,
+                     other_state=self.state)
         artists = visualizer._vehicle_artists["vehicle"]
         self._update(visualizer, collision_pairs=set(), include_other=True)
         self.assertFalse(artists.collision_text.get_visible())
         self.assertEqual(artists.footprint.get_alpha(), 0.25)
+
+    def test_only_collision_envelope_overlap_is_orange_then_body_collision_is_red(self) -> None:
+        self.geometry = replace(self.geometry, collision=CollisionConfig(0.6, 0.8))
+        other = replace(self.state, x=self.state.x + 0.5)
+        self.assertTrue(rectangles_overlap(self.state, self.geometry, other, self.geometry))
+        body = replace(self.geometry, collision=None)
+        self.assertFalse(rectangles_overlap(self.state, body, other, body))
+        visualizer = SimulationVisualizer(self.track, VisualizationConfig())
+        self._update(visualizer, collision_pairs={("vehicle", "other")}, include_other=True, other_state=other)
+        artists = visualizer._vehicle_artists["vehicle"]
+        self.assertEqual(artists.collision_text.get_text(), "ENVELOPE OVERLAP")
+        self.assertEqual(artists.collision_text.get_color(), "darkorange")
+        self._update(visualizer, collision_pairs={("vehicle", "other")}, include_other=True, other_state=self.state)
+        self.assertEqual(artists.collision_text.get_text(), "COLLISION")
+        self.assertEqual(artists.collision_text.get_color(), "red")
+        self._update(visualizer, collision_pairs=set(), include_other=True)
+        self.assertFalse(artists.collision_text.get_visible())
+
+    def test_envelope_switch_hides_orange_but_preserves_body_collision(self) -> None:
+        self.geometry = replace(self.geometry, collision=CollisionConfig(0.6, 0.8))
+        visualizer = SimulationVisualizer(self.track, VisualizationConfig(show_envelope_overlap=False))
+        other = replace(self.state, x=self.state.x + 0.5)
+        self._update(visualizer, collision_pairs={("vehicle", "other")}, include_other=True, other_state=other)
+        artists = visualizer._vehicle_artists["vehicle"]
+        self.assertFalse(artists.collision_text.get_visible())
+        np.testing.assert_allclose(artists.footprint.get_facecolor()[:3], artists.color[:3])
+        self.assertEqual(artists.footprint.get_alpha(), 0.25)
+        self._update(visualizer, collision_pairs={("vehicle", "other")}, include_other=True, other_state=self.state)
+        self.assertTrue(artists.collision_text.get_visible())
+        self.assertEqual(artists.collision_text.get_text(), "COLLISION")
+        self.assertEqual(artists.collision_text.get_color(), "red")
+
+    def test_physical_overlap_is_detected_even_with_smaller_collision_envelope(self) -> None:
+        self.geometry = replace(self.geometry, collision=CollisionConfig(0.1, 0.1))
+        other = replace(self.state, y=self.state.y + 0.3)
+        self.assertFalse(rectangles_overlap(self.state, self.geometry, other, self.geometry))
+        visualizer = SimulationVisualizer(self.track, VisualizationConfig())
+        self._update(visualizer, collision_pairs=set(), include_other=True, other_state=other)
+        self.assertEqual(visualizer._vehicle_artists["vehicle"].collision_text.get_text(), "COLLISION")
 
     def test_updates_reuse_existing_artists(self) -> None:
         visualizer = SimulationVisualizer(self.track, VisualizationConfig())
@@ -287,6 +328,7 @@ class SimulationVisualizerTests(unittest.TestCase):
         collision_pairs: set[tuple[str, str]] | None = None,
         include_other: bool = False,
         candidate_snapshot: CandidateSnapshot | None = None,
+        other_state: VehicleState | None = None,
     ) -> None:
         states = {"vehicle": self.state}
         trajectories = {"vehicle": [self.state]}
@@ -294,7 +336,7 @@ class SimulationVisualizerTests(unittest.TestCase):
         geometries = {"vehicle": self.geometry}
         positions = {"vehicle": self.position}
         if include_other:
-            other_state = VehicleState(-4.0, 0.0, -1.57, 1.0)
+            other_state = other_state or VehicleState(-4.0, 0.0, -1.57, 1.0)
             states["other"] = other_state
             trajectories["other"] = [other_state]
             targets["other"] = None

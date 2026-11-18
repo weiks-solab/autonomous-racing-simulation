@@ -29,6 +29,7 @@ class RelativeOvertakingConfig:
     safety_margin: float = 0.1
     speed_candidates_enabled: bool = False
     speed_candidate_delta: float = 1.0
+    extra_speed_candidate_deltas: tuple[float, ...] = ()
 
     def __post_init__(self) -> None:
         positive = (self.detection_range, self.transition_length,
@@ -41,6 +42,8 @@ class RelativeOvertakingConfig:
             raise ValueError("candidate_offsets must be finite")
         if not math.isfinite(self.speed_candidate_delta) or self.speed_candidate_delta < 0.0:
             raise ValueError("speed_candidate_delta must be non-negative and finite")
+        if any(not math.isfinite(delta) or delta < 0.0 for delta in self.extra_speed_candidate_deltas):
+            raise ValueError("extra speed candidate deltas must be non-negative and finite")
 
 
 @dataclass(frozen=True)
@@ -137,7 +140,7 @@ class RelativeOvertakingStrategy:
             self._evaluate_candidate(vehicle, track, target_d, gap, obstacles)
             for target_d in self._candidate_targets(vehicle, track)
         )
-        # 只在目前路徑補 1–2 個速度候選，不展開橫向與速度的全部組合。
+        # 只在目前路徑補速度候選，不展開橫向與速度的全部組合。
         current = self.decision.maneuver
         current_target_d = 0.0 if current is None else current.target_d
         self.last_candidates += tuple(
@@ -283,10 +286,12 @@ class RelativeOvertakingStrategy:
         if not self.config.speed_candidates_enabled or target is None or gap <= 0.0:
             return ()
         front_speed = max(0.0, target.state.velocity)
-        lower_speed = max(0.0, front_speed - self.config.speed_candidate_delta)
+        # 速度差使用正值；例如 4.0 代表前車速度減去 4 m/s。
+        deltas = (0.0, self.config.speed_candidate_delta, *self.config.extra_speed_candidate_deltas)
+        speeds = (max(0.0, front_speed - delta) for delta in deltas)
         cruise_speed = self.prediction_config.controller.target_speed
         return tuple(dict.fromkeys(
-            speed for speed in (front_speed, lower_speed) if speed < cruise_speed
+            speed for speed in speeds if speed < cruise_speed
         ))
 
     def _snapshot(

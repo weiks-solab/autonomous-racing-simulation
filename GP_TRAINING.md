@@ -117,7 +117,43 @@ GP 的 kernel 參數只使用訓練集最佳化；測試集只評分。
 第一版每次訓練一個答案。輸入自動使用資料中的全部 feature，新增 feature 後不需修改訓練流程。
 資料若沒有指定答案，程式會列出可用答案，不會自動把輸入當成答案。
 
-## GP 的少量設定
+## 八輸入、動作條件式互動 GP
+
+`train_action_gp.py` 沿用執行當下的 `main.py` 賽道、車輛、策略、控制器與碰撞矩形。
+各場從 d=0、靜止起步，只隨機平移整組車輛的賽道起點，保留原車距與目標速度。
+固定收集 20 場，以 episode 切成 12 場訓練、4 場驗證、4 場測試，預設每場 25 s。
+樣本間距 0.1 s，答案為前車 `d(t+0.5)-d(t)`；排除未來不足、無歷史速度與標籤窗內碰撞矩形重疊的樣本。
+
+| 輸入名稱 | 定義 | 單位 |
+| --- | --- | --- |
+| `gap` | 前車 s − 後車 s，封閉賽道最短有號距離 | m |
+| `rear_d` | 後車橫向位置 | m |
+| `front_d` | 前車橫向位置 | m |
+| `relative_speed` | 後車車身速度 − 前車車身速度 | m/s |
+| `front_speed` | 前車車身速度 | m/s |
+| `front_lateral_speed` | 前車 d 在過去 0.1 s 的差分速度 | m/s |
+| `front_curvature` | 前車所在中心線的有號曲率，前後各 0.5 m 三點估計 | 1/m |
+| `d_target` | 後車當下真正採用的候選目標 d | m |
+
+```powershell
+.\.venv\Scripts\python.exe train_action_gp.py --data data/training/my_action_gp --output models/gp/my_action_gp --pair vehicle-1 vehicle-2 --seconds 25 --seed 42
+```
+
+資料與模型目錄必須是新路徑。此入口使用全部 12 場的有效訓練樣本，不套用舊七輸入入口的 800 筆上限。
+沿用 StandardScaler + Constant×ARD RBF + WhiteKernel，GP 正規化答案，無額外 optimizer restart；
+超參數僅依訓練資料擬合，驗證與測試只用來評估，不用於選參數。
+若先加 `--collect-only` 收集，可接續：
+
+```powershell
+.\.venv\Scripts\python.exe interaction_gp.py train --data data/training/my_action_gp --output models/gp/my_action_gp --max-train 0
+```
+
+`d_target` 使用同一時間步控制前的已選動作；不會把所有未執行候選複製成相同答案。
+後續 0.5 s 內策略仍可改目標，因此此資料不能直接當成「固定某候選 0.5 s」的反事實實驗。
+本模型沒有自動接入規劃器，亦不能直接替換只接受單一 s 的既有 GP 路線模型。
+原七輸入資料、原收集命令及原 s→d 流程保留。
+
+## 基本 GP 的少量設定
 
 設定集中在 `train_gp.py` 頂端的 `TrainingConfig`：
 

@@ -1,0 +1,16 @@
+{
+  "command": [
+    "interaction_gp.py",
+    "train",
+    "--data",
+    "data/training/action_gp_20261118_current8",
+    "--output",
+    "models/gp/action_gp_20261118_current8",
+    "--seed",
+    "42",
+    "--max-train",
+    "0"
+  ],
+  "exit_code": 0,
+  "python": "3.10.20 (main, May 10 2026, 19:31:32) [MSC v.1944 64 bit (AMD64)]"
+}

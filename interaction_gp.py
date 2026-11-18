@@ -11,6 +11,7 @@ from pathlib import Path
 import pickle
 import platform
 import subprocess
+import time
 import warnings
 
 import numpy as np
@@ -21,7 +22,7 @@ from generate_training_data import _demo_settings
 from sim.data_generation import EpisodeScenario, VehicleInitialCondition, run_episode
 from strategy.assignment import StrategyAssignment
 from training_data import TrainingDataCollector
-from training_data.interaction import build_interaction_dataset, FEATURES
+from training_data.interaction import ACTION_FEATURES, build_interaction_dataset, FEATURES
 from training_data.io import export_dataset, load_dataset, project_path
 from training_data.schema import SamplingConfig, VehiclePair
 from train_gp import TrainingConfig, create_model, prediction_errors
@@ -92,10 +93,11 @@ def split_groups(ids: np.ndarray, seed: int) -> dict[str, np.ndarray]:
 
 def action_events(data: Path, actions: dict) -> list[dict]:
     """從原始狀態與決策還原目標切換、首次到達及不可行事件。"""
+    metadata = json.loads((data / "metadata.json").read_text(encoding="utf-8"))
+    rear_id = metadata.get("run", {}).get("pair", {}).get("ego_id", "rear")
     with (data / "raw_states.csv").open(encoding="utf-8") as stream:
         positions = {(row["episode_id"], int(row["step_index"])): float(row["d"])
-                     for row in csv.DictReader(stream) if row["vehicle_id"] == "rear"}
-    metadata = json.loads((data / "metadata.json").read_text(encoding="utf-8"))
+                     for row in csv.DictReader(stream) if row["vehicle_id"] == rear_id}
     tolerance = metadata.get("run", {}).get("configs", {}).get("probe_following_config", {}).get("lateral_tolerance", 0.1)
     previous, arrived, events = {}, {}, []
     for key, row in actions.items():
@@ -118,11 +120,12 @@ def action_events(data: Path, actions: dict) -> list[dict]:
 
 
 def train(data: Path, output: Path, seed: int, max_train: int) -> None:
-    if max_train < 1:
-        raise ValueError("max_train must be positive")
+    if max_train < 0:
+        raise ValueError("max_train must be non-negative; 0 means all training samples")
     dataset = load_dataset(data)
-    if tuple(dataset.schema.feature_names) != FEATURES or not np.isclose(dataset.sampling.label_horizon_seconds, 0.5):
-        raise ValueError("expected seven interaction features and 0.5 s horizon")
+    names = tuple(dataset.schema.feature_names)
+    if names not in (FEATURES, ACTION_FEATURES) or not np.isclose(dataset.sampling.label_horizon_seconds, 0.5):
+        raise ValueError("expected seven/eight interaction features and 0.5 s horizon")
     X, y = dataset.X, dataset.Y[:, 0]
     with (data / "actions.csv").open(encoding="utf-8") as stream:
         actions = {(row["episode_id"], int(row["step_index"])): row for row in csv.DictReader(stream)}
@@ -131,13 +134,16 @@ def train(data: Path, output: Path, seed: int, max_train: int) -> None:
     ids = np.array([sample.episode_id for sample in dataset.samples])
     split = split_groups(ids, seed)
     fit = split["train"]
-    if len(fit) > max_train:
+    if max_train and len(fit) > max_train:
         fit = np.sort(np.random.default_rng(seed).choice(fit, max_train, replace=False))
-    model = create_model(len(FEATURES), TrainingConfig(optimizer_restarts=0, seed=seed))
+    model = create_model(len(names), TrainingConfig(optimizer_restarts=0, seed=seed))
+    print(f"GP fit: {len(fit)} samples, {len(names)} features; validation/test excluded", flush=True)
+    started = time.perf_counter()
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
         model.fit(X[fit], y[fit])
-    report = {"horizon_seconds": 0.5, "features": FEATURES, "seed": seed,
+    report = {"horizon_seconds": 0.5, "features": names, "seed": seed,
+              "fit_seconds": time.perf_counter() - started,
               "executed_at_utc": datetime.now(timezone.utc).isoformat(),
               "samples_sha256": hashlib.sha256((data / "samples.csv").read_bytes()).hexdigest(),
               "branch": subprocess.check_output(["git", "branch", "--show-current"], text=True).strip(),
@@ -147,10 +153,14 @@ def train(data: Path, output: Path, seed: int, max_train: int) -> None:
               "worktree": "含未提交修改", "training_policy": "fixed hyperparameter setup; validation not used for tuning",
               "sample_count": len(y), "skipped": dict(dataset.skipped),
               "mode_counts": {mode: int(np.sum(modes == mode)) for mode in np.unique(modes)},
-              "feature_ranges": {name: [float(X[:, i].min()), float(X[:, i].max())] for i, name in enumerate(FEATURES)},
+              "feature_ranges": {name: [float(X[:, i].min()), float(X[:, i].max())] for i, name in enumerate(names)},
               "fit_count": len(fit), "fit_sample_indices": fit.tolist(),
               "fitted_kernel": str(model.named_steps["gp"].kernel_),
               "warnings": [str(w.message) for w in caught], "splits": {}}
+    if names == ACTION_FEATURES:
+        values, counts = np.unique(X[:, -1], return_counts=True)
+        report["d_target_counts"] = {str(float(value)): int(count) for value, count in zip(values, counts)}
+        report["action_semantics"] = "當下實際採用的候選目標；未執行候選無反事實答案；未固定未來 0.5 s 的目標。"
     predictions = []
     for name in ("validation", "test"):
         index = split[name]
@@ -158,6 +168,7 @@ def train(data: Path, output: Path, seed: int, max_train: int) -> None:
         actual = y[index]
         metrics = {"gp": prediction_errors(actual, mean),
                    "zero": prediction_errors(actual, np.zeros_like(actual)),
+                   "training_mean": prediction_errors(actual, np.full_like(actual, np.mean(y[fit]))),
                    "constant_lateral_speed": prediction_errors(actual, X[index, 5] * 0.5)}
         subsets = {"straight": np.abs(X[index, 6]) < 0.02, "curve": np.abs(X[index, 6]) >= 0.02,
                    "rear_left": X[index, 1] > 0.2, "rear_right": X[index, 1] < -0.2,
@@ -170,12 +181,14 @@ def train(data: Path, output: Path, seed: int, max_train: int) -> None:
         for i, mu, sigma in zip(index, mean, std):
             predictions.append({"split": name, "episode_id": ids[i], "time_s": dataset.samples[i].time_seconds,
                                 "actual": y[i], "mean": mu, "std": sigma,
-                                "constant_lateral_speed": X[i, 5] * 0.5})
+                                "constant_lateral_speed": X[i, 5] * 0.5,
+                                **{feature: float(value) for feature, value in zip(names, X[i])}})
     report["splits"]["train"] = {"episodes": sorted(set(ids[split["train"]])), "count": len(split["train"])}
     output.mkdir(parents=True, exist_ok=False)
     with (output / "model.pkl").open("wb") as stream:
-        pickle.dump({"pipeline": model, "feature_names": FEATURES, "target": "opponent_delta_d",
-                     "label_horizon_seconds": 0.5, "model_kind": "interaction",
+        pickle.dump({"pipeline": model, "feature_names": names, "target": "opponent_delta_d",
+                     "label_horizon_seconds": 0.5,
+                     "model_kind": "interaction_action" if names == ACTION_FEATURES else "interaction",
                      "versions": report["versions"], "feature_units": [spec.unit for spec in dataset.feature_specs],
                      "target_unit": "m", "history_seconds": 0.1, "curvature_spacing_m": 0.5}, stream)
     (output / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -205,7 +218,7 @@ if __name__ == "__main__":
     parser.add_argument("--episodes", type=int, default=20)
     parser.add_argument("--seconds", type=float, default=15.0)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--max-train", type=int, default=800)
+    parser.add_argument("--max-train", type=int, default=800, help="0 使用全部訓練樣本")
     args = parser.parse_args()
     output = project_path(args.output)
     if output.exists():

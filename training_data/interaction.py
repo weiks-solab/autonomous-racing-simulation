@@ -2,6 +2,7 @@
 
 from collections import Counter
 import math
+from typing import Mapping
 
 import numpy as np
 
@@ -14,6 +15,7 @@ from training_data.schema import (
 
 FEATURES = ("gap", "rear_d", "front_d", "relative_speed", "front_speed",
             "front_lateral_speed", "front_curvature")
+ACTION_FEATURES = FEATURES + ("d_target",)
 UNITS = ("m", "m", "m", "m/s", "m/s", "m/s", "1/m")
 DESCRIPTIONS = ("前車 s 減後車 s，短距有號車距", "後車當下 d", "前車當下 d",
                 "後車車身速度減前車車身速度", "前車車身速度",
@@ -49,6 +51,7 @@ def features(episode: RecordedEpisode, index: int, pair: VehiclePair, track: Tra
 def build_interaction_dataset(
     episodes: tuple[RecordedEpisode, ...], track: Track, pair: VehiclePair,
     sampling: SamplingConfig,
+    action_targets: Mapping[tuple[str, int], float] | None = None,
 ) -> TrainingDataset:
     """標籤窗不得跨 episode 或碰撞；第一筆沒有歷史速度，略過。"""
     if sampling.label_horizon_steps < 1:
@@ -75,13 +78,22 @@ def build_interaction_dataset(
             if not math.isclose(future.time_seconds - current.time_seconds, sampling.label_horizon_seconds):
                 raise ValueError("frame timing does not match label horizon")
             x = features(episode, index, pair, track)
+            if action_targets is not None:
+                # 使用此時真正執行的候選，不把未執行候選配上同一個未來答案。
+                key = (episode.episode_id, current.step_index)
+                if key not in action_targets:
+                    raise ValueError(f"missing executed d_target: {key}")
+                x += (float(action_targets[key]),)
             y = future.observations[pair.opponent_id].track_position.d - current.observations[pair.opponent_id].track_position.d
             if not all(math.isfinite(value) for value in (*x, y)):
                 skipped["non_finite"] += 1
                 continue
             samples.append(TrainingSample(episode.episode_id, current.step_index, current.time_seconds, pair, x, (y,)))
+    names = FEATURES if action_targets is None else ACTION_FEATURES
+    specs = tuple(FieldSpec(name, unit, description) for name, unit, description in zip(FEATURES, UNITS, DESCRIPTIONS))
+    if action_targets is not None:
+        specs += (FieldSpec("d_target", "m", "後車當下實際採用的候選目標 d；後續決策仍可更新"),)
     return TrainingDataset(
-        DatasetSchema(FEATURES, ("opponent_delta_d",)), sampling, tuple(samples),
-        tuple(FieldSpec(name, unit, description) for name, unit, description in zip(FEATURES, UNITS, DESCRIPTIONS)),
+        DatasetSchema(names, ("opponent_delta_d",)), sampling, tuple(samples), specs,
         (FieldSpec("opponent_delta_d", "m", "前車未來 d 減當下 d"),), skipped,
     )

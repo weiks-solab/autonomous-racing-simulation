@@ -11,6 +11,7 @@ import numpy as np
 import main
 from core.pure_pursuit import PurePursuitController, compute_speed_acceleration
 from core.track import Track
+from core.vehicle_geometry import CollisionConfig
 from core.vehicle_model import KinematicBicycleModel
 from core.vehicle_state import ControlCommand, VehicleState
 from sim.candidate_paths import candidate_path_label
@@ -291,18 +292,19 @@ class SpeedCandidateIntegrationTests(unittest.TestCase):
         self.assert_same_states(actual, selected.prediction.states)
 
     def test_speed_candidates_continue_existing_maneuver_origin(self) -> None:
-        config = replace(self.config, candidate_offsets=(0.0, 0.6), prediction_horizon=0.1)
+        config = replace(self.config, candidate_offsets=(0.0, 0.6), prediction_horizon=0.1,
+                         extra_speed_candidate_deltas=(4.0,))
         strategy = self.strategy(config)
         maneuver = LateralManeuver(19.5, 0.0, 0.45, 3.0)
         strategy.decision = StrategyDecision("attack", target_d=0.45, maneuver=maneuver)
         decision = strategy.update(self.ego, (self.front,), self.track, 0.0)
-        self.assertEqual(len(strategy.last_candidates), 4)
+        self.assertEqual(len(strategy.last_candidates), 5)
         slower = [candidate for candidate in strategy.last_candidates if candidate.speed_limit is not None]
-        self.assertEqual(len(slower), 2)
+        self.assertEqual(len(slower), 3)
         self.assertTrue(all(candidate.maneuver is maneuver for candidate in slower))
         self.assertTrue(all(candidate.prediction.states[0] is self.ego.state for candidate in slower))
         self.assertTrue(all(item.speed_limit is None for item in strategy.last_candidates[:2]))
-        self.assertEqual(len(decision.candidate_snapshot.candidates), 4)
+        self.assertEqual(len(decision.candidate_snapshot.candidates), 5)
 
     def test_speed_candidate_filtering_and_deduplication(self) -> None:
         for front_speed, delta, expected in (
@@ -316,6 +318,61 @@ class SpeedCandidateIntegrationTests(unittest.TestCase):
                 strategy.update(self.ego, (front,), self.track, 0.0)
                 self.assertEqual(tuple(candidate.speed_limit for candidate in strategy.last_candidates
                                        if candidate.speed_limit is not None), expected)
+
+    def test_extra_speed_candidates_are_clamped_filtered_and_deduplicated(self) -> None:
+        for front_speed, deltas, expected in (
+            (3.0, (4.0, 1.0, 4.0, 8.0), (3.0, 2.0, 0.0)),
+            (9.0, (4.0, 4.0, 7.0), (5.0, 2.0)),
+            (0.0, (4.0,), (0.0,)),
+        ):
+            with self.subTest(front_speed=front_speed):
+                config = replace(self.config, extra_speed_candidate_deltas=deltas, prediction_horizon=0.1)
+                strategy = self.strategy(config)
+                front = replace(self.front, state=replace(self.front.state, velocity=front_speed))
+                strategy.update(self.ego, (front,), self.track, 0.0)
+                self.assertEqual(tuple(candidate.speed_limit for candidate in strategy.last_candidates
+                                       if candidate.speed_limit is not None), expected)
+        disabled = self.strategy(replace(config, speed_candidates_enabled=False))
+        disabled.update(self.ego, (self.front,), self.track, 0.0)
+        self.assertEqual(len(disabled.last_candidates), 1)
+
+    def test_extra_delta_rejects_negative_and_nonfinite_values(self) -> None:
+        for delta in (-1.0, float("nan"), float("inf"), -float("inf")):
+            with self.subTest(delta=delta), self.assertRaises(ValueError):
+                replace(self.config, extra_speed_candidate_deltas=(delta,))
+
+    def test_minus_four_adds_a_feasible_solution_with_wide_collision_rectangles(self) -> None:
+        # 同一條直線：匹配及 -1 都會碰撞，-4 透過較強的正常減速可行。
+        geometry = replace(self.ego.geometry, collision=CollisionConfig(0.8, 0.7))
+        self.ego = replace(observation(self.track, "ego", 20.0, 0.0, 11.0), geometry=geometry)
+        front = replace(observation(self.track, "front", 21.3, 0.0, 9.0), geometry=geometry)
+        self.prediction = replace(self.prediction,
+            model=replace(self.prediction.model, max_velocity=30.0),
+            controller=replace(self.prediction.controller, target_speed=11.0,
+                               max_acceleration=5.0, max_deceleration=5.0))
+        baseline = self.strategy()
+        previous = baseline.update(self.ego, (front,), self.track, 0.0)
+        self.assertEqual(previous.mode, "no_feasible_path")
+        strategy = self.strategy(replace(self.config, extra_speed_candidate_deltas=(4.0,)))
+        decision = strategy.update(self.ego, (front,), self.track, 0.0)
+        self.assertEqual([candidate.speed_limit for candidate in strategy.last_candidates], [None, 9.0, 8.0, 5.0])
+        self.assertEqual(strategy.last_candidates[:-1], baseline.last_candidates)
+        self.assertEqual(decision.speed_limit, 5.0)
+        self.assertEqual(decision.target_d, 0.0)
+        selected = strategy.last_candidates[-1]
+        self.assertTrue(selected.feasible)
+        actual, commands = self.execute_fixed_decision(self.track, self.ego.state, self.prediction, decision, 1.0)
+        self.assertEqual(commands[0].acceleration, -5.0)
+        self.assertAlmostEqual(actual[1].velocity, 10.9)
+        self.assert_same_states(actual, selected.prediction.states)
+
+    def test_extra_speed_cannot_remove_existing_overlap(self) -> None:
+        strategy = self.strategy(replace(self.config, extra_speed_candidate_deltas=(4.0,)))
+        overlapping = observation(self.track, "front", 20.4, 0.0, 3.0)
+        decision = strategy.update(self.ego, (overlapping,), self.track, 0.0)
+        self.assertEqual(decision.mode, "no_feasible_path")
+        self.assertEqual(len(strategy.last_candidates), 4)
+        self.assertTrue(all(candidate.collision.time_seconds == 0.0 for candidate in strategy.last_candidates))
 
     def test_no_front_target_and_passed_target_add_no_speed_candidates(self) -> None:
         strategy = self.strategy()

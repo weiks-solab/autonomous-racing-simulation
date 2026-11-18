@@ -1,0 +1,16 @@
+﻿{
+    "date":  "2026-11-18",
+    "branch":  "master",
+    "base_commit":  "de3581a06604976980aa6efa36c1cf61b84fa84c",
+    "version_note":  "基於 base_commit，含未提交修改；收集啟動時的程式雜湊。",
+    "source_sha256":  {
+                          "main.py":  "55c06e1f94823d3d9c3828ac6a4bbc787fbf23b005beeac211a048a9eb8e5dde",
+                          "train_action_gp.py":  "d543bc165b4916b6b5175562a93f9a3432276639d2db672903c3bfca54c257ef",
+                          "training_data/interaction.py":  "538a30f2a32124fe9e40331f113fe9a8d83fe3c447fed56fc0cd1b19c8dd01fc",
+                          "interaction_gp.py":  "051df92bc8aad29725a8f561659b52421c0b9dad17132f3b0141f64133a3ca7d",
+                          "sim/data_generation.py":  "ab9b9513db3cff80c4ed19252418359107a64e0d7ea7209b1dc9d1cad6bf1493",
+                          "strategy/relative_overtaking.py":  "d0af80f98d9c905dfe35c0ddbfd08e0cad301aa8cb84bea3d89aabf502d926d2",
+                          "strategy/defending.py":  "a1d410ad40d104d16bd84f201fe67a62b2218eb2984bc276b32e5f0de2216c6a",
+                          "train_gp.py":  "6097b19b97ac63cec20e9a980850a82a9c057fb96ac7811fc292e36fed4f8fa2"
+                      }
+}
