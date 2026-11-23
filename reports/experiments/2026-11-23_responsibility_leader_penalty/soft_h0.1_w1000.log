@@ -1,0 +1,4127 @@
+C:\Users\kevin\OneDrive\Desktop\project\racing_sim\sim\visualizer.py:550: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  plt.show()
+options: {'leader_soft': True, 'DEFENSE_CONFIG.leader_penalty_weight': 1000.0, 'RELATIVE_OVERTAKING_CONFIG.leader_penalty_weight': 10.0, 'RELATIVE_OVERTAKING_CONFIG.responsibility': 'ResponsibilityConfig(collision_radius=0.6, slope=40.0, offset=4.5, leader_soft=True)', 'DEFENSE_CONFIG.responsibility': 'ResponsibilityConfig(collision_radius=0.6, slope=40.0, offset=4.5, leader_soft=True)', 'DEFENSE_CONFIG.collision_horizon': 0.1, 'DEFENSE_CONFIG.decision_period': 0.1}
+vehicle-1 strategy: relative_overtake
+Strategy transitions: 0.00s ATTACK -> 4.44s NO_FEASIBLE_PATH -> 4.98s ATTACK -> 6.06s NO_FEASIBLE_PATH -> 6.48s ATTACK -> 8.28s NO_FEASIBLE_PATH -> 9.18s ATTACK -> 12.72s NO_FEASIBLE_PATH -> 13.08s ATTACK -> 14.46s NO_FEASIBLE_PATH -> 14.76s ATTACK -> 14.94s NO_FEASIBLE_PATH -> 15.12s ATTACK -> 16.92s NO_FEASIBLE_PATH -> 17.46s ATTACK -> 19.02s NO_FEASIBLE_PATH -> 19.50s ATTACK
+Lateral targets: 0.00s +0.00m -> 1.62s +0.20m -> 1.80s +0.40m -> 1.92s +0.20m -> 1.98s +0.40m -> 2.28s +0.20m -> 2.64s +0.00m -> 2.82s -0.20m -> 2.94s +0.20m -> 3.24s -0.20m -> 3.48s +0.20m -> 3.60s +0.00m -> 3.72s +0.60m -> 4.02s -0.60m -> 4.14s -0.40m -> 4.38s -0.60m -> 4.50s -0.40m -> 4.62s +0.00m -> 4.68s +0.60m -> 4.98s +0.20m -> 5.04s +0.00m -> 5.16s -0.20m -> 5.46s +0.00m -> 5.52s -0.20m -> 5.64s +0.60m -> 6.48s +0.00m -> 6.78s -0.20m -> 6.90s -0.40m -> 6.96s +0.00m -> 7.20s +0.40m -> 7.32s +0.60m -> 7.38s +0.00m -> 7.56s -0.60m -> 7.80s +0.20m -> 7.86s +0.60m -> 8.04s +0.40m -> 8.16s +0.60m -> 9.18s +0.20m -> 9.66s +0.00m -> 9.78s -0.20m -> 9.96s +0.00m -> 11.76s +0.60m -> 11.88s -0.20m -> 12.12s +0.00m -> 12.18s -0.20m -> 12.24s +0.60m -> 13.08s +0.00m -> 13.14s -0.20m -> 13.38s -0.40m -> 13.50s +0.00m -> 13.68s +0.40m -> 13.80s +0.60m -> 14.04s -0.60m -> 14.16s -0.40m -> 14.40s -0.60m -> 14.52s +0.60m -> 14.82s +0.40m -> 14.88s +0.20m -> 14.94s +0.60m -> 15.12s +0.00m -> 15.30s -0.20m -> 15.48s +0.20m -> 15.66s +0.60m -> 15.90s +0.00m -> 16.08s -0.20m -> 16.26s +0.00m -> 16.32s -0.40m -> 16.38s +0.00m -> 16.44s -0.20m -> 16.50s +0.60m -> 17.46s -0.20m -> 17.70s +0.00m -> 17.76s +0.20m -> 18.12s -0.20m -> 18.42s +0.00m -> 18.54s -0.20m -> 18.60s +0.60m -> 19.50s +0.00m -> 19.80s -0.20m -> 19.92s -0.40m -> 19.98s +0.00m -> 20.82s +0.60m -> 20.94s +0.00m
+Final strategy reason: lowest predicted relative gap
+Final vehicle-1 d: +0.228 m
+vehicle-2 strategy: defend
+Strategy transitions: 0.00s DEFEND
+Lateral targets: 0.00s +0.00m -> 1.88s +0.20m -> 2.30s +0.40m -> 2.42s +0.20m -> 2.72s +0.00m -> 3.14s +0.20m -> 3.46s +0.00m -> 3.56s -0.20m -> 3.66s +0.00m -> 3.88s +0.20m -> 3.98s +0.40m -> 4.20s +0.00m -> 4.56s -0.20m -> 4.68s +0.00m -> 4.78s +0.20m -> 4.90s +0.00m -> 5.02s +0.40m -> 5.24s +0.20m -> 5.36s +0.00m -> 5.60s -0.20m -> 5.72s +0.00m -> 5.82s +0.20m -> 5.94s +0.40m -> 6.06s +0.20m -> 6.18s +0.40m -> 6.76s +0.20m -> 6.86s +0.00m -> 6.98s -0.20m -> 7.22s +0.00m -> 7.44s +0.20m -> 7.56s +0.00m -> 7.78s -0.40m -> 8.02s +0.00m -> 8.12s +0.20m -> 8.24s +0.00m -> 8.36s +0.20m -> 8.46s +0.40m -> 8.58s +0.20m -> 9.04s +0.40m -> 9.50s +0.20m -> 9.86s +0.00m -> 11.94s +0.20m -> 12.04s +0.00m -> 12.16s -0.20m -> 12.40s +0.00m -> 12.52s +0.40m -> 13.32s +0.20m -> 13.44s -0.20m -> 13.78s +0.00m -> 13.90s +0.20m -> 14.02s +0.40m -> 14.24s +0.00m -> 14.36s -0.20m -> 14.46s +0.00m -> 14.82s +0.40m -> 15.40s +0.00m -> 15.86s +0.20m -> 15.98s +0.40m -> 16.08s +0.20m -> 16.20s +0.00m -> 16.74s +0.20m -> 16.86s +0.40m -> 16.96s +0.20m -> 17.20s +0.40m -> 17.62s +0.20m -> 17.74s +0.00m -> 17.96s +0.20m -> 18.30s +0.00m -> 18.52s -0.20m -> 18.74s +0.00m -> 18.86s +0.40m -> 18.96s +0.20m -> 19.08s +0.40m -> 19.20s +0.20m -> 19.30s +0.40m -> 19.74s +0.20m -> 19.86s +0.00m -> 20.08s -0.20m -> 20.20s +0.00m -> 20.96s +0.20m
+Final strategy reason: lowest cost
+Final vehicle-2 d: +0.006 m
+Detected collision pairs: vehicle-1/vehicle-2
+{
+  "track": "rounded_rectangle",
+  "simulation_seconds": 21.0,
+  "assignments": {
+    "vehicle-1": "relative_overtake",
+    "vehicle-2": "defend"
+  },
+  "applied": {
+    "leader_soft": true,
+    "DEFENSE_CONFIG.leader_penalty_weight": 1000.0,
+    "RELATIVE_OVERTAKING_CONFIG.leader_penalty_weight": 10.0,
+    "RELATIVE_OVERTAKING_CONFIG.responsibility": "ResponsibilityConfig(collision_radius=0.6, slope=40.0, offset=4.5, leader_soft=True)",
+    "DEFENSE_CONFIG.responsibility": "ResponsibilityConfig(collision_radius=0.6, slope=40.0, offset=4.5, leader_soft=True)",
+    "DEFENSE_CONFIG.collision_horizon": 0.1,
+    "DEFENSE_CONFIG.decision_period": 0.1
+  },
+  "wall_seconds_including_plot": 72.86002939997707,
+  "final_s_from_start": {
+    "vehicle-1": 184.48832980912204,
+    "vehicle-2": 185.6032751995961
+  },
+  "first_attacker_lead_time": null,
+  "blocking_mean_abs_delta_d_before_lead": 0.21709795413138194,
+  "blocking_samples": 926,
+  "mean_abs_d": {
+    "vehicle-1": 0.24324442268706484,
+    "vehicle-2": 0.1512945963770403
+  },
+  "collision_steps": 179,
+  "first_collision_time": 4.62,
+  "collision_pairs": [
+    [
+      "vehicle-1",
+      "vehicle-2"
+    ]
+  ],
+  "strategies": {
+    "relative_overtake": {
+      "evaluations": 350,
+      "mean_ms": 183.04120399856143,
+      "max_ms": 227.76869998779148,
+      "total_s": 64.0644213994965,
+      "mode_counts": {
+        "attack": 288,
+        "no_feasible_path": 62
+      },
+      "speed_limited_evaluations": 163,
+      "target_d_switches": 82,
+      "max_candidates": 28,
+      "rejected_candidates": {
+        "overlap": 0,
+        "responsibility": 3468
+      },
+      "evaluations_with_rejection": 310,
+      "evaluations_selected_with_leader_cost": 0,
+      "selected_leader_cost_max": 0.0
+    },
+    "defend": {
+      "evaluations": 187,
+      "mean_ms": 44.3814791412775,
+      "max_ms": 58.322599972598255,
+      "total_s": 8.299336599418893,
+      "mode_counts": {
+        "defend": 187
+      },
+      "speed_limited_evaluations": 0,
+      "target_d_switches": 79,
+      "max_candidates": 7,
+      "rejected_candidates": {
+        "overlap": 0,
+        "responsibility": 0
+      },
+      "evaluations_with_rejection": 0,
+      "evaluations_selected_with_leader_cost": 38,
+      "selected_leader_cost_max": 78.94353671544923
+    }
+  },
+  "rejection_timeline": {
+    "relative_overtake": [
+      {
+        "t": 2.4,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 1
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.355,
+          "vehicle-2": 0.226
+        },
+        "s_attacker_minus_defender": -3.15
+      },
+      {
+        "t": 2.46,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 1
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.312,
+          "vehicle-2": 0.274
+        },
+        "s_attacker_minus_defender": -3.06
+      },
+      {
+        "t": 2.52,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 2
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.24,
+          "vehicle-2": 0.267
+        },
+        "s_attacker_minus_defender": -2.954
+      },
+      {
+        "t": 2.58,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 2
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.181,
+          "vehicle-2": 0.225
+        },
+        "s_attacker_minus_defender": -2.854
+      },
+      {
+        "t": 2.64,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.151,
+          "vehicle-2": 0.17
+        },
+        "s_attacker_minus_defender": -2.73
+      },
+      {
+        "t": 2.7,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.126,
+          "vehicle-2": 0.157
+        },
+        "s_attacker_minus_defender": -2.594
+      },
+      {
+        "t": 2.76,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.073,
+          "vehicle-2": 0.162
+        },
+        "s_attacker_minus_defender": -2.471
+      },
+      {
+        "t": 2.82,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.016,
+          "vehicle-2": 0.126
+        },
+        "s_attacker_minus_defender": -2.356
+      },
+      {
+        "t": 2.88,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": -0.054,
+          "vehicle-2": 0.069
+        },
+        "s_attacker_minus_defender": -2.25
+      },
+      {
+        "t": 2.94,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": -0.104,
+          "vehicle-2": 0.022
+        },
+        "s_attacker_minus_defender": -2.141
+      },
+      {
+        "t": 3.0,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": -0.108,
+          "vehicle-2": -0.004
+        },
+        "s_attacker_minus_defender": -2.036
+      },
+      {
+        "t": 3.06,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": -0.032,
+          "vehicle-2": -0.012
+        },
+        "s_attacker_minus_defender": -1.945
+      },
+      {
+        "t": 3.12,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.072,
+          "vehicle-2": -0.011
+        },
+        "s_attacker_minus_defender": -1.868
+      },
+      {
+        "t": 3.18,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.161,
+          "vehicle-2": -0.0
+        },
+        "s_attacker_minus_defender": -1.797
+      },
+      {
+        "t": 3.24,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.207,
+          "vehicle-2": 0.052
+        },
+        "s_attacker_minus_defender": -1.726
+      },
+      {
+        "t": 3.3,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.195,
+          "vehicle-2": 0.138
+        },
+        "s_attacker_minus_defender": -1.655
+      },
+      {
+        "t": 3.36,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.105,
+          "vehicle-2": 0.193
+        },
+        "s_attacker_minus_defender": -1.62
+      },
+      {
+        "t": 3.42,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": -0.02,
+          "vehicle-2": 0.206
+        },
+        "s_attacker_minus_defender": -1.596
+      },
+      {
+        "t": 3.48,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": -0.12,
+          "vehicle-2": 0.197
+        },
+        "s_attacker_minus_defender": -1.575
+      },
+      {
+        "t": 3.54,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": -0.164,
+          "vehicle-2": 0.148
+        },
+        "s_attacker_minus_defender": -1.561
+      },
+      {
+        "t": 3.6,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.104,
+          "vehicle-2": 0.071
+        },
+        "s_attacker_minus_defender": -1.526
+      },
+      {
+        "t": 3.66,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.041,
+          "vehicle-2": -0.032
+        },
+        "s_attacker_minus_defender": -1.474
+      },
+      {
+        "t": 3.72,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.043,
+          "vehicle-2": -0.106
+        },
+        "s_attacker_minus_defender": -1.405
+      },
+      {
+        "t": 3.78,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.018,
+          "vehicle-2": -0.111
+        },
+        "s_attacker_minus_defender": -1.335
+      },
+      {
+        "t": 3.84,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.102,
+          "vehicle-2": -0.108
+        },
+        "s_attacker_minus_defender": -1.272
+      },
+      {
+        "t": 3.9,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 7
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.271,
+          "vehicle-2": -0.073
+        },
+        "s_attacker_minus_defender": -1.184
+      },
+      {
+        "t": 3.96,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 10
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.415,
+          "vehicle-2": -0.007
+        },
+        "s_attacker_minus_defender": -1.094
+      },
+      {
+        "t": 4.02,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 10
+        },
+        "selected_target_d": -0.6,
+        "d": {
+          "vehicle-1": 0.542,
+          "vehicle-2": 0.084
+        },
+        "s_attacker_minus_defender": -1.023
+      },
+      {
+        "t": 4.08,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 12
+        },
+        "selected_target_d": -0.6,
+        "d": {
+          "vehicle-1": 0.535,
+          "vehicle-2": 0.189
+        },
+        "s_attacker_minus_defender": -0.937
+      },
+      {
+        "t": 4.14,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 12
+        },
+        "selected_target_d": -0.4,
+        "d": {
+          "vehicle-1": 0.309,
+          "vehicle-2": 0.299
+        },
+        "s_attacker_minus_defender": -0.886
+      },
+      {
+        "t": 4.2,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 14
+        },
+        "selected_target_d": -0.4,
+        "d": {
+          "vehicle-1": 0.074,
+          "vehicle-2": 0.378
+        },
+        "s_attacker_minus_defender": -0.842
+      },
+      {
+        "t": 4.26,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 16
+        },
+        "selected_target_d": -0.4,
+        "d": {
+          "vehicle-1": -0.049,
+          "vehicle-2": 0.378
+        },
+        "s_attacker_minus_defender": -0.763
+      },
+      {
+        "t": 4.32,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 19
+        },
+        "selected_target_d": -0.4,
+        "d": {
+          "vehicle-1": -0.175,
+          "vehicle-2": 0.268
+        },
+        "s_attacker_minus_defender": -0.671
+      },
+      {
+        "t": 4.38,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 23
+        },
+        "selected_target_d": -0.6,
+        "d": {
+          "vehicle-1": -0.309,
+          "vehicle-2": 0.13
+        },
+        "s_attacker_minus_defender": -0.573
+      },
+      {
+        "t": 4.44,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": -0.6,
+        "d": {
+          "vehicle-1": -0.395,
+          "vehicle-2": 0.029
+        },
+        "s_attacker_minus_defender": -0.472
+      },
+      {
+        "t": 4.5,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": -0.4,
+        "d": {
+          "vehicle-1": -0.45,
+          "vehicle-2": -0.019
+        },
+        "s_attacker_minus_defender": -0.38
+      },
+      {
+        "t": 4.56,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": -0.4,
+        "d": {
+          "vehicle-1": -0.482,
+          "vehicle-2": -0.03
+        },
+        "s_attacker_minus_defender": -0.306
+      },
+      {
+        "t": 4.62,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.464,
+          "vehicle-2": -0.043
+        },
+        "s_attacker_minus_defender": -0.25
+      },
+      {
+        "t": 4.68,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.42,
+          "vehicle-2": -0.095
+        },
+        "s_attacker_minus_defender": -0.211
+      },
+      {
+        "t": 4.74,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.32,
+          "vehicle-2": -0.127
+        },
+        "s_attacker_minus_defender": -0.199
+      },
+      {
+        "t": 4.8,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.151,
+          "vehicle-2": -0.096
+        },
+        "s_attacker_minus_defender": -0.224
+      },
+      {
+        "t": 4.86,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.061,
+          "vehicle-2": -0.025
+        },
+        "s_attacker_minus_defender": -0.28
+      },
+      {
+        "t": 4.92,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.277,
+          "vehicle-2": 0.072
+        },
+        "s_attacker_minus_defender": -0.354
+      },
+      {
+        "t": 4.98,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.457,
+          "vehicle-2": 0.103
+        },
+        "s_attacker_minus_defender": -0.439
+      },
+      {
+        "t": 5.04,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.546,
+          "vehicle-2": 0.077
+        },
+        "s_attacker_minus_defender": -0.51
+      },
+      {
+        "t": 5.1,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.526,
+          "vehicle-2": 0.117
+        },
+        "s_attacker_minus_defender": -0.564
+      },
+      {
+        "t": 5.16,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.447,
+          "vehicle-2": 0.225
+        },
+        "s_attacker_minus_defender": -0.611
+      },
+      {
+        "t": 5.22,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.345,
+          "vehicle-2": 0.332
+        },
+        "s_attacker_minus_defender": -0.654
+      },
+      {
+        "t": 5.28,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.243,
+          "vehicle-2": 0.389
+        },
+        "s_attacker_minus_defender": -0.69
+      },
+      {
+        "t": 5.34,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.119,
+          "vehicle-2": 0.362
+        },
+        "s_attacker_minus_defender": -0.72
+      },
+      {
+        "t": 5.4,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": -0.017,
+          "vehicle-2": 0.316
+        },
+        "s_attacker_minus_defender": -0.76
+      },
+      {
+        "t": 5.46,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.124,
+          "vehicle-2": 0.215
+        },
+        "s_attacker_minus_defender": -0.808
+      },
+      {
+        "t": 5.52,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": -0.169,
+          "vehicle-2": 0.096
+        },
+        "s_attacker_minus_defender": -0.842
+      },
+      {
+        "t": 5.58,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": -0.177,
+          "vehicle-2": 0.008
+        },
+        "s_attacker_minus_defender": -0.859
+      },
+      {
+        "t": 5.64,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.194,
+          "vehicle-2": -0.048
+        },
+        "s_attacker_minus_defender": -0.878
+      },
+      {
+        "t": 5.7,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.174,
+          "vehicle-2": -0.111
+        },
+        "s_attacker_minus_defender": -0.876
+      },
+      {
+        "t": 5.76,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 10
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.049,
+          "vehicle-2": -0.167
+        },
+        "s_attacker_minus_defender": -0.864
+      },
+      {
+        "t": 5.82,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 10
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.148,
+          "vehicle-2": -0.156
+        },
+        "s_attacker_minus_defender": -0.833
+      },
+      {
+        "t": 5.88,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 15
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.359,
+          "vehicle-2": -0.105
+        },
+        "s_attacker_minus_defender": -0.757
+      },
+      {
+        "t": 5.94,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 23
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.515,
+          "vehicle-2": -0.028
+        },
+        "s_attacker_minus_defender": -0.617
+      },
+      {
+        "t": 6.0,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 27
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.568,
+          "vehicle-2": 0.082
+        },
+        "s_attacker_minus_defender": -0.504
+      },
+      {
+        "t": 6.06,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.595,
+          "vehicle-2": 0.207
+        },
+        "s_attacker_minus_defender": -0.439
+      },
+      {
+        "t": 6.12,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.606,
+          "vehicle-2": 0.29
+        },
+        "s_attacker_minus_defender": -0.399
+      },
+      {
+        "t": 6.18,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.607,
+          "vehicle-2": 0.284
+        },
+        "s_attacker_minus_defender": -0.385
+      },
+      {
+        "t": 6.24,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.604,
+          "vehicle-2": 0.273
+        },
+        "s_attacker_minus_defender": -0.388
+      },
+      {
+        "t": 6.3,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.602,
+          "vehicle-2": 0.31
+        },
+        "s_attacker_minus_defender": -0.408
+      },
+      {
+        "t": 6.36,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.6,
+          "vehicle-2": 0.358
+        },
+        "s_attacker_minus_defender": -0.445
+      },
+      {
+        "t": 6.42,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.6,
+          "vehicle-2": 0.392
+        },
+        "s_attacker_minus_defender": -0.501
+      },
+      {
+        "t": 6.48,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 2
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.599,
+          "vehicle-2": 0.407
+        },
+        "s_attacker_minus_defender": -0.574
+      },
+      {
+        "t": 6.54,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.578,
+          "vehicle-2": 0.414
+        },
+        "s_attacker_minus_defender": -0.651
+      },
+      {
+        "t": 6.6,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.496,
+          "vehicle-2": 0.433
+        },
+        "s_attacker_minus_defender": -0.761
+      },
+      {
+        "t": 6.66,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.377,
+          "vehicle-2": 0.421
+        },
+        "s_attacker_minus_defender": -0.904
+      },
+      {
+        "t": 6.72,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.242,
+          "vehicle-2": 0.395
+        },
+        "s_attacker_minus_defender": -0.976
+      },
+      {
+        "t": 6.78,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.104,
+          "vehicle-2": 0.374
+        },
+        "s_attacker_minus_defender": -1.059
+      },
+      {
+        "t": 6.84,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.002,
+          "vehicle-2": 0.321
+        },
+        "s_attacker_minus_defender": -1.143
+      },
+      {
+        "t": 6.9,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": -0.4,
+        "d": {
+          "vehicle-1": -0.067,
+          "vehicle-2": 0.244
+        },
+        "s_attacker_minus_defender": -1.195
+      },
+      {
+        "t": 6.96,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.127,
+          "vehicle-2": 0.143
+        },
+        "s_attacker_minus_defender": -1.222
+      },
+      {
+        "t": 7.02,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.169,
+          "vehicle-2": 0.039
+        },
+        "s_attacker_minus_defender": -1.241
+      },
+      {
+        "t": 7.08,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.157,
+          "vehicle-2": -0.079
+        },
+        "s_attacker_minus_defender": -1.235
+      },
+      {
+        "t": 7.14,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.116,
+          "vehicle-2": -0.167
+        },
+        "s_attacker_minus_defender": -1.238
+      },
+      {
+        "t": 7.2,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.4,
+        "d": {
+          "vehicle-1": -0.085,
+          "vehicle-2": -0.211
+        },
+        "s_attacker_minus_defender": -1.234
+      },
+      {
+        "t": 7.26,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.4,
+        "d": {
+          "vehicle-1": -0.041,
+          "vehicle-2": -0.216
+        },
+        "s_attacker_minus_defender": -1.217
+      },
+      {
+        "t": 7.32,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.05,
+          "vehicle-2": -0.163
+        },
+        "s_attacker_minus_defender": -1.195
+      },
+      {
+        "t": 7.38,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.157,
+          "vehicle-2": -0.085
+        },
+        "s_attacker_minus_defender": -1.163
+      },
+      {
+        "t": 7.44,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.21,
+          "vehicle-2": -0.023
+        },
+        "s_attacker_minus_defender": -1.124
+      },
+      {
+        "t": 7.5,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.171,
+          "vehicle-2": 0.025
+        },
+        "s_attacker_minus_defender": -1.087
+      },
+      {
+        "t": 7.56,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": -0.6,
+        "d": {
+          "vehicle-1": 0.101,
+          "vehicle-2": 0.091
+        },
+        "s_attacker_minus_defender": -1.055
+      },
+      {
+        "t": 7.62,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": -0.6,
+        "d": {
+          "vehicle-1": 0.018,
+          "vehicle-2": 0.13
+        },
+        "s_attacker_minus_defender": -1.026
+      },
+      {
+        "t": 7.68,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": -0.6,
+        "d": {
+          "vehicle-1": -0.115,
+          "vehicle-2": 0.099
+        },
+        "s_attacker_minus_defender": -0.999
+      },
+      {
+        "t": 7.74,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 8
+        },
+        "selected_target_d": -0.6,
+        "d": {
+          "vehicle-1": -0.288,
+          "vehicle-2": 0.049
+        },
+        "s_attacker_minus_defender": -0.975
+      },
+      {
+        "t": 7.8,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 10
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": -0.461,
+          "vehicle-2": 0.012
+        },
+        "s_attacker_minus_defender": -0.945
+      },
+      {
+        "t": 7.86,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 10
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.517,
+          "vehicle-2": -0.072
+        },
+        "s_attacker_minus_defender": -0.891
+      },
+      {
+        "t": 7.92,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 9
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.397,
+          "vehicle-2": -0.206
+        },
+        "s_attacker_minus_defender": -0.837
+      },
+      {
+        "t": 7.98,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 12
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.189,
+          "vehicle-2": -0.329
+        },
+        "s_attacker_minus_defender": -0.804
+      },
+      {
+        "t": 8.04,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 11
+        },
+        "selected_target_d": 0.4,
+        "d": {
+          "vehicle-1": 0.078,
+          "vehicle-2": -0.401
+        },
+        "s_attacker_minus_defender": -0.801
+      },
+      {
+        "t": 8.1,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 14
+        },
+        "selected_target_d": 0.4,
+        "d": {
+          "vehicle-1": 0.278,
+          "vehicle-2": -0.356
+        },
+        "s_attacker_minus_defender": -0.769
+      },
+      {
+        "t": 8.16,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 18
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.318,
+          "vehicle-2": -0.228
+        },
+        "s_attacker_minus_defender": -0.684
+      },
+      {
+        "t": 8.22,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 24
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.342,
+          "vehicle-2": -0.084
+        },
+        "s_attacker_minus_defender": -0.589
+      },
+      {
+        "t": 8.28,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.405,
+          "vehicle-2": 0.052
+        },
+        "s_attacker_minus_defender": -0.495
+      },
+      {
+        "t": 8.34,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.489,
+          "vehicle-2": 0.09
+        },
+        "s_attacker_minus_defender": -0.423
+      },
+      {
+        "t": 8.4,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.562,
+          "vehicle-2": 0.08
+        },
+        "s_attacker_minus_defender": -0.369
+      },
+      {
+        "t": 8.46,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.602,
+          "vehicle-2": 0.106
+        },
+        "s_attacker_minus_defender": -0.33
+      },
+      {
+        "t": 8.52,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.614,
+          "vehicle-2": 0.161
+        },
+        "s_attacker_minus_defender": -0.306
+      },
+      {
+        "t": 8.58,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.613,
+          "vehicle-2": 0.25
+        },
+        "s_attacker_minus_defender": -0.294
+      },
+      {
+        "t": 8.64,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.616,
+          "vehicle-2": 0.328
+        },
+        "s_attacker_minus_defender": -0.322
+      },
+      {
+        "t": 8.7,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.631,
+          "vehicle-2": 0.315
+        },
+        "s_attacker_minus_defender": -0.33
+      },
+      {
+        "t": 8.76,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.619,
+          "vehicle-2": 0.256
+        },
+        "s_attacker_minus_defender": -0.31
+      },
+      {
+        "t": 8.82,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.599,
+          "vehicle-2": 0.202
+        },
+        "s_attacker_minus_defender": -0.299
+      },
+      {
+        "t": 8.88,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.582,
+          "vehicle-2": 0.168
+        },
+        "s_attacker_minus_defender": -0.3
+      },
+      {
+        "t": 8.94,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.571,
+          "vehicle-2": 0.154
+        },
+        "s_attacker_minus_defender": -0.313
+      },
+      {
+        "t": 9.0,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.565,
+          "vehicle-2": 0.152
+        },
+        "s_attacker_minus_defender": -0.356
+      },
+      {
+        "t": 9.06,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.563,
+          "vehicle-2": 0.154
+        },
+        "s_attacker_minus_defender": -0.395
+      },
+      {
+        "t": 9.12,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.56,
+          "vehicle-2": 0.17
+        },
+        "s_attacker_minus_defender": -0.465
+      },
+      {
+        "t": 9.18,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 1
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.542,
+          "vehicle-2": 0.237
+        },
+        "s_attacker_minus_defender": -0.525
+      },
+      {
+        "t": 9.24,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 1
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.52,
+          "vehicle-2": 0.325
+        },
+        "s_attacker_minus_defender": -0.658
+      },
+      {
+        "t": 9.3,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 1
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.48,
+          "vehicle-2": 0.386
+        },
+        "s_attacker_minus_defender": -0.778
+      },
+      {
+        "t": 9.36,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 1
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.423,
+          "vehicle-2": 0.413
+        },
+        "s_attacker_minus_defender": -0.885
+      },
+      {
+        "t": 9.42,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 1
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.353,
+          "vehicle-2": 0.417
+        },
+        "s_attacker_minus_defender": -0.976
+      },
+      {
+        "t": 9.48,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 1
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.282,
+          "vehicle-2": 0.412
+        },
+        "s_attacker_minus_defender": -1.049
+      },
+      {
+        "t": 9.54,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 2
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.226,
+          "vehicle-2": 0.399
+        },
+        "s_attacker_minus_defender": -1.104
+      },
+      {
+        "t": 9.6,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 2
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.195,
+          "vehicle-2": 0.346
+        },
+        "s_attacker_minus_defender": -1.139
+      },
+      {
+        "t": 9.66,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.185,
+          "vehicle-2": 0.274
+        },
+        "s_attacker_minus_defender": -1.157
+      },
+      {
+        "t": 9.72,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.176,
+          "vehicle-2": 0.219
+        },
+        "s_attacker_minus_defender": -1.165
+      },
+      {
+        "t": 9.78,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.143,
+          "vehicle-2": 0.206
+        },
+        "s_attacker_minus_defender": -1.164
+      },
+      {
+        "t": 9.84,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.095,
+          "vehicle-2": 0.208
+        },
+        "s_attacker_minus_defender": -1.192
+      },
+      {
+        "t": 9.9,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.039,
+          "vehicle-2": 0.188
+        },
+        "s_attacker_minus_defender": -1.213
+      },
+      {
+        "t": 9.96,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.033,
+          "vehicle-2": 0.124
+        },
+        "s_attacker_minus_defender": -1.216
+      },
+      {
+        "t": 10.02,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.1,
+          "vehicle-2": 0.049
+        },
+        "s_attacker_minus_defender": -1.209
+      },
+      {
+        "t": 10.08,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.101,
+          "vehicle-2": -0.008
+        },
+        "s_attacker_minus_defender": -1.199
+      },
+      {
+        "t": 10.14,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.075,
+          "vehicle-2": -0.038
+        },
+        "s_attacker_minus_defender": -1.182
+      },
+      {
+        "t": 10.2,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.048,
+          "vehicle-2": -0.048
+        },
+        "s_attacker_minus_defender": -1.16
+      },
+      {
+        "t": 10.26,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.032,
+          "vehicle-2": -0.047
+        },
+        "s_attacker_minus_defender": -1.135
+      },
+      {
+        "t": 10.32,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.026,
+          "vehicle-2": -0.058
+        },
+        "s_attacker_minus_defender": -1.114
+      },
+      {
+        "t": 10.38,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.03,
+          "vehicle-2": -0.047
+        },
+        "s_attacker_minus_defender": -1.1
+      },
+      {
+        "t": 10.44,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.055,
+          "vehicle-2": -0.025
+        },
+        "s_attacker_minus_defender": -1.086
+      },
+      {
+        "t": 10.5,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.05,
+          "vehicle-2": -0.008
+        },
+        "s_attacker_minus_defender": -1.069
+      },
+      {
+        "t": 10.56,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 7
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.027,
+          "vehicle-2": 0.002
+        },
+        "s_attacker_minus_defender": -1.055
+      },
+      {
+        "t": 10.62,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 7
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.008,
+          "vehicle-2": 0.005
+        },
+        "s_attacker_minus_defender": -1.042
+      },
+      {
+        "t": 10.68,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 7
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.002,
+          "vehicle-2": 0.004
+        },
+        "s_attacker_minus_defender": -1.029
+      },
+      {
+        "t": 10.74,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 7
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.005,
+          "vehicle-2": 0.002
+        },
+        "s_attacker_minus_defender": -1.018
+      },
+      {
+        "t": 10.8,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 7
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.003,
+          "vehicle-2": 0.001
+        },
+        "s_attacker_minus_defender": -1.008
+      },
+      {
+        "t": 10.86,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.002,
+          "vehicle-2": -0.0
+        },
+        "s_attacker_minus_defender": -0.998
+      },
+      {
+        "t": 10.92,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.0,
+          "vehicle-2": -0.0
+        },
+        "s_attacker_minus_defender": -0.99
+      },
+      {
+        "t": 10.98,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.0,
+          "vehicle-2": -0.0
+        },
+        "s_attacker_minus_defender": -0.982
+      },
+      {
+        "t": 11.04,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.0,
+          "vehicle-2": -0.0
+        },
+        "s_attacker_minus_defender": -0.975
+      },
+      {
+        "t": 11.1,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.0,
+          "vehicle-2": -0.0
+        },
+        "s_attacker_minus_defender": -0.968
+      },
+      {
+        "t": 11.16,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.0,
+          "vehicle-2": -0.0
+        },
+        "s_attacker_minus_defender": -0.962
+      },
+      {
+        "t": 11.22,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.0,
+          "vehicle-2": 0.0
+        },
+        "s_attacker_minus_defender": -0.957
+      },
+      {
+        "t": 11.28,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.0,
+          "vehicle-2": 0.0
+        },
+        "s_attacker_minus_defender": -0.952
+      },
+      {
+        "t": 11.34,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 7
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.0,
+          "vehicle-2": 0.0
+        },
+        "s_attacker_minus_defender": -0.947
+      },
+      {
+        "t": 11.4,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 7
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.0,
+          "vehicle-2": 0.0
+        },
+        "s_attacker_minus_defender": -0.943
+      },
+      {
+        "t": 11.46,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 7
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.0,
+          "vehicle-2": 0.0
+        },
+        "s_attacker_minus_defender": -0.939
+      },
+      {
+        "t": 11.52,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 7
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.0,
+          "vehicle-2": -0.0
+        },
+        "s_attacker_minus_defender": -0.936
+      },
+      {
+        "t": 11.58,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 7
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.0,
+          "vehicle-2": -0.0
+        },
+        "s_attacker_minus_defender": -0.933
+      },
+      {
+        "t": 11.64,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 7
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.0,
+          "vehicle-2": -0.0
+        },
+        "s_attacker_minus_defender": -0.93
+      },
+      {
+        "t": 11.7,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 7
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.0,
+          "vehicle-2": -0.0
+        },
+        "s_attacker_minus_defender": -0.927
+      },
+      {
+        "t": 11.76,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.0,
+          "vehicle-2": -0.0
+        },
+        "s_attacker_minus_defender": -0.925
+      },
+      {
+        "t": 11.82,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 7
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.03,
+          "vehicle-2": 0.002
+        },
+        "s_attacker_minus_defender": -0.92
+      },
+      {
+        "t": 11.88,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 11
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.138,
+          "vehicle-2": 0.018
+        },
+        "s_attacker_minus_defender": -0.917
+      },
+      {
+        "t": 11.94,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 10
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.235,
+          "vehicle-2": 0.01
+        },
+        "s_attacker_minus_defender": -0.908
+      },
+      {
+        "t": 12.0,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 8
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.186,
+          "vehicle-2": 0.01
+        },
+        "s_attacker_minus_defender": -0.855
+      },
+      {
+        "t": 12.06,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.032,
+          "vehicle-2": 0.051
+        },
+        "s_attacker_minus_defender": -0.845
+      },
+      {
+        "t": 12.12,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.117,
+          "vehicle-2": 0.05
+        },
+        "s_attacker_minus_defender": -0.869
+      },
+      {
+        "t": 12.18,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": -0.195,
+          "vehicle-2": 0.019
+        },
+        "s_attacker_minus_defender": -0.892
+      },
+      {
+        "t": 12.24,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.207,
+          "vehicle-2": -0.044
+        },
+        "s_attacker_minus_defender": -0.913
+      },
+      {
+        "t": 12.3,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.184,
+          "vehicle-2": -0.126
+        },
+        "s_attacker_minus_defender": -0.908
+      },
+      {
+        "t": 12.36,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 9
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.057,
+          "vehicle-2": -0.199
+        },
+        "s_attacker_minus_defender": -0.888
+      },
+      {
+        "t": 12.42,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 8
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.14,
+          "vehicle-2": -0.249
+        },
+        "s_attacker_minus_defender": -0.869
+      },
+      {
+        "t": 12.48,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 9
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.336,
+          "vehicle-2": -0.219
+        },
+        "s_attacker_minus_defender": -0.82
+      },
+      {
+        "t": 12.54,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 12
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.499,
+          "vehicle-2": -0.134
+        },
+        "s_attacker_minus_defender": -0.789
+      },
+      {
+        "t": 12.6,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 13
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.599,
+          "vehicle-2": -0.004
+        },
+        "s_attacker_minus_defender": -0.728
+      },
+      {
+        "t": 12.66,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 27
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.632,
+          "vehicle-2": 0.164
+        },
+        "s_attacker_minus_defender": -0.642
+      },
+      {
+        "t": 12.72,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.627,
+          "vehicle-2": 0.314
+        },
+        "s_attacker_minus_defender": -0.563
+      },
+      {
+        "t": 12.78,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.613,
+          "vehicle-2": 0.401
+        },
+        "s_attacker_minus_defender": -0.517
+      },
+      {
+        "t": 12.84,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.603,
+          "vehicle-2": 0.432
+        },
+        "s_attacker_minus_defender": -0.494
+      },
+      {
+        "t": 12.9,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.598,
+          "vehicle-2": 0.429
+        },
+        "s_attacker_minus_defender": -0.491
+      },
+      {
+        "t": 12.96,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.597,
+          "vehicle-2": 0.417
+        },
+        "s_attacker_minus_defender": -0.506
+      },
+      {
+        "t": 13.02,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.598,
+          "vehicle-2": 0.409
+        },
+        "s_attacker_minus_defender": -0.538
+      },
+      {
+        "t": 13.08,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.602,
+          "vehicle-2": 0.424
+        },
+        "s_attacker_minus_defender": -0.63
+      },
+      {
+        "t": 13.14,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.595,
+          "vehicle-2": 0.414
+        },
+        "s_attacker_minus_defender": -0.733
+      },
+      {
+        "t": 13.2,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.5,
+          "vehicle-2": 0.392
+        },
+        "s_attacker_minus_defender": -0.755
+      },
+      {
+        "t": 13.26,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.338,
+          "vehicle-2": 0.373
+        },
+        "s_attacker_minus_defender": -0.816
+      },
+      {
+        "t": 13.32,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.139,
+          "vehicle-2": 0.363
+        },
+        "s_attacker_minus_defender": -0.907
+      },
+      {
+        "t": 13.38,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.4,
+        "d": {
+          "vehicle-1": -0.053,
+          "vehicle-2": 0.337
+        },
+        "s_attacker_minus_defender": -1.006
+      },
+      {
+        "t": 13.44,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": -0.4,
+        "d": {
+          "vehicle-1": -0.182,
+          "vehicle-2": 0.272
+        },
+        "s_attacker_minus_defender": -1.093
+      },
+      {
+        "t": 13.5,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.251,
+          "vehicle-2": 0.171
+        },
+        "s_attacker_minus_defender": -1.149
+      },
+      {
+        "t": 13.56,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.28,
+          "vehicle-2": 0.003
+        },
+        "s_attacker_minus_defender": -1.15
+      },
+      {
+        "t": 13.62,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.251,
+          "vehicle-2": -0.135
+        },
+        "s_attacker_minus_defender": -1.164
+      },
+      {
+        "t": 13.68,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.4,
+        "d": {
+          "vehicle-1": -0.198,
+          "vehicle-2": -0.21
+        },
+        "s_attacker_minus_defender": -1.164
+      },
+      {
+        "t": 13.74,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.4,
+        "d": {
+          "vehicle-1": -0.117,
+          "vehicle-2": -0.232
+        },
+        "s_attacker_minus_defender": -1.148
+      },
+      {
+        "t": 13.8,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.006,
+          "vehicle-2": -0.227
+        },
+        "s_attacker_minus_defender": -1.129
+      },
+      {
+        "t": 13.86,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.114,
+          "vehicle-2": -0.182
+        },
+        "s_attacker_minus_defender": -1.102
+      },
+      {
+        "t": 13.92,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.226,
+          "vehicle-2": -0.106
+        },
+        "s_attacker_minus_defender": -1.062
+      },
+      {
+        "t": 13.98,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 8
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.359,
+          "vehicle-2": -0.018
+        },
+        "s_attacker_minus_defender": -1.018
+      },
+      {
+        "t": 14.04,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 9
+        },
+        "selected_target_d": -0.6,
+        "d": {
+          "vehicle-1": 0.494,
+          "vehicle-2": 0.082
+        },
+        "s_attacker_minus_defender": -0.967
+      },
+      {
+        "t": 14.1,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 11
+        },
+        "selected_target_d": -0.6,
+        "d": {
+          "vehicle-1": 0.508,
+          "vehicle-2": 0.181
+        },
+        "s_attacker_minus_defender": -0.9
+      },
+      {
+        "t": 14.16,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 10
+        },
+        "selected_target_d": -0.4,
+        "d": {
+          "vehicle-1": 0.3,
+          "vehicle-2": 0.284
+        },
+        "s_attacker_minus_defender": -0.861
+      },
+      {
+        "t": 14.22,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 11
+        },
+        "selected_target_d": -0.4,
+        "d": {
+          "vehicle-1": 0.075,
+          "vehicle-2": 0.366
+        },
+        "s_attacker_minus_defender": -0.828
+      },
+      {
+        "t": 14.28,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 13
+        },
+        "selected_target_d": -0.4,
+        "d": {
+          "vehicle-1": -0.046,
+          "vehicle-2": 0.396
+        },
+        "s_attacker_minus_defender": -0.761
+      },
+      {
+        "t": 14.34,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 18
+        },
+        "selected_target_d": -0.4,
+        "d": {
+          "vehicle-1": -0.17,
+          "vehicle-2": 0.31
+        },
+        "s_attacker_minus_defender": -0.686
+      },
+      {
+        "t": 14.4,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 22
+        },
+        "selected_target_d": -0.6,
+        "d": {
+          "vehicle-1": -0.303,
+          "vehicle-2": 0.173
+        },
+        "s_attacker_minus_defender": -0.599
+      },
+      {
+        "t": 14.46,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": -0.6,
+        "d": {
+          "vehicle-1": -0.39,
+          "vehicle-2": 0.039
+        },
+        "s_attacker_minus_defender": -0.501
+      },
+      {
+        "t": 14.52,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.446,
+          "vehicle-2": -0.059
+        },
+        "s_attacker_minus_defender": -0.411
+      },
+      {
+        "t": 14.58,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.423,
+          "vehicle-2": -0.076
+        },
+        "s_attacker_minus_defender": -0.349
+      },
+      {
+        "t": 14.64,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.226,
+          "vehicle-2": -0.055
+        },
+        "s_attacker_minus_defender": -0.336
+      },
+      {
+        "t": 14.7,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.039,
+          "vehicle-2": -0.027
+        },
+        "s_attacker_minus_defender": -0.373
+      },
+      {
+        "t": 14.76,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 23
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.302,
+          "vehicle-2": -0.007
+        },
+        "s_attacker_minus_defender": -0.428
+      },
+      {
+        "t": 14.82,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 21
+        },
+        "selected_target_d": 0.4,
+        "d": {
+          "vehicle-1": 0.506,
+          "vehicle-2": 0.003
+        },
+        "s_attacker_minus_defender": -0.466
+      },
+      {
+        "t": 14.88,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 23
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.596,
+          "vehicle-2": 0.042
+        },
+        "s_attacker_minus_defender": -0.469
+      },
+      {
+        "t": 14.94,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.579,
+          "vehicle-2": 0.158
+        },
+        "s_attacker_minus_defender": -0.471
+      },
+      {
+        "t": 15.0,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.545,
+          "vehicle-2": 0.29
+        },
+        "s_attacker_minus_defender": -0.489
+      },
+      {
+        "t": 15.06,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.548,
+          "vehicle-2": 0.383
+        },
+        "s_attacker_minus_defender": -0.531
+      },
+      {
+        "t": 15.12,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 2
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.565,
+          "vehicle-2": 0.446
+        },
+        "s_attacker_minus_defender": -0.621
+      },
+      {
+        "t": 15.18,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.572,
+          "vehicle-2": 0.446
+        },
+        "s_attacker_minus_defender": -0.785
+      },
+      {
+        "t": 15.24,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.487,
+          "vehicle-2": 0.414
+        },
+        "s_attacker_minus_defender": -0.826
+      },
+      {
+        "t": 15.3,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.331,
+          "vehicle-2": 0.384
+        },
+        "s_attacker_minus_defender": -0.888
+      },
+      {
+        "t": 15.36,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.179,
+          "vehicle-2": 0.365
+        },
+        "s_attacker_minus_defender": -0.984
+      },
+      {
+        "t": 15.42,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.063,
+          "vehicle-2": 0.358
+        },
+        "s_attacker_minus_defender": -1.057
+      },
+      {
+        "t": 15.48,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": -0.039,
+          "vehicle-2": 0.28
+        },
+        "s_attacker_minus_defender": -1.123
+      },
+      {
+        "t": 15.54,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": -0.097,
+          "vehicle-2": 0.145
+        },
+        "s_attacker_minus_defender": -1.16
+      },
+      {
+        "t": 15.6,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": -0.068,
+          "vehicle-2": 0.014
+        },
+        "s_attacker_minus_defender": -1.159
+      },
+      {
+        "t": 15.66,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.007,
+          "vehicle-2": -0.041
+        },
+        "s_attacker_minus_defender": -1.162
+      },
+      {
+        "t": 15.72,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.048,
+          "vehicle-2": -0.046
+        },
+        "s_attacker_minus_defender": -1.156
+      },
+      {
+        "t": 15.78,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.152,
+          "vehicle-2": -0.031
+        },
+        "s_attacker_minus_defender": -1.148
+      },
+      {
+        "t": 15.84,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 7
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.302,
+          "vehicle-2": -0.013
+        },
+        "s_attacker_minus_defender": -1.141
+      },
+      {
+        "t": 15.9,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 8
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.458,
+          "vehicle-2": 0.004
+        },
+        "s_attacker_minus_defender": -1.127
+      },
+      {
+        "t": 15.96,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 8
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.52,
+          "vehicle-2": 0.058
+        },
+        "s_attacker_minus_defender": -1.092
+      },
+      {
+        "t": 16.02,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 8
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.424,
+          "vehicle-2": 0.131
+        },
+        "s_attacker_minus_defender": -1.06
+      },
+      {
+        "t": 16.08,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.266,
+          "vehicle-2": 0.22
+        },
+        "s_attacker_minus_defender": -1.043
+      },
+      {
+        "t": 16.14,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.135,
+          "vehicle-2": 0.283
+        },
+        "s_attacker_minus_defender": -1.021
+      },
+      {
+        "t": 16.2,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.054,
+          "vehicle-2": 0.281
+        },
+        "s_attacker_minus_defender": -0.986
+      },
+      {
+        "t": 16.26,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 7
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.032,
+          "vehicle-2": 0.26
+        },
+        "s_attacker_minus_defender": -0.971
+      },
+      {
+        "t": 16.32,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 8
+        },
+        "selected_target_d": -0.4,
+        "d": {
+          "vehicle-1": -0.084,
+          "vehicle-2": 0.173
+        },
+        "s_attacker_minus_defender": -0.959
+      },
+      {
+        "t": 16.38,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 10
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.091,
+          "vehicle-2": 0.072
+        },
+        "s_attacker_minus_defender": -0.93
+      },
+      {
+        "t": 16.44,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 10
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": -0.131,
+          "vehicle-2": -0.002
+        },
+        "s_attacker_minus_defender": -0.905
+      },
+      {
+        "t": 16.5,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.143,
+          "vehicle-2": -0.041
+        },
+        "s_attacker_minus_defender": -0.886
+      },
+      {
+        "t": 16.56,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 8
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.125,
+          "vehicle-2": -0.051
+        },
+        "s_attacker_minus_defender": -0.868
+      },
+      {
+        "t": 16.62,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 11
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.004,
+          "vehicle-2": -0.047
+        },
+        "s_attacker_minus_defender": -0.841
+      },
+      {
+        "t": 16.68,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 14
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.201,
+          "vehicle-2": -0.04
+        },
+        "s_attacker_minus_defender": -0.797
+      },
+      {
+        "t": 16.74,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 23
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.404,
+          "vehicle-2": -0.04
+        },
+        "s_attacker_minus_defender": -0.712
+      },
+      {
+        "t": 16.8,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 24
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.534,
+          "vehicle-2": -0.032
+        },
+        "s_attacker_minus_defender": -0.551
+      },
+      {
+        "t": 16.86,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 27
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.575,
+          "vehicle-2": 0.04
+        },
+        "s_attacker_minus_defender": -0.449
+      },
+      {
+        "t": 16.92,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.599,
+          "vehicle-2": 0.133
+        },
+        "s_attacker_minus_defender": -0.376
+      },
+      {
+        "t": 16.98,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.607,
+          "vehicle-2": 0.238
+        },
+        "s_attacker_minus_defender": -0.319
+      },
+      {
+        "t": 17.04,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.606,
+          "vehicle-2": 0.278
+        },
+        "s_attacker_minus_defender": -0.289
+      },
+      {
+        "t": 17.1,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.603,
+          "vehicle-2": 0.261
+        },
+        "s_attacker_minus_defender": -0.278
+      },
+      {
+        "t": 17.16,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.601,
+          "vehicle-2": 0.23
+        },
+        "s_attacker_minus_defender": -0.284
+      },
+      {
+        "t": 17.22,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.6,
+          "vehicle-2": 0.207
+        },
+        "s_attacker_minus_defender": -0.309
+      },
+      {
+        "t": 17.28,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.599,
+          "vehicle-2": 0.233
+        },
+        "s_attacker_minus_defender": -0.351
+      },
+      {
+        "t": 17.34,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.6,
+          "vehicle-2": 0.299
+        },
+        "s_attacker_minus_defender": -0.407
+      },
+      {
+        "t": 17.4,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.6,
+          "vehicle-2": 0.363
+        },
+        "s_attacker_minus_defender": -0.48
+      },
+      {
+        "t": 17.46,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 2
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.6,
+          "vehicle-2": 0.4
+        },
+        "s_attacker_minus_defender": -0.569
+      },
+      {
+        "t": 17.52,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 2
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.574,
+          "vehicle-2": 0.413
+        },
+        "s_attacker_minus_defender": -0.663
+      },
+      {
+        "t": 17.58,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.475,
+          "vehicle-2": 0.412
+        },
+        "s_attacker_minus_defender": -0.75
+      },
+      {
+        "t": 17.64,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.319,
+          "vehicle-2": 0.407
+        },
+        "s_attacker_minus_defender": -0.834
+      },
+      {
+        "t": 17.7,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.136,
+          "vehicle-2": 0.368
+        },
+        "s_attacker_minus_defender": -0.91
+      },
+      {
+        "t": 17.76,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.002,
+          "vehicle-2": 0.298
+        },
+        "s_attacker_minus_defender": -0.954
+      },
+      {
+        "t": 17.82,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": -0.022,
+          "vehicle-2": 0.214
+        },
+        "s_attacker_minus_defender": -0.967
+      },
+      {
+        "t": 17.88,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.012,
+          "vehicle-2": 0.116
+        },
+        "s_attacker_minus_defender": -0.977
+      },
+      {
+        "t": 17.94,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.073,
+          "vehicle-2": 0.036
+        },
+        "s_attacker_minus_defender": -0.99
+      },
+      {
+        "t": 18.0,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.136,
+          "vehicle-2": 0.0
+        },
+        "s_attacker_minus_defender": -1.007
+      },
+      {
+        "t": 18.06,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.2,
+        "d": {
+          "vehicle-1": 0.183,
+          "vehicle-2": 0.04
+        },
+        "s_attacker_minus_defender": -1.021
+      },
+      {
+        "t": 18.12,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.206,
+          "vehicle-2": 0.113
+        },
+        "s_attacker_minus_defender": -1.029
+      },
+      {
+        "t": 18.18,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.194,
+          "vehicle-2": 0.174
+        },
+        "s_attacker_minus_defender": -1.033
+      },
+      {
+        "t": 18.24,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.122,
+          "vehicle-2": 0.206
+        },
+        "s_attacker_minus_defender": -1.033
+      },
+      {
+        "t": 18.3,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.014,
+          "vehicle-2": 0.226
+        },
+        "s_attacker_minus_defender": -1.03
+      },
+      {
+        "t": 18.36,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": -0.098,
+          "vehicle-2": 0.225
+        },
+        "s_attacker_minus_defender": -1.05
+      },
+      {
+        "t": 18.42,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.172,
+          "vehicle-2": 0.151
+        },
+        "s_attacker_minus_defender": -1.056
+      },
+      {
+        "t": 18.48,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.187,
+          "vehicle-2": 0.062
+        },
+        "s_attacker_minus_defender": -1.056
+      },
+      {
+        "t": 18.54,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": -0.167,
+          "vehicle-2": -0.004
+        },
+        "s_attacker_minus_defender": -1.061
+      },
+      {
+        "t": 18.6,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.148,
+          "vehicle-2": -0.071
+        },
+        "s_attacker_minus_defender": -1.049
+      },
+      {
+        "t": 18.66,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 7
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.124,
+          "vehicle-2": -0.146
+        },
+        "s_attacker_minus_defender": -1.02
+      },
+      {
+        "t": 18.72,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 9
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.003,
+          "vehicle-2": -0.203
+        },
+        "s_attacker_minus_defender": -0.979
+      },
+      {
+        "t": 18.78,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 9
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.197,
+          "vehicle-2": -0.229
+        },
+        "s_attacker_minus_defender": -0.903
+      },
+      {
+        "t": 18.84,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 14
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.398,
+          "vehicle-2": -0.202
+        },
+        "s_attacker_minus_defender": -0.791
+      },
+      {
+        "t": 18.9,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 22
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.532,
+          "vehicle-2": -0.136
+        },
+        "s_attacker_minus_defender": -0.63
+      },
+      {
+        "t": 18.96,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 27
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.573,
+          "vehicle-2": 0.011
+        },
+        "s_attacker_minus_defender": -0.516
+      },
+      {
+        "t": 19.02,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.597,
+          "vehicle-2": 0.149
+        },
+        "s_attacker_minus_defender": -0.436
+      },
+      {
+        "t": 19.08,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.606,
+          "vehicle-2": 0.2
+        },
+        "s_attacker_minus_defender": -0.391
+      },
+      {
+        "t": 19.14,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.606,
+          "vehicle-2": 0.235
+        },
+        "s_attacker_minus_defender": -0.365
+      },
+      {
+        "t": 19.2,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.604,
+          "vehicle-2": 0.295
+        },
+        "s_attacker_minus_defender": -0.355
+      },
+      {
+        "t": 19.26,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.601,
+          "vehicle-2": 0.33
+        },
+        "s_attacker_minus_defender": -0.364
+      },
+      {
+        "t": 19.32,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.6,
+          "vehicle-2": 0.299
+        },
+        "s_attacker_minus_defender": -0.392
+      },
+      {
+        "t": 19.38,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.6,
+          "vehicle-2": 0.298
+        },
+        "s_attacker_minus_defender": -0.439
+      },
+      {
+        "t": 19.44,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 28
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.6,
+          "vehicle-2": 0.334
+        },
+        "s_attacker_minus_defender": -0.502
+      },
+      {
+        "t": 19.5,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 2
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.6,
+          "vehicle-2": 0.378
+        },
+        "s_attacker_minus_defender": -0.579
+      },
+      {
+        "t": 19.56,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.582,
+          "vehicle-2": 0.421
+        },
+        "s_attacker_minus_defender": -0.718
+      },
+      {
+        "t": 19.62,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.517,
+          "vehicle-2": 0.418
+        },
+        "s_attacker_minus_defender": -0.839
+      },
+      {
+        "t": 19.68,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.383,
+          "vehicle-2": 0.396
+        },
+        "s_attacker_minus_defender": -0.898
+      },
+      {
+        "t": 19.74,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 3
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.217,
+          "vehicle-2": 0.376
+        },
+        "s_attacker_minus_defender": -1.005
+      },
+      {
+        "t": 19.8,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": 0.073,
+          "vehicle-2": 0.342
+        },
+        "s_attacker_minus_defender": -1.088
+      },
+      {
+        "t": 19.86,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": -0.2,
+        "d": {
+          "vehicle-1": -0.025,
+          "vehicle-2": 0.272
+        },
+        "s_attacker_minus_defender": -1.159
+      },
+      {
+        "t": 19.92,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": -0.4,
+        "d": {
+          "vehicle-1": -0.084,
+          "vehicle-2": 0.192
+        },
+        "s_attacker_minus_defender": -1.211
+      },
+      {
+        "t": 19.98,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.137,
+          "vehicle-2": 0.087
+        },
+        "s_attacker_minus_defender": -1.234
+      },
+      {
+        "t": 20.04,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.177,
+          "vehicle-2": -0.007
+        },
+        "s_attacker_minus_defender": -1.241
+      },
+      {
+        "t": 20.1,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.165,
+          "vehicle-2": -0.038
+        },
+        "s_attacker_minus_defender": -1.251
+      },
+      {
+        "t": 20.16,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.137,
+          "vehicle-2": -0.073
+        },
+        "s_attacker_minus_defender": -1.25
+      },
+      {
+        "t": 20.22,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.081,
+          "vehicle-2": -0.128
+        },
+        "s_attacker_minus_defender": -1.236
+      },
+      {
+        "t": 20.28,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.028,
+          "vehicle-2": -0.129
+        },
+        "s_attacker_minus_defender": -1.225
+      },
+      {
+        "t": 20.34,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.002,
+          "vehicle-2": -0.084
+        },
+        "s_attacker_minus_defender": -1.212
+      },
+      {
+        "t": 20.4,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.011,
+          "vehicle-2": -0.034
+        },
+        "s_attacker_minus_defender": -1.199
+      },
+      {
+        "t": 20.46,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.01,
+          "vehicle-2": -0.003
+        },
+        "s_attacker_minus_defender": -1.188
+      },
+      {
+        "t": 20.52,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.005,
+          "vehicle-2": 0.01
+        },
+        "s_attacker_minus_defender": -1.179
+      },
+      {
+        "t": 20.58,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.002,
+          "vehicle-2": 0.011
+        },
+        "s_attacker_minus_defender": -1.171
+      },
+      {
+        "t": 20.64,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.0,
+          "vehicle-2": 0.007
+        },
+        "s_attacker_minus_defender": -1.163
+      },
+      {
+        "t": 20.7,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.001,
+          "vehicle-2": 0.003
+        },
+        "s_attacker_minus_defender": -1.157
+      },
+      {
+        "t": 20.76,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 6
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": -0.001,
+          "vehicle-2": 0.0
+        },
+        "s_attacker_minus_defender": -1.15
+      },
+      {
+        "t": 20.82,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": -0.0,
+          "vehicle-2": -0.001
+        },
+        "s_attacker_minus_defender": -1.145
+      },
+      {
+        "t": 20.88,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 4
+        },
+        "selected_target_d": 0.6,
+        "d": {
+          "vehicle-1": 0.03,
+          "vehicle-2": -0.001
+        },
+        "s_attacker_minus_defender": -1.137
+      },
+      {
+        "t": 20.94,
+        "rejected": {
+          "overlap": 0,
+          "responsibility": 5
+        },
+        "selected_target_d": 0.0,
+        "d": {
+          "vehicle-1": 0.139,
+          "vehicle-2": -0.001
+        },
+        "s_attacker_minus_defender": -1.13
+      }
+    ],
+    "defend": []
+  }
+}

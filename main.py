@@ -35,6 +35,7 @@ from strategy.overtaking import OvertakingConfig
 from strategy.progress import ProgressConfig, ProgressStrategy
 from strategy.probe_following import ProbeFollowingConfig, ProbeFollowingStrategy
 from strategy.relative_overtaking import RelativeOvertakingConfig, RelativeOvertakingStrategy
+from strategy.responsibility import ResponsibilityConfig
 from strategy.gp_prediction import load_gp_routes
 
 
@@ -88,12 +89,29 @@ MODEL_CONFIG = VehicleModelConfig(
     min_velocity=0.0,
     max_velocity=30.0,
 )
-COLLISION_CONFIG = CollisionConfig(length=0.6, width=1.2)  # 只調整碰撞判定矩形，單位 m。
+COLLISION_CONFIG = CollisionConfig(length=0.6, width=0.4)  # 只調整碰撞判定矩形，單位 m。
 VEHICLE_GEOMETRY = VehicleGeometry(
     length=0.55, width=0.30, rear_axle_to_center=0.12,
     collision=COLLISION_CONFIG,
 )
-LOOKAHEAD_DISTANCE = 2.0
+# 避撞責任約束（defend 與 relative_overtake）：g=‖Δc‖²−r²−ℓ(Δs)≥0，違反就剔除候選。
+# 後車負責保持 r；並排時兩車都負責；領先越多越寬鬆（ℓ 依 Δs=對方 s−自車 s 的 sigmoid）。
+# False：恢復原本設定（進攻車矩形重疊剔除、防守車依 collision_check_enabled）。
+RESPONSIBILITY_ENABLED = True
+RESPONSIBILITY_CONFIG = ResponsibilityConfig(
+    collision_radius=0.6,  # r_col：兩車車身中心最小距離 m；=碰撞框長，尚未調參
+    slope=40.0,            # a：1/m；前車領先超過 b/a≈0.11 m 即免責，只在完全並排時負責（論文為 5）
+    offset=4.5,            # b：沿用論文；後車額外留距約 1/(1+e^b)≈0.011 m²
+    # leader_soft=True：決策當下在前的車不剔除，改以 leader_penalty_weight×mean(max(0,r−‖Δc‖)²) 加入成本；
+    # 後車與完全並排仍為硬約束。與 overlap_rule 只能擇一。
+    leader_soft=False,
+    # overlap_rule=True：依決策當下狀態，縱向重疊中（|Δs|<碰撞框長）兩車都負責，
+    # 脫離重疊後只剩後車負責；負責者要保持 ‖Δc‖≥r_col，不負責者只計 leader 懲罰。此模式不使用 slope、offset。
+    overlap_rule=True,
+)
+_RESPONSIBILITY = RESPONSIBILITY_CONFIG if RESPONSIBILITY_ENABLED else None
+
+LOOKAHEAD_DISTANCE = 1.0
 SPEED_GAIN = 1.5
 MAX_ACCELERATION = 5.0
 MAX_DECELERATION = 5.0  # 正值，控制器輸出的減速度最多為此大小，單位 m/s²。
@@ -117,14 +135,17 @@ DEFENSE_CONFIG = DefenseConfig(
     detection_range=6.0,           # 後車在此範圍內才考慮防守
     return_tolerance=0.08,        # 接回共同中心線的橫向容許誤差
     transition_length=2.0,         # 越長，橫移越緩慢
-    decision_period=0.2,           # 每隔多久比較一次候選路徑
-    candidate_offsets=(-0.6, -0.3, 0.0, 0.3, 0.6),  # 固定候選；超出可用路寬就排除
+    decision_period=0.05,           # 每隔多久比較一次候選路徑
+    candidate_offsets=(-0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6),  # 固定候選；超出可用路寬就排除
     prediction_horizon=1,       # 自身候選路徑的成本評估時間
     prediction_step=0.1,          # 成本取樣的時間間距
     path_sample_spacing=0.2,      # 幾何路徑的取樣距離；越小越細
     collision_check_enabled=False, # False 可停用獨立的碰撞條件
-    collision_horizon=1.5,        # 幾何碰撞預測時長；間距沿用 prediction_step
+    collision_horizon=1.0,        # 碰撞／責任檢查時長；短到只看「即將並排」，不因預測被超越而提前避讓
     safety_margin=0.1,            # 限制候選目標與賽道邊界的留距
+    deviation_weight=5.0,         # 偏離中心線成本 w×Σd²，併入 J_race；0 關閉，尚未調參
+    responsibility=_RESPONSIBILITY,  # 啟用時檢查所有車，取代上方碰撞條件；時長沿用 collision_horizon
+    leader_penalty_weight=0.0,    # leader_soft=True 時守方在前的避碰懲罰權重；0 表示前車不避讓，尚未調參
 )
 COST_OVERTAKING_CONFIG = CostOvertakingConfig(
     progress_weight=2.0,           # 前進距離越多，成本越低
@@ -142,7 +163,7 @@ COST_OVERTAKING_CONFIG = CostOvertakingConfig(
 )
 OFFSET_PATH_CONFIG = OffsetPathConfig(sample_spacing=0.2, path_length=4.0)
 PROGRESS_CONFIG = ProgressConfig(
-    candidate_offsets=(-0.6, -0.3, 0.0, 0.3, 0.6),
+    candidate_offsets=(-0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6),
     transition_length=3.0,
     decision_period=0.1,
     prediction_horizon=1.5,
@@ -150,7 +171,7 @@ PROGRESS_CONFIG = ProgressConfig(
 )
 RELATIVE_OVERTAKING_CONFIG = RelativeOvertakingConfig(
     candidate_offsets=(
-        -0.6, -0.45, -0.3, -0.15, 0.0, 0.15, 0.3, 0.45, 0.6,
+        -0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6,
     ),
     detection_range=6.0,  # 新前車的選取範圍；超車後仍保留原比較對象。
     transition_length=3.0,
@@ -160,6 +181,12 @@ RELATIVE_OVERTAKING_CONFIG = RelativeOvertakingConfig(
     speed_candidates_enabled=True,  # True 時在目前路徑增加低速候選。
     speed_candidate_delta=1.0,       # 第二個速度要求為 max(前車速度 - 此差值, 0)，m/s。
     extra_speed_candidate_deltas=(4.0,),  # 再加前車 -4 m/s；可填 (2.0, 4.0)，最低為 0。
+    # 啟用速度候選時，每條橫向路徑都搭配巡航與上述低速，一起比較成本。
+    safety_weight=10.0,    # 安全距離成本權重（1/m）；0 關閉，只比預測終點間距。
+    safety_distance=0.5,   # 碰撞矩形間隙小於 0.5 m 時開始懲罰，越近越大。
+    deviation_weight=3.0,  # 偏離中心線成本 w×mean(d²)（1/m）；0 關閉，尚未調參。
+    responsibility=_RESPONSIBILITY,  # 啟用時取代矩形重疊剔除
+    leader_penalty_weight=0.0,  # leader_soft=True 時攻方在前的避碰懲罰權重（1/m）；尚未調參
 )
 
 
@@ -371,6 +398,7 @@ def run_simulation(
         DEFENSE_CONFIG,
         defense_enabled=defense_enabled,
         strategy_factories=strategy_factories,
+        prediction_configs=prediction_configs,  # defend 以 bicycle model 預測自車候選
     )
     display_options = create_display_options(realtime)
     if probe_follow_demo:

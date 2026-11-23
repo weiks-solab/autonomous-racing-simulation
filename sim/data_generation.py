@@ -189,6 +189,7 @@ def _create_manager(
                 settings.relative_overtaking_config, prediction_configs[vehicle_id], prediction_configs,
             ),
         },
+        prediction_configs=prediction_configs,
     )
 
 

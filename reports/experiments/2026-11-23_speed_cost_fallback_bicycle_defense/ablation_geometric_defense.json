@@ -1,0 +1,48 @@
+{
+  "track": "rounded_rectangle",
+  "simulation_seconds": 21.0,
+  "assignments": {
+    "vehicle-1": "relative_overtake",
+    "vehicle-2": "defend"
+  },
+  "wall_seconds_including_plot": 86.36689450003905,
+  "final_s_from_start": {
+    "vehicle-1": 184.8860867652928,
+    "vehicle-2": 185.8939866604171
+  },
+  "collision_steps": 11,
+  "first_collision_time": 4.14,
+  "collision_pairs": [
+    [
+      "vehicle-1",
+      "vehicle-2"
+    ]
+  ],
+  "strategies": {
+    "relative_overtake": {
+      "evaluations": 350,
+      "mean_ms": 245.28674600180238,
+      "max_ms": 265.7308999914676,
+      "total_s": 85.85036110063083,
+      "mode_counts": {
+        "attack": 346,
+        "no_feasible_path": 4
+      },
+      "speed_limited_evaluations": 214,
+      "max_candidates": 36
+    },
+    "defend": {
+      "evaluations": 100,
+      "mean_ms": 0.785158000071533,
+      "max_ms": 1.5359999961219728,
+      "total_s": 0.0785158000071533,
+      "mode_counts": {
+        "defend": 69,
+        "cruise": 1,
+        "return": 30
+      },
+      "speed_limited_evaluations": 0,
+      "max_candidates": 5
+    }
+  }
+}

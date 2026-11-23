@@ -1,0 +1,62 @@
+C:\Users\kevin\OneDrive\Desktop\project\racing_sim\sim\visualizer.py:550: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  plt.show()
+ablation: {'safety_weight': 0.0}
+vehicle-1 strategy: relative_overtake
+Strategy transitions: 0.00s ATTACK -> 7.56s NO_FEASIBLE_PATH -> 7.74s ATTACK -> 16.86s NO_FEASIBLE_PATH -> 17.04s ATTACK -> 18.66s NO_FEASIBLE_PATH -> 18.72s ATTACK
+Lateral targets: 0.00s +0.00m -> 1.50s +0.60m -> 2.52s +0.45m -> 2.82s +0.30m -> 2.88s +0.15m -> 2.94s +0.00m -> 3.00s +0.60m -> 3.06s -0.15m -> 3.18s +0.45m -> 3.36s -0.45m -> 3.48s +0.60m -> 3.90s +0.15m -> 3.96s -0.15m -> 4.02s -0.30m -> 4.20s +0.30m -> 4.26s -0.45m -> 4.44s +0.45m -> 5.34s +0.60m -> 5.70s +0.45m -> 5.82s +0.60m -> 6.00s +0.15m -> 6.06s +0.00m -> 6.24s -0.15m -> 6.36s +0.45m -> 6.42s +0.60m -> 6.48s -0.45m -> 6.54s -0.60m -> 6.60s +0.60m -> 6.84s +0.45m -> 7.38s +0.00m -> 7.44s -0.15m -> 7.56s +0.15m -> 7.74s +0.60m -> 7.80s +0.00m -> 8.10s -0.15m -> 8.28s +0.30m -> 8.34s +0.45m -> 8.40s +0.60m -> 8.46s -0.45m -> 8.70s -0.15m -> 8.82s -0.30m -> 8.88s +0.30m -> 9.00s -0.45m -> 9.06s -0.60m -> 9.18s -0.45m -> 9.30s -0.30m -> 9.36s +0.00m -> 9.42s +0.30m -> 9.48s -0.15m -> 9.60s -0.30m -> 9.66s -0.45m -> 9.72s +0.60m -> 10.56s +0.30m -> 11.40s +0.45m -> 11.58s +0.60m -> 11.70s +0.45m -> 11.88s +0.60m -> 11.94s +0.45m -> 12.12s -0.30m -> 12.18s +0.60m -> 12.24s -0.15m -> 12.54s +0.45m -> 12.60s +0.60m -> 12.72s -0.45m -> 12.78s -0.60m -> 12.84s +0.60m -> 13.08s +0.45m -> 13.50s -0.60m -> 13.74s -0.15m -> 13.80s +0.45m -> 14.64s +0.60m -> 14.70s +0.45m -> 14.76s +0.60m -> 14.82s +0.45m -> 15.00s +0.60m -> 15.06s +0.45m -> 15.12s +0.60m -> 15.30s +0.15m -> 15.36s +0.00m -> 15.54s -0.15m -> 15.66s +0.45m -> 15.72s -0.30m -> 15.78s +0.60m -> 15.84s -0.60m -> 15.90s +0.60m -> 16.08s +0.00m -> 16.14s -0.15m -> 16.26s -0.30m -> 16.32s -0.45m -> 16.38s +0.30m -> 16.44s +0.45m -> 16.62s +0.30m -> 16.68s +0.00m -> 16.74s +0.30m -> 17.04s +0.00m -> 17.46s -0.15m -> 17.58s +0.30m -> 17.64s +0.45m -> 17.76s -0.30m -> 17.82s -0.45m -> 18.06s -0.30m -> 18.18s +0.60m -> 18.24s +0.15m -> 18.30s +0.00m -> 18.36s -0.60m -> 18.48s -0.30m -> 18.54s -0.45m -> 18.66s +0.60m -> 18.72s +0.00m -> 18.78s -0.30m -> 18.84s -0.15m -> 18.96s -0.30m -> 19.02s -0.45m -> 19.08s +0.60m -> 19.26s +0.45m -> 19.32s +0.30m -> 19.98s +0.60m -> 20.10s +0.45m -> 20.16s -0.45m -> 20.28s +0.30m -> 20.40s -0.15m -> 20.64s -0.30m -> 20.82s +0.45m -> 20.88s -0.45m -> 20.94s -0.60m
+Final strategy reason: lowest predicted relative gap
+Final vehicle-1 d: -0.204 m
+vehicle-2 strategy: defend
+Strategy transitions: 0.00s DEFEND -> 4.00s RETURN -> 6.70s DEFEND -> 6.90s CRUISE -> 7.52s RETURN -> 8.78s DEFEND -> 9.20s RETURN -> 9.84s DEFEND -> 10.26s RETURN -> 11.94s DEFEND -> 12.14s RETURN -> 13.00s DEFEND -> 13.42s RETURN -> 15.94s DEFEND -> 16.14s CRUISE -> 16.80s RETURN -> 18.12s DEFEND -> 18.56s RETURN -> 19.20s DEFEND -> 20.26s RETURN
+Lateral targets: 0.00s +0.00m -> 1.70s +0.30m -> 1.90s +0.60m -> 2.74s +0.30m -> 3.58s +0.00m -> 3.78s +0.60m -> 6.70s +0.00m -> 7.52s +0.60m -> 8.78s -0.60m -> 8.98s -0.30m -> 9.20s +0.60m -> 9.84s +0.00m -> 10.04s +0.60m -> 11.94s +0.30m -> 12.14s +0.60m -> 13.00s +0.30m -> 13.20s +0.60m -> 15.94s +0.00m -> 16.80s +0.60m -> 18.12s -0.60m -> 18.34s -0.30m -> 18.56s +0.60m -> 19.20s +0.00m -> 19.40s +0.30m -> 20.26s +0.60m
+Final strategy reason: lowest cost
+Final vehicle-2 d: +0.581 m
+Detected collision pairs: vehicle-1/vehicle-2
+{
+  "track": "rounded_rectangle",
+  "simulation_seconds": 21.0,
+  "assignments": {
+    "vehicle-1": "relative_overtake",
+    "vehicle-2": "defend"
+  },
+  "wall_seconds_including_plot": 91.92165209999075,
+  "final_s_from_start": {
+    "vehicle-1": 191.67649004185841,
+    "vehicle-2": 192.59156960461215
+  },
+  "collision_steps": 20,
+  "first_collision_time": 4.0,
+  "collision_pairs": [
+    [
+      "vehicle-1",
+      "vehicle-2"
+    ]
+  ],
+  "strategies": {
+    "relative_overtake": {
+      "evaluations": 350,
+      "mean_ms": 252.1979928570467,
+      "max_ms": 285.763899970334,
+      "total_s": 88.26929749996634,
+      "mode_counts": {
+        "attack": 343,
+        "no_feasible_path": 7
+      },
+      "speed_limited_evaluations": 217,
+      "max_candidates": 36
+    },
+    "defend": {
+      "evaluations": 100,
+      "mean_ms": 31.70362700126134,
+      "max_ms": 40.81119998591021,
+      "total_s": 3.170362700126134,
+      "mode_counts": {
+        "defend": 35,
+        "return": 59,
+        "cruise": 6
+      },
+      "speed_limited_evaluations": 0,
+      "max_candidates": 5
+    }
+  }
+}

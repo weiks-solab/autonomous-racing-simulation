@@ -82,16 +82,22 @@ extra_speed_candidate_deltas=(4.0,),  # 再加前車 -4 m/s
 ```
 
 速度差填正值，`4.0` 表示減去 4 m/s；單一值的 tuple 也要保留逗號。
-例如前車 9 m/s，會在目前路徑比較 9、8、5 m/s，原本橫向候選仍使用巡航目標。
-改成 `(2.0, 4.0)` 可增加兩個速度差；填 `()` 則恢復原本只有匹配與 −1 m/s 的行為。
+例如前車 9 m/s，每條橫向候選都會比較巡航、9、8、5 m/s。
+改成 `(2.0, 4.0)` 可增加兩個速度差；填 `()` 則只有匹配與 −1 m/s。
 
-- 原本橫向候選照常以巡航目標 rollout。
-- 有前方目標時，在目前追蹤的 maneuver 增加前車車速與 `max(前車車速 - 各速度差, 0)` 候選。
-  尚無 maneuver 時使用原本的回中心線候選，進行中的橫移保留其起點。
+- 有前方目標時，每條橫向候選都搭配巡航（`None`）、前車車速與
+  `max(前車車速 - 各速度差, 0)`，展開成全組合；九條橫向 × 四種速度最多 36 條。
+  與原目標相同的橫向候選保留進行中橫移的起點。
 - 僅加入低於巡航目標且互不重複的速度要求，負的目標速度截為 0；速度差本身必須非負且有限。
 - 全部候選共用初始狀態、預測視野及對手預測，經既有同時間矩形碰撞檢查後，
-  以原有終點相對間距成本取最小值。
-- 全部候選都被剔除時記錄 `no_feasible_path`，繼續持有上一個路徑與速度要求。
+  以「終點相對間距＋安全距離成本」取最小值，見下方相對進度策略。
+- 全部候選都被剔除時記錄 `no_feasible_path`，改選第一次預測碰撞最晚的候選；
+  碰撞時間相同時選速度要求較低者，仍相同再選自車進度較多者。
+  決策採用該候選的路徑與速度要求，候選圖仍標出被選中的不可行候選。
+
+每次決策的 rollout 數量約為原本的 3 倍。11/23 在預設場景量到的每次決策平均
+約 255 ms，原本約 76 ms，見
+[量測紀錄](reports/experiments/2026-11-23_speed_cost_fallback_bicycle_defense/README.md)。
 
 對手的 `constant_speed=True` 維持零加速度，GP 對手預測沿用原有假設。
 目前功能提供速度要求與短視野候選比較，自動避碰、緊急煞車與完整 fallback 尚未實作。
@@ -287,6 +293,7 @@ python3 train_gp.py --data data/training/生成的資料夾名稱
 | `PROGRESS_CONFIG` | `progress` 的候選目標、橫移長度、決策週期與自車預測時長 |
 | `RELATIVE_OVERTAKING_CONFIG` | `relative_overtake` 的候選目標、對象偵測距離、預測參數與速度候選開關 |
 | `DEFENSE_CONFIG` | 所有防守車使用的成本、觸發條件與路徑參數 |
+| `RESPONSIBILITY_ENABLED` / `RESPONSIBILITY_CONFIG` | 避撞責任約束開關與 r_col、a、b；`defend` 與 `relative_overtake` 共用，見「避撞責任約束」 |
 | `OFFSET_PATH_CONFIG` | 臨時路徑的取樣間距與長度 |
 
 碰撞矩形在 `main.py` 設定，例如 `CollisionConfig(length=0.45, width=0.24)`。
@@ -310,6 +317,7 @@ python3 train_gp.py --data data/training/生成的資料夾名稱
 | `collision_horizon` | 防守碰撞條件檢查更長的未來時間；不改變成本評估時長 |
 
 `collision_check_enabled=False` 可停用防守碰撞條件，回到原本只依成本選路徑。
+設定 `responsibility` 時改用避撞責任約束檢查所有其他車，`collision_check_enabled` 不再生效。
 
 固定候選由 `candidate_offsets` 設定，中心線 `0` 一定列入；策略不會額外加入
 目前位置、目前目標或 ego 的位置。可用橫向範圍為
@@ -441,7 +449,7 @@ STRATEGY_ASSIGNMENTS = {
 | `overtake` | 找前方較慢的車，選擇左右超車路徑 | `strategy/overtaking.py` |
 | `cost_overtake` | 固定候選 bicycle 預測，以進度與超車獎勵選路徑 | `strategy/cost_overtaking.py` |
 | `progress` | 五候選 bicycle 預測，只選最大進度，不預測其他車或篩選碰撞 | `strategy/progress.py` |
-| `relative_overtake` | 只最小化預測終點的對手 s 減自車 s，保留碰撞篩選 | `strategy/relative_overtaking.py` |
+| `relative_overtake` | 最小化預測終點的對手 s 減自車 s，加上可選安全距離成本；保留碰撞篩選 | `strategy/relative_overtaking.py` |
 | `defend` | 依成本選擇橫向防守位置 | `strategy/defending.py` |
 
 例如想改成第二台車進攻，第三台車防守第二台，只需改成：
@@ -565,11 +573,24 @@ STRATEGY_ASSIGNMENTS = {
 }
 ```
 
-唯一成本為預測終點的有號縱向間距，沒有額外自車進度項或超車成功獎勵：
+成本為預測終點的有號縱向間距，加上可選的安全距離與偏離中心線成本，沒有額外自車進度項或超車成功獎勵：
 
 ```text
-J = gap_T = gap_now + delta_s_opponent - delta_s_self
+J = gap_T + safety_weight * safety + deviation_weight * mean_k(d_k²)
+gap_T = gap_now + delta_s_opponent - delta_s_self
+clear_k = max(|Δs_k| - L̄, |Δd_k| - W̄)
+safety = Σ_其他車 mean_k max(0, safety_distance - clear_k)²
 ```
+
+`d_k` 是自車 rollout 在各預測時間點（不含 t=0）相對中心線的 d；
+`deviation_weight` 單位 1/m，類別預設 0，main 目前設 1.0，尚未調參。
+被碰撞剔除的候選不計任何成本。
+
+`Δs_k`、`Δd_k` 為各預測時間點兩車的縱向、橫向距離，`L̄`、`W̄` 為兩車碰撞矩形
+長、寬的半和。這是 Frenet 座標的矩形間隙近似，彎道會與實際 SAT 判定有差異；
+碰撞預設以原本的矩形檢查剔除；設定 `responsibility` 時改用避撞責任約束（見下方「避撞責任約束」）。
+`safety_weight=0`（類別預設）時恢復只比 `gap_T`。
+main 目前設定 `safety_weight=10.0`、`safety_distance=0.5`，尚未調參。
 
 `gap_now` 是當下對手相對自車的有號間距，兩個 `delta_s` 為同一預測時長內累積的
 縱向進度。用累積進度計算，避免跨起終點時跳變；不取絕對值或截斷負值。
@@ -582,15 +603,16 @@ J = gap_T = gap_now + delta_s_opponent - delta_s_self
 自車候選使用 Pure Pursuit 與自行車模型預測；
 每台其他車每輪只預測一次。未指定 GP 時維持當下速度、追蹤當下 d 的等偏移參考線；
 指定 GP 時改用定縱向速度與 GP 路線，設定方式見上方「在進攻策略使用 GP」。
-碰撞硬性篩選涵蓋所有其他車，通過後才比較相對成本；全部被剔除時沿用原路徑。
+碰撞硬性篩選涵蓋所有其他車，通過後才比較成本；全部被剔除時改選最晚碰撞的候選。
 尚未選過對象，或原對象已不在觀測且沒有新前車時，相對成本才停用，不補回自車進度項。
 此時仍篩選碰撞，同分優先沿用
 原目標，原目標不可行時按候選順序選擇其他可行目標（中心線先列入）。
 
 參數集中於 `RELATIVE_OVERTAKING_CONFIG`：預設九條候選由 -0.6 到 +0.6 m、
 間距 0.15 m、偵測距離 6 m、過渡長度 3 m、決策週期 0.1 s、預測時長 0.8 s。
-候選圖只顯示 `relative_gap` 成本，超車後仍顯示並比較負成本；只有沒有比較對象時才不顯示。
-同一次評估中，對手預測對所有候選相同，所以有比較對象時與最大自車進度具有相同排序。
+候選圖顯示 `relative_gap`，啟用時另顯示 `safety`、`deviation`，標籤的 J 為各項加總；
+超車後仍顯示並比較負成本，沒有比較對象時不顯示 `relative_gap`。
+同一次評估中，對手預測對所有候選相同，所以安全項關閉時與最大自車進度具有相同排序。
 無視窗資料生成也支援此策略，並將獨立設定保存至 metadata。
 
 ### 隨時替換策略
@@ -640,7 +662,11 @@ def update(self, vehicle, others, track, time_seconds) -> StrategyDecision:
 
 1. 指定 ego 在後方且位於偵測距離內時，啟用對齊成本；否則該項為零。
 2. 從固定候選目標中，排除超出可用路寬的點。
-3. 為各目標產生自身平滑橫移路徑，使用自己的目前速度作幾何預測。
+3. 為各目標產生自身平滑橫移路徑並預測自身軌跡。`main.py` 與資料收集入口會傳入
+   各車的 `BicyclePredictionConfig`，防守車以自己的 Pure Pursuit 與自行車模型
+   rollout，速度依自己的巡航目標加減速，再插值到成本與碰撞取樣時間；
+   未提供設定時（例如直接建立 `CostBasedDefenseStrategy`）沿用原本以目前速度走完路徑的幾何預測。
+   後車預測、對齊成本與碰撞條件不變，仍只使用後車當下的 d。
 4. 啟用碰撞條件時，先剔除與指定防守對象預測重疊的候選，再計算成本。
 5. 選可行候選中總成本最低者，輸出 `target_d` 與 `LateralManeuver` 給 Pure Pursuit。
 
@@ -689,10 +715,15 @@ J_O = J_race + q_block × sum((d_opponent[k] - d_ego_now)²)
 
 J_race = -progress_weight × estimated_progress
        + smooth_weight × sum((d_opponent[k] - d_opponent[k-1])²)
+       + deviation_weight × sum(d_opponent[k]²)
 
 estimated_progress = s_end - s_start
 s_end = 沿候選路徑走滿 max(v, 0) × prediction_horizon 後的賽道位置
 ```
+
+`deviation_weight` 是偏離中心線成本（類別預設 0 關閉），與對齊項使用相同取樣點；
+main 目前設 1.0，約為 `q_block=15` 的 1/15，尚未調參。
+使用 bicycle 預測時，`estimated_progress` 與 `d_opponent[k]` 取自 rollout 插值。
 
 `k=1..N` 是未來的預測時間點，`d_opponent[0]` 為對手車目前位置。
 `N` 是預測步數，不是車輛數量。`d_ego_now` 在一次成本評估中固定，沒有預測
@@ -711,6 +742,65 @@ ego 未來意圖。`v` 是當下車身速度，不直接當成 `ds/dt`。幾何�
 不會覆蓋成本選出的目標。選中 `0` 且已接近中心線時，以 `return_tolerance`
 判斷是否接回共同中心線。圖上也會顯示 `race` 與 `block` 成本；終端會列出
 狀態轉換、橫向目標與碰撞紀錄。
+
+## 避撞責任約束
+
+依使用者提供的論文截圖實作，`defend` 與 `relative_overtake` 共用，程式在 `strategy/responsibility.py`。
+對每台其他車、每個未來預測時間點（不含當下 t=0）：
+
+```text
+g = ‖c_自車 − c_對方‖² − r_col² − ℓ(Δs) ≥ 0      違反即剔除候選
+ℓ(Δs) = 1/(1+e^b) − 1/(1+e^{aΔs+b})          Δs = 對方 s − 自車 s
+```
+
+- `c` 為碰撞矩形中心，距離為圓形（歐氏距離）。
+- 自車在後時 ℓ 為小正值（約 0.011 m²），要保持 r_col。
+- 並排時 ℓ≈0，兩車都要保持 r_col。
+- 自車領先越多 ℓ 越負，約束越寬。
+- 截圖印出的式子正負號與圖、內文相反；程式依 Fig. 2 與「後車負責」的語意實作。
+
+在 `main.py` 開頭設定：
+
+```python
+RESPONSIBILITY_ENABLED = True
+RESPONSIBILITY_CONFIG = ResponsibilityConfig(collision_radius=0.6, slope=40.0, offset=4.5)
+```
+
+- `offset`（b）決定後車的額外要求 1/(1+e^b)。
+- `-b/a` 是前車開始被放寬的位置：
+  - 論文值 a=5、b=4.5 時，前車要領先約 0.55 m 才完全免責。
+  - main 目前依使用者要求設 a=40，前車領先超過約 0.1 m 就免責，只有完全並排時要負責。
+- 守方的檢查時長沿用 `DEFENSE_CONFIG.collision_horizon`。
+  - main 目前設 0.2 s，避免守方因預測攻方會追上並排而提前讓路。
+  - 代價是碰撞變多，見實驗紀錄。
+- 類別預設仍是 a=5。
+
+- `RESPONSIBILITY_ENABLED=False`：攻方恢復矩形重疊剔除，守方恢復依 `collision_check_enabled`。
+- 啟用時：
+  - 攻方以責任約束取代矩形剔除，全部不可行時仍選最晚違反的候選。
+  - 守方對所有其他車做等 d、等速的幾何預測（`collision_horizon`、`prediction_step`），全部不可行時沿用前一路徑。
+- 類別預設 `responsibility=None`，直接建立策略時維持原行為。
+- r_col=0.6 m 等於碰撞框長。圓形與矩形不一致，斜向角落仍可能重疊；r_col≥0.72 m 才保證不重疊，但會讓同側並排不可行。
+- r_col 與 b 未調參；a 與守方檢查時長依使用者描述的行為設定，只在單一場景量測過。
+
+`ResponsibilityConfig(leader_soft=True)` 會改為「後車硬限制、前車成本懲罰」：
+- 角色依決策當下的 Δs₀ 判定，整段預測不變。
+- 當下在後或完全並排（Δs₀ ≥ 0）：仍是上式的硬約束。
+- 當下在前（Δs₀ < 0）：不剔除，成本加上 `leader_penalty_weight × mean_k max(0, r_col − ‖Δc_k‖)²`。
+  - `relative_overtake` 加入總成本，候選圖顯示 `leader`。
+  - `defend` 併入 J_race。
+- 預設場景量測中碰撞增加，沒有改善（見[實驗紀錄](reports/experiments/2026-11-23_responsibility_leader_penalty/README.md)）。
+
+`ResponsibilityConfig(overlap_rule=True)`（main 目前使用）改為依「縱向重疊」分配責任，與 `leader_soft` 只能擇一：
+- 依決策當下兩車碰撞框中心的縱向差 Δs₀ᶜ，與碰撞框長的平均 L̄ 判定。
+- |Δs₀ᶜ| < L̄（重疊中）：兩車都負責。
+- 對方完全在前：自車負責。
+- 自車完全在前（已脫離重疊）：自車不負責，只計 `leader_penalty_weight` 懲罰（main 為 0，即不限制）。
+- 負責時要求預測中心距離 ≥ r_col，違反就剔除，不套 ℓ，所以 `slope`、`offset` 在此模式不使用。
+- 預測中才會發生的並排不會讓前車提前負責。量測見[實驗紀錄](reports/experiments/2026-11-23_overlap_responsibility/README.md)。
+
+候選圖中被剔除的候選顯示 `responsibility violation with <車輛> @ <秒>`。
+量測與限制見 [實驗紀錄](reports/experiments/2026-11-23_collision_responsibility/README.md)。
 
 ## 預測與限制
 

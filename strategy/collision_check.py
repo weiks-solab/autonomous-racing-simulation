@@ -21,9 +21,12 @@ class PredictedVehicle:
 class PredictedCollision:
     vehicle_id: str
     time_seconds: float
+    kind: str = "overlap"  # overlap：矩形重疊；responsibility：違反避撞責任約束
 
     @property
     def reason(self) -> str:
+        if self.kind == "responsibility":
+            return f"responsibility violation with {self.vehicle_id} @ {self.time_seconds:.2f}s"
         return f"predicted overlap with {self.vehicle_id} @ {self.time_seconds:.2f}s"
 
 
@@ -43,8 +46,8 @@ def first_predicted_collision(
                 or item.times[-1] != prediction.times[-1]):
             raise ValueError("collision predictions must cover the same time interval")
     times = tuple(sorted({time for item in all_predictions for time in item.times}))
-    ego_states = _states_at_times(prediction, times)
-    other_states = [_states_at_times(other.prediction, times) for other in ordered]
+    ego_states = states_at_times(prediction, times)
+    other_states = [states_at_times(other.prediction, times) for other in ordered]
     for index, time in enumerate(times):
         for other, states in zip(ordered, other_states):
             if rectangles_overlap(ego_states[index], geometry, states[index], other.geometry):
@@ -52,7 +55,7 @@ def first_predicted_collision(
     return None
 
 
-def _states_at_times(
+def states_at_times(
     prediction: BicyclePrediction, times: tuple[float, ...],
 ) -> tuple[VehicleState, ...]:
     """步長相同時直接沿用狀態；不同時插值，yaw 沿最短角度銜接。"""

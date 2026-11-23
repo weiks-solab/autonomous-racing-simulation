@@ -1,0 +1,53 @@
+{
+  "track": "rounded_rectangle",
+  "simulation_seconds": 21.0,
+  "assignments": {
+    "vehicle-1": "relative_overtake",
+    "vehicle-2": "defend"
+  },
+  "wall_seconds_including_plot": 34.79109279997647,
+  "final_s_from_start": {
+    "vehicle-1": 229.3013248118954,
+    "vehicle-2": 194.2526369548984
+  },
+  "mean_abs_d": {
+    "vehicle-1": 0.523099720474344,
+    "vehicle-2": 0.5179700441435783
+  },
+  "collision_steps": 30,
+  "first_collision_time": 3.94,
+  "collision_pairs": [
+    [
+      "vehicle-1",
+      "vehicle-2"
+    ]
+  ],
+  "strategies": {
+    "relative_overtake": {
+      "evaluations": 350,
+      "mean_ms": 85.01072371494956,
+      "max_ms": 229.3733999831602,
+      "total_s": 29.753753300232347,
+      "mode_counts": {
+        "attack": 339,
+        "no_feasible_path": 11
+      },
+      "speed_limited_evaluations": 3,
+      "target_d_switches": 8,
+      "max_candidates": 28
+    },
+    "defend": {
+      "evaluations": 100,
+      "mean_ms": 45.92083900002763,
+      "max_ms": 62.15770001290366,
+      "total_s": 4.592083900002763,
+      "mode_counts": {
+        "defend": 20,
+        "return": 80
+      },
+      "speed_limited_evaluations": 0,
+      "target_d_switches": 6,
+      "max_candidates": 7
+    }
+  }
+}

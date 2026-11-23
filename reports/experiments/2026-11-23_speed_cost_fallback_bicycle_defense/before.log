@@ -1,0 +1,60 @@
+C:\Users\kevin\OneDrive\Desktop\project\racing_sim\sim\visualizer.py:550: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  plt.show()
+vehicle-1 strategy: relative_overtake
+Strategy transitions: 0.00s ATTACK -> 6.24s NO_FEASIBLE_PATH -> 7.32s ATTACK
+Lateral targets: 0.00s +0.00m -> 1.50s +0.60m -> 2.52s +0.45m -> 2.82s +0.30m -> 2.88s +0.15m -> 2.94s +0.00m -> 3.00s -0.15m -> 3.12s -0.30m -> 3.24s -0.45m -> 3.30s -0.60m -> 3.84s +0.60m -> 4.98s +0.15m -> 5.04s +0.00m -> 5.22s -0.15m -> 5.34s -0.30m -> 5.46s -0.45m -> 5.70s -0.60m -> 6.18s +0.60m -> 9.48s +0.45m -> 9.84s +0.60m -> 12.00s +0.45m -> 12.30s +0.60m -> 14.52s +0.45m -> 14.82s +0.60m -> 17.04s +0.45m -> 17.34s +0.60m -> 19.56s +0.45m -> 19.86s +0.60m
+Final strategy reason: lowest predicted relative gap
+Final vehicle-1 d: +0.560 m
+vehicle-2 strategy: defend
+Strategy transitions: 0.00s DEFEND -> 4.40s RETURN -> 5.66s DEFEND -> 6.70s RETURN
+Lateral targets: 0.00s +0.00m -> 1.70s +0.30m -> 1.90s +0.60m -> 2.74s +0.30m -> 3.16s +0.00m -> 3.38s -0.30m -> 3.58s -0.60m -> 4.00s -0.30m -> 4.20s +0.60m -> 4.40s +0.30m -> 4.60s +0.60m -> 5.66s -0.30m -> 5.86s -0.60m -> 6.28s -0.30m -> 6.48s +0.60m
+Final strategy reason: lowest cost
+Final vehicle-2 d: +0.576 m
+Detected collision pairs: vehicle-1/vehicle-2
+{
+  "track": "rounded_rectangle",
+  "simulation_seconds": 21.0,
+  "assignments": {
+    "vehicle-1": "relative_overtake",
+    "vehicle-2": "defend"
+  },
+  "wall_seconds_including_plot": 27.152452699956484,
+  "final_s_from_start": {
+    "vehicle-1": 222.37770549264053,
+    "vehicle-2": 192.80216388051377
+  },
+  "collision_steps": 36,
+  "first_collision_time": 6.5600000000000005,
+  "collision_pairs": [
+    [
+      "vehicle-1",
+      "vehicle-2"
+    ]
+  ],
+  "strategies": {
+    "relative_overtake": {
+      "evaluations": 350,
+      "mean_ms": 76.1482697156524,
+      "max_ms": 105.6465000147,
+      "total_s": 26.65189440047834,
+      "mode_counts": {
+        "attack": 332,
+        "no_feasible_path": 18
+      },
+      "speed_limited_evaluations": 30,
+      "max_candidates": 12
+    },
+    "defend": {
+      "evaluations": 100,
+      "mean_ms": 0.825631000334397,
+      "max_ms": 1.4323000214062631,
+      "total_s": 0.0825631000334397,
+      "mode_counts": {
+        "defend": 26,
+        "return": 74
+      },
+      "speed_limited_evaluations": 0,
+      "max_candidates": 5
+    }
+  }
+}

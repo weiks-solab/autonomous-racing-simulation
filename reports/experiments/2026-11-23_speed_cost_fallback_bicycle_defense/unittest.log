@@ -1,0 +1,21 @@
+...........................................F..............................................................................................................................................................................................F.............................................................................................................................
+======================================================================
+FAIL: test_passive_vehicle_is_unchanged_and_defender_actually_moves (tests.test_defending_integration.DefendingIntegrationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\kevin\OneDrive\Desktop\project\racing_sim\tests\test_defending_integration.py", line 83, in test_passive_vehicle_is_unchanged_and_defender_actually_moves
+    self.assertIn("Detected collision pairs: none", self.passive_output)
+AssertionError: 'Detected collision pairs: none' not found in 'vehicle-1 strategy: overtake\nStrategy transitions: 0.00s FOLLOW -> 2.06s PREPARE_OVERTAKE -> 2.08s OVERTAKE -> 6.26s RETURN -> 7.06s FOLLOW -> 17.08s PREPARE_OVERTAKE -> 19.58s FOLLOW\nLateral targets: 0.00s +0.00m -> 2.08s +0.60m -> 6.26s +0.00m\nFinal strategy reason: no slower vehicle in detection range\nPass completed: yes\nReturn completed: yes\nFinal vehicle-1 d: +0.000 m\nvehicle-2 strategy: centerline\nStrategy transitions: 0.00s CENTERLINE\nFinal strategy reason: following shared centerline\nFinal vehicle-2 d: -0.044 m\nvehicle-3 strategy: centerline\nStrategy transitions: 0.00s CENTERLINE\nFinal strategy reason: following shared centerline\nFinal vehicle-3 d: -0.003 m\nDetected collision pairs: vehicle-1/vehicle-2, vehicle-1/vehicle-3\n'
+
+======================================================================
+FAIL: test_relative_cost_stays_active_after_the_actual_overtake (tests.test_relative_overtaking_integration.RelativeOvertakingIntegrationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\kevin\OneDrive\Desktop\project\racing_sim\tests\test_relative_overtaking_integration.py", line 91, in test_relative_cost_stays_active_after_the_actual_overtake
+    self.assertLess(gap, -main.RELATIVE_OVERTAKING_CONFIG.detection_range)
+AssertionError: 1.8858516627425068 not less than -6.0
+
+----------------------------------------------------------------------
+Ran 360 tests in 45.325s
+
+FAILED (failures=2)

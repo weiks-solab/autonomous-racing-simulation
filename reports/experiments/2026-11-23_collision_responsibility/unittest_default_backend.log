@@ -1,0 +1,53 @@
+..............................................................................................................................................................................................................................................F...........................................................................................................................................F....
+======================================================================
+FAIL: test_no_defense_for_ahead_alongside_far_or_unspecified_vehicle (tests.test_defending_strategy.DefendingStrategyTests) (others=(VehicleObservation(vehicle_id='ego', state=VehicleState(x=19.95, y=0.6, yaw=0.0, velocity=5.0), track_position=TrackPosition(s=19.950000000000003, d=0.6, centerline_index=0), geometry=VehicleGeometry(length=0.55, width=0.3, rear_axle_to_center=0.12, collision=None), maneuver=None),))
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\kevin\OneDrive\Desktop\project\racing_sim\tests\test_defending_strategy.py", line 115, in test_no_defense_for_ahead_alongside_far_or_unspecified_vehicle
+    self.assertIs(decision.mode, DefenseMode.CRUISE)
+AssertionError: <DefenseMode.DEFEND: 'defend'> is not <DefenseMode.CRUISE: 'cruise'>
+
+======================================================================
+FAIL: test_no_defense_for_ahead_alongside_far_or_unspecified_vehicle (tests.test_defending_strategy.DefendingStrategyTests) (others=(VehicleObservation(vehicle_id='ego', state=VehicleState(x=19.0, y=0.6, yaw=0.0, velocity=5.0), track_position=TrackPosition(s=19.0, d=0.6, centerline_index=0), geometry=VehicleGeometry(length=0.55, width=0.3, rear_axle_to_center=0.12, collision=None), maneuver=None),))
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\kevin\OneDrive\Desktop\project\racing_sim\tests\test_defending_strategy.py", line 115, in test_no_defense_for_ahead_alongside_far_or_unspecified_vehicle
+    self.assertIs(decision.mode, DefenseMode.CRUISE)
+AssertionError: <DefenseMode.DEFEND: 'defend'> is not <DefenseMode.CRUISE: 'cruise'>
+
+======================================================================
+FAIL: test_relative_cost_stays_active_after_the_actual_overtake (tests.test_relative_overtaking_integration.RelativeOvertakingIntegrationTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\kevin\OneDrive\Desktop\project\racing_sim\tests\test_relative_overtaking_integration.py", line 99, in test_relative_cost_stays_active_after_the_actual_overtake
+    self.assertEqual(selected.cost_terms[0][1], min(costs))
+AssertionError: -8.966791256708774 != -8.98568912333575
+
+======================================================================
+FAIL: test_blit_processes_events_without_pause_or_repeated_show (tests.test_visualizer.SimulationVisualizerTests) (interval=0.001)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\kevin\OneDrive\Desktop\project\racing_sim\tests\test_visualizer.py", line 110, in test_blit_processes_events_without_pause_or_repeated_show
+    self.assertEqual(draw.call_count, 1)
+AssertionError: 4 != 1
+
+======================================================================
+FAIL: test_blit_processes_events_without_pause_or_repeated_show (tests.test_visualizer.SimulationVisualizerTests) (interval=0.0)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\kevin\OneDrive\Desktop\project\racing_sim\tests\test_visualizer.py", line 110, in test_blit_processes_events_without_pause_or_repeated_show
+    self.assertEqual(draw.call_count, 1)
+AssertionError: 4 != 1
+
+======================================================================
+FAIL: test_realtime_reuses_background_and_rebuilds_after_view_changes (tests.test_visualizer.SimulationVisualizerTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\kevin\OneDrive\Desktop\project\racing_sim\tests\test_visualizer.py", line 53, in test_realtime_reuses_background_and_rebuilds_after_view_changes
+    self.assertIs(visualizer._background, cached)
+AssertionError: <matplotlib.backends._backend_agg.BufferRegion object at 0x000002B8118FA3F0> is not <matplotlib.backends._backend_agg.BufferRegion object at 0x000002B8118C96B0>
+
+----------------------------------------------------------------------
+Ran 385 tests in 43.418s
+
+FAILED (failures=6)

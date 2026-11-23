@@ -1,0 +1,66 @@
+C:\Users\kevin\OneDrive\Desktop\project\racing_sim\sim\visualizer.py:550: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  plt.show()
+vehicle-1 strategy: relative_overtake
+Strategy transitions: 0.00s ATTACK -> 3.90s NO_FEASIBLE_PATH -> 4.56s ATTACK
+Lateral targets: 0.00s +0.00m -> 1.50s +0.60m -> 2.58s +0.40m -> 2.88s +0.20m -> 2.94s +0.00m -> 3.06s -0.20m -> 3.30s -0.40m -> 3.42s -0.60m -> 3.48s +0.60m
+Final strategy reason: lowest predicted relative gap
+Final vehicle-1 d: +0.600 m
+vehicle-2 strategy: defend
+Strategy transitions: 0.00s DEFEND -> 4.20s RETURN
+Lateral targets: 0.00s +0.00m -> 1.70s +0.40m -> 1.90s +0.60m -> 2.74s +0.40m -> 3.16s +0.20m -> 3.38s -0.20m -> 3.78s +0.60m
+Final strategy reason: lowest cost
+Final vehicle-2 d: +0.555 m
+Detected collision pairs: vehicle-1/vehicle-2
+{
+  "track": "rounded_rectangle",
+  "simulation_seconds": 21.0,
+  "assignments": {
+    "vehicle-1": "relative_overtake",
+    "vehicle-2": "defend"
+  },
+  "wall_seconds_including_plot": 34.79109279997647,
+  "final_s_from_start": {
+    "vehicle-1": 229.3013248118954,
+    "vehicle-2": 194.2526369548984
+  },
+  "mean_abs_d": {
+    "vehicle-1": 0.523099720474344,
+    "vehicle-2": 0.5179700441435783
+  },
+  "collision_steps": 30,
+  "first_collision_time": 3.94,
+  "collision_pairs": [
+    [
+      "vehicle-1",
+      "vehicle-2"
+    ]
+  ],
+  "strategies": {
+    "relative_overtake": {
+      "evaluations": 350,
+      "mean_ms": 85.01072371494956,
+      "max_ms": 229.3733999831602,
+      "total_s": 29.753753300232347,
+      "mode_counts": {
+        "attack": 339,
+        "no_feasible_path": 11
+      },
+      "speed_limited_evaluations": 3,
+      "target_d_switches": 8,
+      "max_candidates": 28
+    },
+    "defend": {
+      "evaluations": 100,
+      "mean_ms": 45.92083900002763,
+      "max_ms": 62.15770001290366,
+      "total_s": 4.592083900002763,
+      "mode_counts": {
+        "defend": 20,
+        "return": 80
+      },
+      "speed_limited_evaluations": 0,
+      "target_d_switches": 6,
+      "max_candidates": 7
+    }
+  }
+}

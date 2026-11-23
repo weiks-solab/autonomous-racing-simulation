@@ -28,8 +28,10 @@ class RelativeOvertakingIntegrationTests(unittest.TestCase):
         return visualizer.return_value.update_vehicles.call_args.kwargs, output.getvalue()
 
     def test_new_strategy_coexists_with_progress_and_original_cost_attack(self) -> None:
-        # 此案例檢查原本九條橫向候選，不依賴使用者在 main 啟用的速度選項。
-        config = replace(main.RELATIVE_OVERTAKING_CONFIG, speed_candidates_enabled=False)
+        # 此案例檢查原本九條橫向候選，不依賴使用者在 main 啟用的速度與安全成本選項。
+        config = replace(main.RELATIVE_OVERTAKING_CONFIG, speed_candidates_enabled=False,
+                         safety_weight=0.0, deviation_weight=0.0,
+                         candidate_offsets=(-0.6, -0.45, -0.3, -0.15, 0.0, 0.15, 0.3, 0.45, 0.6))
         with patch("main.RELATIVE_OVERTAKING_CONFIG", config):
             frame, output = self.run_scene({
                 "rear": StrategyAssignment("relative_overtake"),
@@ -68,8 +70,11 @@ class RelativeOvertakingIntegrationTests(unittest.TestCase):
         frame, output = self.run_scene({"rear": StrategyAssignment("relative_overtake")}, overlap=True)
         self.assertIn("NO_FEASIBLE_PATH", frame["strategy_labels"]["rear"])
         self.assertIn("Detected collision pairs: front/rear", output)
-        self.assertTrue(all(not item.selected and not item.feasible
-                            for item in frame["candidate_snapshots"]["rear"].candidates))
+        candidates = frame["candidate_snapshots"]["rear"].candidates
+        # 全部不可行時仍標出採用的最晚碰撞候選。
+        self.assertTrue(all(not item.feasible for item in candidates))
+        self.assertEqual(sum(item.selected for item in candidates), 1)
+        self.assertIn("latest predicted collision", frame["strategy_labels"]["rear"])
         self.assertEqual(len(frame["trajectories"]["rear"]), 8)
 
     def test_relative_cost_stays_active_after_the_actual_overtake(self) -> None:

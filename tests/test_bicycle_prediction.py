@@ -8,7 +8,7 @@ import numpy as np
 
 from core.pure_pursuit import PurePursuitConfig, PurePursuitController
 from core.track import Track
-from core.track_geometry import track_length, track_to_world
+from core.track_geometry import track_length, track_to_world, world_to_track
 from core.vehicle_geometry import VehicleGeometry
 from core.vehicle_model import KinematicBicycleModel, VehicleModelConfig
 from core.vehicle_state import VehicleState
@@ -110,6 +110,17 @@ class BicyclePredictionTests(unittest.TestCase):
         next_lap = observation(track, "ego", 1.5, 0.6, 3.0)
         reference = generate_offset_track(track, next_lap.track_position, completed, self.config.path)
         np.testing.assert_allclose(reference.centerline[:, 1], 0.6, atol=1e-10)
+
+    def test_offsets_record_track_d_at_every_predicted_state(self) -> None:
+        vehicle = observation(self.track, "ego", 20.0, -0.2, 4.0)
+        result = predict_bicycle_trajectory(
+            vehicle, self.track, LateralManeuver(20.0, -0.2, 0.5, 3.0), self.config, 1.0,
+        )
+        self.assertEqual(len(result.offsets), len(result.states))
+        expected = [world_to_track(state, self.track).d for state in result.states]
+        np.testing.assert_allclose(result.offsets, expected, atol=1e-12)
+        self.assertAlmostEqual(result.offsets[0], -0.2)
+        self.assertGreater(result.offsets[-1], 0.2)
 
     def test_invalid_horizon_track_and_initial_speed_are_rejected(self) -> None:
         vehicle = observation(self.track, "ego", 20.0, 0.0, 3.0)

@@ -1,5 +1,51 @@
 # 變更紀錄
 
+## 2026-11-23
+
+- 依使用者要求，`relative_overtake` 啟用速度候選時，改為每條橫向候選都搭配巡航與各低速要求（最多 9×4 條）；成本可加安全距離項 `safety_weight`／`safety_distance`。類別預設 0 維持舊成本，main 設為 10／0.5 m。
+- 全部候選不可行時，不再沿用舊決策，改選最晚碰撞的候選；同時間選低速，再比進度。
+- `defend` 取得 `BicyclePredictionConfig` 時，自車候選改用 Pure Pursuit＋自行車模型 rollout；main 與資料產生入口都會傳入。對齊成本、後車預測與碰撞條件不變。`BicyclePrediction` 新增 `offsets`。
+- 預設場景量測：碰撞步數 36→2，但進攻車未完成超車；進攻每次決策 76→255 ms，防守 0.8→31 ms。360 項測試有 2 項失敗，與 11/18 紀錄同名。詳見 `reports/experiments/2026-11-23_speed_cost_fallback_bicycle_defense/`，未 commit／push。
+- 量測包含使用者先前已改、未提交的 `LOOKAHEAD_DISTANCE=1.0`。
+
+### 偏離中心線成本
+
+- 依使用者要求，`relative_overtake` 成本加入 `deviation_weight × mean(d_k²)`，`defend` 的 J_race 加入 `deviation_weight × Σd_k²`；類別預設 0，main 兩者設 1.0，尚未調參。
+- 修正候選標籤：移除上一輪多放的 `total` 成本項，避免 J 重複加總。
+- 預設場景（含使用者後續的碰撞框 0.4 m 寬、7 個候選偏移、防守 `gap < 0` 等未提交參數）：仍完成超車；平均 |d| 攻／守由 0.52／0.52 降為 0.41／0.13 m，碰撞步數 30→20，目標切換 8／6→45／29，耗時不變。
+- 365 項測試有 3 項失敗：防守並排判定測試的 2 個子案例來自使用者的 `gap < 0` 修改，另 1 項是既有失敗。詳見 `reports/experiments/2026-11-23_centerline_deviation_cost/`，未 commit／push。
+
+### 避撞責任約束
+
+- 依使用者提供的論文截圖與選定形式（圓形距離、硬約束），新增 `strategy/responsibility.py`：`g=‖Δc‖²−r_col²−ℓ(Δs)≥0`，ℓ 依 Δs（對方 s − 自車 s）以 sigmoid 分配責任，後車負責、並排兩車都負責、領先者放寬。正負號依論文 Fig. 2 與內文，截圖印出的式子相反。
+- `relative_overtake`、`defend` 新增 `responsibility` 設定（類別預設 None，維持原行為）：攻方取代矩形重疊剔除；守方改為逐對檢查所有其他車，取代 `collision_check_enabled`。`RearPrediction` 新增 `progress`，`PredictedCollision` 新增 `kind`。
+- main 新增 `RESPONSIBILITY_ENABLED=True` 與 `RESPONSIBILITY_CONFIG(r_col=0.6, a=5, b=4.5)`，未調參；`generate_training_data.py` 也會套用。
+- 預設場景單次量測：關閉時與修改前完全相同；開啟時 SAT 碰撞步數 78→0、攻方 no_feasible 28→0，攻方首次領先 4.34→3.62 s；守方每次決策 44→70 ms。
+- 385 項測試（Agg）有 3 項失敗，與先前紀錄同名；新增 20 項全部通過。不設 Agg 時 `test_visualizer` 另有 3 項與後端有關的失敗。詳見 `reports/experiments/2026-11-23_collision_responsibility/`，未 commit／push。
+- 依使用者要求只調參數，讓守方不主動避讓：main 的 `RESPONSIBILITY_CONFIG.slope` 5→40（前車只在完全並排時負責）、`DEFENSE_CONFIG.collision_horizon` 1.5→0.2 s。預設場景攻方仍超車，但 SAT 碰撞步數 0→22；測試結果不變。程式邏輯未改。
+- 使用者之後自行把守方 `decision_period`、`collision_horizon` 都改為 0.1 s。
+- 依使用者提議新增 `ResponsibilityConfig.leader_soft`，與 `relative_overtake`／`defend` 的 `leader_penalty_weight`：決策當下在後或並排維持硬約束；在前改為 `w × mean max(0, r_col − ‖Δc‖)²` 成本懲罰。類別預設關閉。
+- 預設場景量測：
+  - 基準：碰撞 37 步，7.12 s 超車。
+  - w=0：碰撞 47 步，超車時間相同。
+  - w>0：碰撞 53～179 步，超車延後或沒有超車。
+  - 沒有改善，所以 main 維持 `leader_soft=False`、權重 0，行為與修改前相同。
+- 394 項測試有 3 項失敗，與先前同名。詳見 `reports/experiments/2026-11-23_responsibility_leader_penalty/`，未 commit／push。
+
+### 重疊責任規則
+
+- 使用者之後把 main 改為 `leader_soft=True`（權重 0）。
+- 依使用者要求新增 `ResponsibilityConfig.overlap_rule`，與 `leader_soft` 只能擇一：
+  - 依決策當下狀態，縱向重疊中（中心 |Δs| < 碰撞框長平均）兩車都負責。
+  - 脫離重疊後只剩後車負責。
+  - 負責者要保持 ‖Δc‖ ≥ r_col（不套 ℓ），不負責者只計 leader 懲罰。
+- main 改為 `leader_soft=False`、`overlap_rule=True`，其餘使用者設定不變；修正了與實際值不符的註解。
+- 預設場景量測：
+  - 基準（leader_soft、0.1 s）：碰撞 51 步，7.12 s 超車。
+  - 重疊規則、守方 0.1 s（目前 main）：碰撞 73 步，10.40 s 超車。
+  - 重疊規則、守方 1.0 s：碰撞 26 步，5.52 s 超車。
+- 401 項測試有 3 項失敗，與先前同名。詳見 `reports/experiments/2026-11-23_overlap_responsibility/`，未 commit／push。
+
 ## 2026-11-18
 
 - 本次提交彙整八輸入 GP、額外低速候選、碰撞顯示與參數紀錄；保留 352 項測試中兩個場景失敗的日誌。原始資料、模型與環境不納入 Git。

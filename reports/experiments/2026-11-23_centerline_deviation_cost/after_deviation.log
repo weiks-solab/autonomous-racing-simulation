@@ -1,0 +1,67 @@
+C:\Users\kevin\OneDrive\Desktop\project\racing_sim\sim\visualizer.py:550: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  plt.show()
+vehicle-1 strategy: relative_overtake
+Strategy transitions: 0.00s ATTACK -> 3.72s NO_FEASIBLE_PATH -> 4.20s ATTACK
+Lateral targets: 0.00s +0.00m -> 1.50s +0.20m -> 1.62s +0.60m -> 2.58s +0.40m -> 2.88s +0.20m -> 2.94s +0.00m -> 3.06s -0.20m -> 3.30s -0.40m -> 3.36s +0.60m -> 4.20s +0.40m -> 4.32s +0.60m -> 6.06s +0.40m -> 6.12s +0.20m -> 6.24s +0.00m -> 6.72s +0.20m -> 6.78s +0.40m -> 6.84s +0.60m -> 8.58s +0.40m -> 8.64s +0.20m -> 8.76s +0.00m -> 9.24s +0.20m -> 9.36s +0.60m -> 11.16s +0.40m -> 11.22s +0.20m -> 11.28s +0.00m -> 11.76s +0.20m -> 11.88s +0.40m -> 11.94s +0.60m -> 13.68s +0.40m -> 13.74s +0.20m -> 13.86s +0.00m -> 14.34s +0.20m -> 14.40s +0.40m -> 14.46s +0.60m -> 16.20s +0.40m -> 16.26s +0.20m -> 16.38s +0.00m -> 16.86s +0.20m -> 16.92s +0.40m -> 17.04s +0.60m -> 18.78s +0.40m -> 18.84s +0.20m -> 18.90s +0.00m -> 19.38s +0.20m -> 19.50s +0.40m -> 19.56s +0.60m
+Final strategy reason: lowest predicted relative gap
+Final vehicle-1 d: +0.604 m
+vehicle-2 strategy: defend
+Strategy transitions: 0.00s DEFEND -> 4.00s RETURN -> 4.40s CRUISE -> 4.82s RETURN -> 6.90s CRUISE -> 7.94s RETURN -> 8.98s CRUISE -> 9.20s RETURN -> 10.26s CRUISE -> 11.30s RETURN -> 13.42s CRUISE -> 14.46s RETURN -> 16.58s CRUISE -> 17.68s RETURN -> 19.84s CRUISE -> 20.90s RETURN
+Lateral targets: 0.00s +0.00m -> 1.70s +0.20m -> 1.90s +0.60m -> 2.74s +0.40m -> 3.16s +0.00m -> 3.38s -0.20m -> 3.58s +0.40m -> 3.78s +0.60m -> 4.00s +0.00m -> 4.82s +0.20m -> 5.66s +0.00m -> 5.86s +0.20m -> 6.70s +0.00m -> 7.94s +0.20m -> 8.78s +0.00m -> 9.20s +0.20m -> 10.04s +0.00m -> 11.30s +0.20m -> 12.14s +0.00m -> 12.36s +0.20m -> 13.20s +0.00m -> 14.46s +0.20m -> 15.30s +0.00m -> 15.52s +0.20m -> 16.36s +0.00m -> 17.68s +0.20m -> 18.56s +0.00m -> 18.76s +0.20m -> 19.62s +0.00m -> 20.90s +0.20m
+Final strategy reason: lowest cost
+Final vehicle-2 d: +0.057 m
+Detected collision pairs: vehicle-1/vehicle-2
+{
+  "track": "rounded_rectangle",
+  "simulation_seconds": 21.0,
+  "assignments": {
+    "vehicle-1": "relative_overtake",
+    "vehicle-2": "defend"
+  },
+  "wall_seconds_including_plot": 34.17638680001255,
+  "final_s_from_start": {
+    "vehicle-1": 228.2912657877495,
+    "vehicle-2": 186.2899782282475
+  },
+  "mean_abs_d": {
+    "vehicle-1": 0.4089038497824855,
+    "vehicle-2": 0.12540249775736628
+  },
+  "collision_steps": 20,
+  "first_collision_time": 3.7600000000000002,
+  "collision_pairs": [
+    [
+      "vehicle-1",
+      "vehicle-2"
+    ]
+  ],
+  "strategies": {
+    "relative_overtake": {
+      "evaluations": 350,
+      "mean_ms": 83.54121971542814,
+      "max_ms": 223.49230002146214,
+      "total_s": 29.23942690039985,
+      "mode_counts": {
+        "attack": 342,
+        "no_feasible_path": 8
+      },
+      "speed_limited_evaluations": 2,
+      "target_d_switches": 45,
+      "max_candidates": 28
+    },
+    "defend": {
+      "evaluations": 100,
+      "mean_ms": 45.12421200226527,
+      "max_ms": 50.33429997274652,
+      "total_s": 4.512421200226527,
+      "mode_counts": {
+        "defend": 19,
+        "return": 53,
+        "cruise": 28
+      },
+      "speed_limited_evaluations": 0,
+      "target_d_switches": 29,
+      "max_candidates": 7
+    }
+  }
+}

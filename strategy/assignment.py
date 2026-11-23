@@ -6,6 +6,7 @@ from typing import Callable, Mapping, Sequence
 
 from core.track import Track
 from strategy.base import CandidatePath, CandidateSnapshot, StrategyDecision, VehicleStrategy
+from strategy.bicycle_prediction import BicyclePredictionConfig
 from strategy.centerline import CenterlineStrategy
 from strategy.defending import CostBasedDefenseStrategy, DefenseConfig, DefenseMode
 from strategy.observations import VehicleObservation
@@ -90,8 +91,13 @@ class OvertakingStrategy:
 class DefendingStrategy:
     """把既有防守策略的輸出轉成同一格式。"""
 
-    def __init__(self, config: DefenseConfig, target_vehicle_id: str) -> None:
-        self.algorithm = CostBasedDefenseStrategy(config, target_vehicle_id)
+    def __init__(
+        self,
+        config: DefenseConfig,
+        target_vehicle_id: str,
+        prediction_config: BicyclePredictionConfig | None = None,
+    ) -> None:
+        self.algorithm = CostBasedDefenseStrategy(config, target_vehicle_id, prediction_config)
         self.candidate_snapshot: CandidateSnapshot | None = None
 
     def update(
@@ -140,6 +146,7 @@ def create_strategy(
     assignment: StrategyAssignment,
     overtaking_config: OvertakingConfig,
     defense_config: DefenseConfig,
+    prediction_config: BicyclePredictionConfig | None = None,
 ) -> VehicleStrategy:
     """每次建立新物件，讓各車的策略狀態互相獨立。"""
     if assignment.name == "centerline":
@@ -147,7 +154,7 @@ def create_strategy(
     if assignment.name == "overtake":
         return OvertakingStrategy(overtaking_config)
     if assignment.name == "defend" and assignment.target_vehicle_id is not None:
-        return DefendingStrategy(defense_config, assignment.target_vehicle_id)
+        return DefendingStrategy(defense_config, assignment.target_vehicle_id, prediction_config)
     raise ValueError("unknown strategy assignment")
 
 
@@ -162,7 +169,9 @@ class StrategyManager:
         defense_config: DefenseConfig,
         defense_enabled: bool = True,
         strategy_factories: Mapping[str, Callable[[str], VehicleStrategy]] | None = None,
+        prediction_configs: Mapping[str, BicyclePredictionConfig] | None = None,
     ) -> None:
+        """prediction_configs 提供時，defend 依自己的 ID 取用並改用 bicycle 預測自車。"""
         if not vehicle_ids or len(set(vehicle_ids)) != len(vehicle_ids):
             raise ValueError("vehicle_ids must be non-empty and unique")
         if set(assignments) - set(vehicle_ids):
@@ -189,6 +198,7 @@ class StrategyManager:
             else:
                 self.strategies[vehicle_id] = create_strategy(
                     assignment, overtaking_config, defense_config,
+                    None if prediction_configs is None else prediction_configs.get(vehicle_id),
                 )
 
     def update(

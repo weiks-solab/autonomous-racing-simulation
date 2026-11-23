@@ -1,8 +1,10 @@
-"""先篩選預測碰撞，再只比較預測終點的對手 s 減自車 s。"""
+"""先篩選預測碰撞，再比較預測終點間距與可選的安全距離成本。"""
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 import math
 from typing import Mapping, Sequence
+
+import numpy as np
 
 from core.pure_pursuit import validate_speed_limit
 from core.track import Track
@@ -11,10 +13,15 @@ from strategy.base import CandidatePath, CandidateSnapshot, GpPredictionSnapshot
 from strategy.bicycle_prediction import (
     BicyclePrediction, BicyclePredictionConfig, predict_bicycle_trajectory,
 )
-from strategy.collision_check import PredictedCollision, PredictedVehicle, first_predicted_collision
+from strategy.collision_check import (
+    PredictedCollision, PredictedVehicle, first_predicted_collision, states_at_times,
+)
 from strategy.gp_prediction import GpRoute, predict_gp_trajectory
 from strategy.observations import VehicleObservation
 from strategy.offset_path import LateralManeuver, continue_lateral_maneuver
+from strategy.responsibility import (
+    PairPrediction, ResponsibilityConfig, ResponsibilityResult, evaluate_responsibility,
+)
 
 
 @dataclass(frozen=True)
@@ -30,8 +37,20 @@ class RelativeOvertakingConfig:
     speed_candidates_enabled: bool = False
     speed_candidate_delta: float = 1.0
     extra_speed_candidate_deltas: tuple[float, ...] = ()
+    safety_weight: float = 0.0     # 1/m；0 表示不加安全距離成本
+    safety_distance: float = 0.5   # m；矩形間隙小於此值才開始懲罰
+    deviation_weight: float = 0.0  # 1/m；偏離中心線成本，0 表示不加
+    # None：沿用矩形重疊剔除；設定後改用避撞責任約束剔除候選。
+    responsibility: ResponsibilityConfig | None = None
+    # 1/m；responsibility.leader_soft=True 時，自車在前的懲罰權重；0 表示前車不避讓。
+    leader_penalty_weight: float = 0.0
 
     def __post_init__(self) -> None:
+        if self.responsibility is not None and not isinstance(
+                self.responsibility, ResponsibilityConfig):
+            raise ValueError("responsibility must be a ResponsibilityConfig or None")
+        if not math.isfinite(self.leader_penalty_weight) or self.leader_penalty_weight < 0.0:
+            raise ValueError("leader_penalty_weight must be non-negative and finite")
         positive = (self.detection_range, self.transition_length,
                     self.decision_period, self.prediction_horizon)
         if any(not math.isfinite(value) or value <= 0.0 for value in positive):
@@ -44,6 +63,11 @@ class RelativeOvertakingConfig:
             raise ValueError("speed_candidate_delta must be non-negative and finite")
         if any(not math.isfinite(delta) or delta < 0.0 for delta in self.extra_speed_candidate_deltas):
             raise ValueError("extra speed candidate deltas must be non-negative and finite")
+        if any(not math.isfinite(value) or value < 0.0
+               for value in (self.safety_weight, self.safety_distance, self.deviation_weight)):
+            raise ValueError(
+                "safety_weight, safety_distance and deviation_weight must be non-negative and finite"
+            )
 
 
 @dataclass(frozen=True)
@@ -53,6 +77,9 @@ class RelativeCandidate:
     predicted_gap: float | None
     collision: PredictedCollision | None = None
     speed_limit: float | None = None
+    safety_cost: float = 0.0  # 已乘上 safety_weight
+    deviation_cost: float = 0.0  # 已乘上 deviation_weight
+    leader_cost: float = 0.0  # 已乘上 leader_penalty_weight；自車在前時的避碰懲罰
 
     def __post_init__(self) -> None:
         validate_speed_limit(self.speed_limit)
@@ -62,11 +89,15 @@ class RelativeCandidate:
         return self.collision is None
 
     @property
+    def relative_cost(self) -> float:
+        # 沒有比較對象就沒有相對成本；不另加自車進度項。
+        return 0.0 if self.predicted_gap is None else self.predicted_gap
+
+    @property
     def total_cost(self) -> float:
         if not self.feasible:
             raise ValueError("collision-rejected candidates do not have a cost")
-        # 沒有比較對象就沒有相對成本；不另加自車進度項。
-        return 0.0 if self.predicted_gap is None else self.predicted_gap
+        return self.relative_cost + self.safety_cost + self.deviation_cost + self.leader_cost
 
 
 @dataclass(frozen=True)
@@ -136,31 +167,35 @@ class RelativeOvertakingStrategy:
                              self.last_other_predictions[other.vehicle_id])
             for other in others
         )
+        # 每條橫向路徑都搭配巡航 (None) 與各個低速要求，一起比較成本。
+        speed_limits = (None, *self._speed_limits(target, gap))
         self.last_candidates = tuple(
-            self._evaluate_candidate(vehicle, track, target_d, gap, obstacles)
-            for target_d in self._candidate_targets(vehicle, track)
-        )
-        # 只在目前路徑補速度候選，不展開橫向與速度的全部組合。
-        current = self.decision.maneuver
-        current_target_d = 0.0 if current is None else current.target_d
-        self.last_candidates += tuple(
             self._evaluate_candidate(
-                vehicle, track, current_target_d, gap, obstacles, speed_limit=speed_limit,
+                vehicle, track, target_d, gap, obstacles, others, speed_limit=speed_limit,
             )
-            for speed_limit in self._speed_limits(target, gap)
+            for target_d in self._candidate_targets(vehicle, track)
+            for speed_limit in speed_limits
         )
         feasible = [candidate for candidate in self.last_candidates if candidate.feasible]
-        # 同分優先保留原目標；沒有比較對象時也不偷偷加入自車進度項。
+        # 同分優先保留原目標，再保留原速度要求。
         best = min(feasible, key=lambda candidate: (
-            candidate.total_cost, candidate.maneuver.target_d != self.decision.target_d,
-        )) if feasible else None
+            candidate.total_cost,
+            candidate.maneuver.target_d != self.decision.target_d,
+            candidate.speed_limit != self.decision.speed_limit,
+        )) if feasible else self._latest_collision(self.last_candidates)
         snapshot = self._snapshot(vehicle, time_seconds, best)
         self.last_evaluation_time = time_seconds
-        if best is None:
-            self.decision = replace(
-                self.decision, mode="no_feasible_path",
-                reason="all candidates predict overlap; continuing previous path",
-                details=("continuing previous path",), candidate_snapshot=snapshot,
+        if best.collision is not None:
+            reason = f"latest predicted collision @ {best.collision.time_seconds:.2f}s"
+            self.decision = StrategyDecision(
+                mode="no_feasible_path",
+                target_d=best.maneuver.target_d,
+                target_vehicle_id=None if target is None else target.vehicle_id,
+                maneuver=best.maneuver,
+                speed_limit=best.speed_limit,
+                reason="all candidates predict overlap; " + reason,
+                details=(reason,),
+                candidate_snapshot=snapshot,
             )
             return self.decision
 
@@ -172,8 +207,7 @@ class RelativeOvertakingStrategy:
             speed_limit=best.speed_limit,
             reason="no target vehicle; prefer previous feasible target" if target is None
             else "lowest predicted relative gap",
-            details=("no target vehicle; collision filtering only",) if target is None
-            else (f"gap_T={best.total_cost:+.2f} m", f"J={best.total_cost:.2f}"),
+            details=self._details(target is None, best),
             candidate_snapshot=snapshot,
         )
         return self.decision
@@ -252,9 +286,95 @@ class RelativeOvertakingStrategy:
             if abs(target) <= maximum_d
         ))
 
+    def _latest_collision(
+        self, candidates: Sequence[RelativeCandidate],
+    ) -> RelativeCandidate:
+        """全部不可行時：最晚碰撞優先；同時間選速度要求較低者，再選進度較多者。"""
+        cruise_speed = self.prediction_config.controller.target_speed
+
+        def key(candidate: RelativeCandidate) -> tuple[float, float, float]:
+            if candidate.collision is None:
+                raise ValueError("latest-collision fallback expects rejected candidates only")
+            speed = cruise_speed if candidate.speed_limit is None else min(
+                candidate.speed_limit, cruise_speed,
+            )
+            return (-candidate.collision.time_seconds, speed, -candidate.prediction.progress[-1])
+
+        return min(candidates, key=key)
+
+    def _safety_penalty(
+        self, vehicle: VehicleObservation, prediction: BicyclePrediction,
+        others: Sequence[VehicleObservation], track: Track,
+    ) -> float:
+        """Frenet 近似的矩形間隙：間隙小於 safety_distance 時，依不足量平方懲罰。"""
+        if self.config.safety_weight == 0.0 or not others:
+            return 0.0
+        length = track_length(track)
+        own_times = np.asarray(prediction.times)
+        own_box = vehicle.geometry.collision or vehicle.geometry
+        penalty = 0.0
+        for other in others:
+            other_prediction = self.last_other_predictions[other.vehicle_id]
+            other_times = np.asarray(other_prediction.times)
+            if (len(prediction.offsets) != len(own_times)
+                    or len(other_prediction.offsets) != len(other_times)):
+                raise ValueError("safety cost requires predicted offsets at every time")
+            # 橫向距離＝兩車 d 差；縱向距離見 _relative_progress。
+            delta_s = self._relative_progress(vehicle, other, prediction, length)
+            delta_d = (np.interp(own_times, other_times, other_prediction.offsets)
+                       - np.asarray(prediction.offsets))
+            other_box = other.geometry.collision or other.geometry
+            half_length = (own_box.length + other_box.length) / 2.0
+            half_width = (own_box.width + other_box.width) / 2.0
+            # 任一方向分開即不重疊，因此取兩方向中較大的間隙。
+            clearance = np.maximum(np.abs(delta_s) - half_length, np.abs(delta_d) - half_width)
+            shortage = np.maximum(self.config.safety_distance - clearance, 0.0)
+            penalty += float(np.mean(shortage**2))
+        return self.config.safety_weight * penalty
+
+    def _relative_progress(
+        self, vehicle: VehicleObservation, other: VehicleObservation,
+        prediction: BicyclePrediction, length: float,
+    ) -> np.ndarray:
+        """各預測時間點的 Δs＝起始間距＋對手進度－自車進度；正值表示對手在前。"""
+        other_prediction = self.last_other_predictions[other.vehicle_id]
+        gap0 = signed_longitudinal_gap(vehicle.track_position, other.track_position, length)
+        return (gap0 + np.interp(prediction.times, other_prediction.times, other_prediction.progress)
+                - np.asarray(prediction.progress))
+
+    def _responsibility_result(
+        self, vehicle: VehicleObservation, prediction: BicyclePrediction,
+        others: Sequence[VehicleObservation], track: Track,
+    ) -> ResponsibilityResult:
+        """逐對檢查避撞責任：自車在後時須保持 r_col；leader_soft 時自車在前只計懲罰。"""
+        config = self.config.responsibility
+        if config is None or not others:
+            return ResponsibilityResult(None)
+        length = track_length(track)
+        pairs = tuple(
+            PairPrediction(
+                other.vehicle_id, other.geometry,
+                states_at_times(self.last_other_predictions[other.vehicle_id], prediction.times),
+                self._relative_progress(vehicle, other, prediction, length),
+            )
+            for other in others
+        )
+        return evaluate_responsibility(
+            prediction.times, prediction.states, vehicle.geometry, pairs, config,
+        )
+
+    def _deviation_cost(self, prediction: BicyclePrediction) -> float:
+        """偏離中心線成本：預測各點 d 的平方取平均；t=0 各候選相同，不列入。"""
+        if self.config.deviation_weight == 0.0:
+            return 0.0
+        if len(prediction.offsets) != len(prediction.times):
+            raise ValueError("deviation cost requires predicted offsets at every time")
+        offsets = np.asarray(prediction.offsets[1:])
+        return self.config.deviation_weight * float(np.mean(offsets**2))
+
     def _evaluate_candidate(
         self, vehicle: VehicleObservation, track: Track, target_d: float, gap: float,
-        obstacles: Sequence[PredictedVehicle],
+        obstacles: Sequence[PredictedVehicle], others: Sequence[VehicleObservation] = (),
         speed_limit: float | None = None,
     ) -> RelativeCandidate:
         maneuver = self.decision.maneuver
@@ -271,13 +391,24 @@ class RelativeOvertakingStrategy:
             vehicle, track, maneuver, self.prediction_config, self.config.prediction_horizon,
             speed_limit=speed_limit,
         )
-        collision = first_predicted_collision(prediction, vehicle.geometry, obstacles)
+        # 預設用矩形重疊剔除；設定 responsibility 時改用避撞責任約束。
+        leader_penalty = 0.0
+        if self.config.responsibility is None:
+            collision = first_predicted_collision(prediction, vehicle.geometry, obstacles)
+        else:
+            result = self._responsibility_result(vehicle, prediction, others, track)
+            collision, leader_penalty = result.violation, result.leader_penalty
         if collision is not None:
             return RelativeCandidate(maneuver, prediction, None, collision, speed_limit=speed_limit)
         opponent = self.last_target_prediction
         # 用累積進度算終點間距，跨起終點不跳變；保留負值表示自車領先。
         predicted_gap = None if opponent is None else gap + opponent.progress[-1] - prediction.progress[-1]
-        return RelativeCandidate(maneuver, prediction, predicted_gap, speed_limit=speed_limit)
+        return RelativeCandidate(
+            maneuver, prediction, predicted_gap, speed_limit=speed_limit,
+            safety_cost=self._safety_penalty(vehicle, prediction, others, track),
+            deviation_cost=self._deviation_cost(prediction),
+            leader_cost=self.config.leader_penalty_weight * leader_penalty,
+        )
 
     def _speed_limits(
         self, target: VehicleObservation | None, gap: float,
@@ -294,6 +425,42 @@ class RelativeOvertakingStrategy:
             speed for speed in speeds if speed < cruise_speed
         ))
 
+    def _details(self, no_target: bool, best: RelativeCandidate) -> tuple[str, ...]:
+        extra = ()
+        if self.config.safety_weight > 0.0:
+            extra += (f"safety={best.safety_cost:.2f}",)
+        if self.config.deviation_weight > 0.0:
+            extra += (f"dev={best.deviation_cost:.2f}",)
+        if self._leader_cost_active():
+            extra += (f"leader={best.leader_cost:.2f}",)
+        if no_target:
+            if not extra:
+                return ("no target vehicle; collision filtering only",)
+            return ("no target vehicle; collision filtering and extra costs", *extra)
+        return (f"gap_T={best.relative_cost:+.2f} m", *extra, f"J={best.total_cost:.2f}")
+
+    def _cost_terms(self, candidate: RelativeCandidate) -> tuple[tuple[str, float], ...]:
+        """只列出實際參與比較的成本項；安全項關閉時維持原本的顯示。"""
+        if not candidate.feasible:
+            return ()
+        terms: tuple[tuple[str, float], ...] = ()
+        if candidate.predicted_gap is not None:
+            terms += (("relative_gap", candidate.relative_cost),)
+        if self.config.safety_weight > 0.0:
+            terms += (("safety", candidate.safety_cost),)
+        if self.config.deviation_weight > 0.0:
+            terms += (("deviation", candidate.deviation_cost),)
+        if self._leader_cost_active():
+            terms += (("leader", candidate.leader_cost),)
+        # 不另放 total：候選標籤會把各項加總成 J。
+        return terms
+
+    def _leader_cost_active(self) -> bool:
+        responsibility = self.config.responsibility
+        return (responsibility is not None
+                and (responsibility.leader_soft or responsibility.overlap_rule)
+                and self.config.leader_penalty_weight > 0.0)
+
     def _snapshot(
         self, vehicle: VehicleObservation, time_seconds: float, best: RelativeCandidate | None,
     ) -> CandidateSnapshot:
@@ -309,8 +476,7 @@ class RelativeOvertakingStrategy:
                     maneuver=candidate.maneuver, selected=candidate is best,
                     feasible=candidate.feasible,
                     reason="" if candidate.collision is None else candidate.collision.reason,
-                    cost_terms=(("relative_gap", candidate.total_cost),)
-                    if candidate.feasible and candidate.predicted_gap is not None else (),
+                    cost_terms=self._cost_terms(candidate),
                     predicted_states=candidate.prediction.states,
                     speed_limit=candidate.speed_limit,
                 )

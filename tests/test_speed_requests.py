@@ -291,20 +291,51 @@ class SpeedCandidateIntegrationTests(unittest.TestCase):
         self.assertGreater(actual[1].velocity, decision.speed_limit)
         self.assert_same_states(actual, selected.prediction.states)
 
-    def test_speed_candidates_continue_existing_maneuver_origin(self) -> None:
-        config = replace(self.config, candidate_offsets=(0.0, 0.6), prediction_horizon=0.1,
+    def test_every_lateral_target_gets_every_speed_and_keeps_existing_origin(self) -> None:
+        config = replace(self.config, candidate_offsets=(0.0, 0.45), prediction_horizon=0.1,
                          extra_speed_candidate_deltas=(4.0,))
         strategy = self.strategy(config)
         maneuver = LateralManeuver(19.5, 0.0, 0.45, 3.0)
         strategy.decision = StrategyDecision("attack", target_d=0.45, maneuver=maneuver)
         decision = strategy.update(self.ego, (self.front,), self.track, 0.0)
-        self.assertEqual(len(strategy.last_candidates), 5)
-        slower = [candidate for candidate in strategy.last_candidates if candidate.speed_limit is not None]
-        self.assertEqual(len(slower), 3)
-        self.assertTrue(all(candidate.maneuver is maneuver for candidate in slower))
-        self.assertTrue(all(candidate.prediction.states[0] is self.ego.state for candidate in slower))
-        self.assertTrue(all(item.speed_limit is None for item in strategy.last_candidates[:2]))
-        self.assertEqual(len(decision.candidate_snapshot.candidates), 5)
+        # 2 條橫向 × (巡航, 3, 2, 0 m/s)。
+        self.assertEqual(
+            [(item.maneuver.target_d, item.speed_limit) for item in strategy.last_candidates],
+            [(target, speed) for target in (0.0, 0.45) for speed in (None, 3.0, 2.0, 0.0)],
+        )
+        current = [item for item in strategy.last_candidates if item.maneuver.target_d == 0.45]
+        # 更換速度不重啟原本未完成的橫移。
+        self.assertTrue(all(candidate.maneuver is maneuver for candidate in current))
+        self.assertTrue(all(candidate.prediction.states[0] is self.ego.state
+                            for candidate in strategy.last_candidates))
+        self.assertEqual(len(decision.candidate_snapshot.candidates), 8)
+
+    def test_safety_cost_can_make_a_lower_speed_win(self) -> None:
+        off = self.strategy()
+        self.assertEqual(off.update(self.ego, (self.front,), self.track, 0.0).speed_limit, 3.0)
+        self.assertTrue(all(item.safety_cost == 0.0 for item in off.last_candidates))
+        strategy = self.strategy(replace(self.config, safety_weight=10.0, safety_distance=1.0))
+        decision = strategy.update(self.ego, (self.front,), self.track, 0.0)
+        self.assertEqual(decision.speed_limit, 2.0)
+        feasible = [item for item in strategy.last_candidates if item.feasible]
+        self.assertEqual(min(feasible, key=lambda item: item.total_cost).speed_limit, 2.0)
+        # 直線同 d：間隙＝縱向距離－車長，逐點平方不足量取平均再乘權重。
+        selected = next(item for item in feasible if item.speed_limit == 2.0)
+        front = strategy.last_other_predictions["front"]
+        delta_s = 2.5 + np.asarray(front.progress) - np.asarray(selected.prediction.progress)
+        shortage = np.maximum(1.0 - (np.abs(delta_s) - 0.55), 0.0)
+        self.assertAlmostEqual(selected.safety_cost, 10.0 * float(np.mean(shortage**2)), places=3)
+        # 標籤的 J 是各成本項加總，必須等於策略比較用的總成本。
+        terms = decision.candidate_snapshot.candidates[2].cost_terms
+        self.assertEqual([name for name, _ in terms], ["relative_gap", "safety"])
+        self.assertAlmostEqual(sum(value for _, value in terms), selected.total_cost)
+        self.assertIn(f"J={selected.total_cost:.2f}",
+                      candidate_path_label(decision.candidate_snapshot.candidates[2]))
+        for value in (-1.0, float("nan")):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                replace(self.config, safety_weight=value)
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                replace(self.config, safety_distance=value)
 
     def test_speed_candidate_filtering_and_deduplication(self) -> None:
         for front_speed, delta, expected in (
@@ -386,18 +417,24 @@ class SpeedCandidateIntegrationTests(unittest.TestCase):
         self.assertEqual(len(strategy.last_candidates), 1)
         self.assertIsNone(decision.speed_limit)
 
-    def test_all_candidates_rejected_keeps_no_feasible_path(self) -> None:
+    def test_all_candidates_rejected_selects_latest_collision_and_its_speed(self) -> None:
         strategy = self.strategy()
-        previous = strategy.update(self.ego, (self.front,), self.track, 0.0)
+        strategy.update(self.ego, (self.front,), self.track, 0.0)
         too_close = observation(self.track, "front", 21.0, 0.0, 3.0)
         decision = strategy.update(self.ego, (too_close,), self.track, 0.2)
         self.assertEqual(decision.mode, "no_feasible_path")
-        self.assertIs(decision.maneuver, previous.maneuver)
-        self.assertEqual(decision.speed_limit, previous.speed_limit)
         self.assertEqual(len(strategy.last_candidates), 3)
         self.assertTrue(all(not candidate.feasible for candidate in strategy.last_candidates))
         self.assertTrue(all(candidate.collision.time_seconds > 0.0 for candidate in strategy.last_candidates))
-        self.assertTrue(all(not candidate.selected for candidate in decision.candidate_snapshot.candidates))
+        latest = max(candidate.collision.time_seconds for candidate in strategy.last_candidates)
+        tied = [item for item in strategy.last_candidates if item.collision.time_seconds == latest]
+        # 最晚碰撞優先；同時間取速度要求最低者。
+        chosen = min(tied, key=lambda item: 6.0 if item.speed_limit is None else item.speed_limit)
+        self.assertEqual(decision.speed_limit, chosen.speed_limit)
+        self.assertIs(decision.maneuver, chosen.maneuver)
+        self.assertIn(f"@ {latest:.2f}s", decision.reason)
+        self.assertEqual([item.selected for item in decision.candidate_snapshot.candidates],
+                         [item is chosen for item in strategy.last_candidates])
 
     def test_default_switch_matches_disabled_baseline(self) -> None:
         default = RelativeOvertakingConfig(candidate_offsets=(0.0,), prediction_horizon=1.0)

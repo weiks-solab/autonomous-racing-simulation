@@ -15,6 +15,7 @@ from strategy.defending import CostBasedDefenseStrategy, DefenseConfig
 from strategy.observations import create_vehicle_observation
 from strategy.offset_path import LateralManeuver
 from strategy.overtaking import OvertakingConfig, RuleBasedOvertakingStrategy
+from tests.test_bicycle_prediction import prediction_config
 
 
 class StrategyAssignmentTests(unittest.TestCase):
@@ -141,6 +142,21 @@ class StrategyAssignmentTests(unittest.TestCase):
         self.assertEqual(actual.target_d, expected.target_d)
         self.assertEqual(actual.maneuver, expected.maneuver)
         self.assertEqual(actual.reason, expected.reason)
+
+    def test_prediction_configs_reach_only_the_matching_defender(self) -> None:
+        configs = {"blue": prediction_config(3.0), "green": prediction_config(2.0)}
+        manager = StrategyManager(
+            tuple(self.observations),
+            {"blue": StrategyAssignment("defend", target_vehicle_id="red"),
+             "green": StrategyAssignment("defend", target_vehicle_id="blue")},
+            self.overtaking_config, self.defense_config, prediction_configs=configs,
+        )
+        for vehicle_id in ("blue", "green"):
+            self.assertIs(manager.strategies[vehicle_id].algorithm.prediction_config,
+                          configs[vehicle_id])
+        manager.update(self.observations, self.track, 0.0)
+        plain = self.manager({"blue": StrategyAssignment("defend", target_vehicle_id="red")})
+        self.assertIsNone(plain.strategies["blue"].algorithm.prediction_config)
 
     def test_invalid_assignments_are_rejected_before_running(self) -> None:
         for kwargs in ({"name": ""}, {"name": "defend"},

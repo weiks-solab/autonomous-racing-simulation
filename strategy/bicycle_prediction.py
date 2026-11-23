@@ -26,6 +26,7 @@ class BicyclePrediction:
     states: tuple[VehicleState, ...]
     progress: tuple[float, ...]
     times: tuple[float, ...]
+    offsets: tuple[float, ...] = ()  # 各時間點相對中心線的 d；舊建構方式可省略。
 
 
 def predict_bicycle_trajectory(
@@ -51,6 +52,7 @@ def predict_bicycle_trajectory(
     position = vehicle.track_position
     length = track_length(track)
     states, progress, times = [state], [0.0], [0.0]
+    offsets = [position.d]
     step_count = math.ceil(horizon / config.model.time_step)
     for step in range(step_count):
         maneuver = continue_lateral_maneuver(maneuver, position.s, length)
@@ -69,6 +71,7 @@ def predict_bicycle_trajectory(
         next_position = world_to_track(state, track)
         progress.append(progress[-1] + signed_longitudinal_gap(position, next_position, length))
         position = next_position
+        offsets.append(position.d)
         states.append(state)
         times.append(min((step + 1) * config.model.time_step, horizon))
-    return BicyclePrediction(tuple(states), tuple(progress), tuple(times))
+    return BicyclePrediction(tuple(states), tuple(progress), tuple(times), tuple(offsets))

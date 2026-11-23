@@ -81,7 +81,10 @@ def predict_gp_trajectory(
     # t=0 一律保留觀測狀態，不能讓 GP 隱藏目前已存在的重疊。
     states = [vehicle.state]
     if longitudinal_speed == 0.0:
-        return BicyclePrediction(tuple(states * len(times)), tuple(progress), tuple(times))
+        return BicyclePrediction(
+            tuple(states * len(times)), tuple(progress), tuple(times),
+            (vehicle.track_position.d,) * len(times),
+        )
 
     length = track_length(track)
     s = (vehicle.track_position.s + progress[1:]) % length
@@ -93,4 +96,5 @@ def predict_gp_trajectory(
     yaws = np.arctan2(directions[:, 1], directions[:, 0])
     states.extend(VehicleState(float(x), float(y), float(yaw), vehicle.state.velocity)
                   for (x, y), yaw in zip(points, yaws))
-    return BicyclePrediction(tuple(states), tuple(progress), tuple(times))
+    offsets = (vehicle.track_position.d, *(float(value) for value in d))
+    return BicyclePrediction(tuple(states), tuple(progress), tuple(times), offsets)

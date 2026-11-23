@@ -10,8 +10,11 @@ from core.track import Track
 from core.track_geometry import signed_longitudinal_gap, track_length
 from sim.candidate_paths import candidate_path_label, candidate_path_points
 from strategy.bicycle_prediction import predict_bicycle_trajectory
+from strategy.collision_check import PredictedCollision
 from strategy.offset_path import LateralManeuver
-from strategy.relative_overtaking import RelativeOvertakingConfig, RelativeOvertakingStrategy
+from strategy.relative_overtaking import (
+    RelativeCandidate, RelativeOvertakingConfig, RelativeOvertakingStrategy,
+)
 from tests.test_bicycle_prediction import observation, prediction_config
 
 
@@ -210,22 +213,69 @@ class RelativeOvertakingTests(unittest.TestCase):
         self.assertEqual(center.collision.vehicle_id, "front")
         self.assertNotEqual(decision.target_d, 0.0)
 
-    def test_all_rejected_keeps_previous_path_and_recovers(self) -> None:
+    def test_all_rejected_selects_latest_collision_then_recovers(self) -> None:
         strategy = self.strategy()
         ego = observation(self.track, "ego", 20.0, 0.6, 6.0)
-        previous = strategy.update(ego, (self.front,), self.track, 0.0)
+        strategy.update(ego, (self.front,), self.track, 0.0)
         moved = observation(self.track, "ego", 21.0, 0.5, 6.0)
         blocker = replace(moved, vehicle_id="blocker")
         decision = strategy.update(moved, (blocker,), self.track, 0.2)
         self.assertEqual(decision.mode, "no_feasible_path")
-        self.assertIs(decision.maneuver, previous.maneuver)
-        self.assertEqual(decision.target_d, previous.target_d)
-        self.assertTrue(all(not item.feasible and not item.selected
-                            for item in decision.candidate_snapshot.candidates))
+        self.assertIn("latest predicted collision @ 0.00s", decision.reason)
+        # 全部在 t=0 重疊且沒有低速候選，同時間時改比進度。
         self.assertTrue(all(item.collision.time_seconds == 0.0 for item in strategy.last_candidates))
+        chosen = max(strategy.last_candidates, key=lambda item: item.prediction.progress[-1])
+        self.assertIs(decision.maneuver, chosen.maneuver)
+        self.assertEqual(decision.target_d, chosen.maneuver.target_d)
+        snapshot = decision.candidate_snapshot.candidates
+        self.assertTrue(all(not item.feasible for item in snapshot))
+        self.assertEqual([item.selected for item in snapshot],
+                         [item is chosen for item in strategy.last_candidates])
         recovered = strategy.update(moved, (), self.track, 0.4)
         self.assertEqual(recovered.mode, "cruise")
-        self.assertEqual(recovered.target_d, previous.target_d)
+        self.assertEqual(recovered.target_d, chosen.maneuver.target_d)
+
+    def test_latest_collision_prefers_later_time_then_lower_speed(self) -> None:
+        strategy = self.strategy()
+        maneuver = LateralManeuver(20.0, 0.0, 0.0, 3.0)
+        base = predict_bicycle_trajectory(self.ego, self.track, maneuver, self.prediction, 1.0)
+        early = RelativeCandidate(maneuver, base, None, PredictedCollision("front", 0.2))
+        late_fast = RelativeCandidate(maneuver, base, None, PredictedCollision("front", 0.6))
+        late_slow = RelativeCandidate(maneuver, base, None, PredictedCollision("front", 0.6),
+                                      speed_limit=2.0)
+        self.assertIs(strategy._latest_collision((early, late_fast, late_slow)), late_slow)
+        self.assertIs(strategy._latest_collision((early, late_fast)), late_fast)
+
+    def test_deviation_cost_averages_squared_offsets_and_prefers_centerline(self) -> None:
+        # 停在 d=0.6 原本進度最多；加上權重後，靠近中心線的候選變便宜。
+        ego = observation(self.track, "ego", 20.0, 0.6, 6.0)
+        plain = self.strategy()
+        self.assertEqual(plain.update(ego, (self.front,), self.track, 0.0).target_d, 0.6)
+        self.assertTrue(all(item.deviation_cost == 0.0 for item in plain.last_candidates))
+        strategy = self.strategy(replace(self.config, deviation_weight=2.0))
+        decision = strategy.update(ego, (self.front,), self.track, 0.0)
+        feasible = [item for item in strategy.last_candidates if item.feasible]
+        # 被碰撞剔除的候選不計成本，與其他成本項一致。
+        for candidate in feasible:
+            expected = 2.0 * float(np.mean(np.square(candidate.prediction.offsets[1:])))
+            self.assertAlmostEqual(candidate.deviation_cost, expected)
+        best = min(feasible, key=lambda item: item.total_cost)
+        self.assertEqual(decision.target_d, best.maneuver.target_d)
+        self.assertLess(abs(decision.target_d), 0.6)
+        selected = next(item for item in decision.candidate_snapshot.candidates if item.selected)
+        self.assertEqual(dict(selected.cost_terms)["deviation"], best.deviation_cost)
+        self.assertIn("dev=", " ".join(decision.details))
+        for value in (-1.0, float("nan")):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                replace(self.config, deviation_weight=value)
+
+    def test_deviation_cost_adds_to_relative_gap_with_a_target(self) -> None:
+        strategy = self.strategy(replace(self.config, deviation_weight=1.0))
+        strategy.update(self.ego, (self.front,), self.track, 0.0)
+        for candidate in strategy.last_candidates:
+            if candidate.feasible:
+                self.assertAlmostEqual(candidate.total_cost,
+                                       candidate.relative_cost + candidate.deviation_cost)
 
     def test_visualization_uses_rollout_and_width_filter_accepts_only_in_bounds_targets(self) -> None:
         strategy = self.strategy()

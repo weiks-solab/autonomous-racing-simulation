@@ -10,11 +10,15 @@ import numpy as np
 from core.track import Track
 from core.track_geometry import signed_longitudinal_gap, track_length
 from core.vehicle_state import VehicleState
-from strategy.collision_check import PredictedCollision
+from strategy.bicycle_prediction import BicyclePredictionConfig, predict_bicycle_trajectory
+from strategy.collision_check import PredictedCollision, states_at_times
 from strategy.defense_conditions import RearPrediction, has_predicted_collision, predict_rear
 from strategy.observations import VehicleObservation
 from strategy.offset_path import LateralManeuver
 from strategy.prediction import predict_path_trajectory
+from strategy.responsibility import (
+    PairPrediction, ResponsibilityConfig, ResponsibilityResult, evaluate_responsibility,
+)
 
 
 class DefenseMode(Enum):
@@ -42,11 +46,20 @@ class DefenseConfig:
     safety_margin: float = 0.1
     collision_check_enabled: bool = True
     collision_horizon: float = 1.0
+    deviation_weight: float = 0.0  # 偏離中心線成本，0 表示不加
+    # 設定後，以避撞責任約束逐對檢查所有其他車，取代 collision_check_enabled 的矩形檢查。
+    responsibility: ResponsibilityConfig | None = None
+    # responsibility.leader_soft=True 時，守方在前的避碰懲罰權重（與 q_block 同尺度），併入 J_race。
+    leader_penalty_weight: float = 0.0
 
     def __post_init__(self) -> None:
+        if self.responsibility is not None and not isinstance(
+                self.responsibility, ResponsibilityConfig):
+            raise ValueError("responsibility must be a ResponsibilityConfig or None")
         nonnegative = (
             self.q_block, self.progress_weight, self.smooth_weight,
-            self.return_tolerance, self.safety_margin,
+            self.return_tolerance, self.safety_margin, self.deviation_weight,
+            self.leader_penalty_weight,
         )
         positive = (
             self.detection_range, self.transition_length,
@@ -73,6 +86,8 @@ class DefenseCandidate:
     blocking_cost: float | None
     collision: PredictedCollision | None = None
     predicted_states: tuple[VehicleState, ...] = ()
+    deviation_cost: float | None = None  # 已併入 race_cost，只供檢查
+    leader_cost: float | None = None  # 守方在前的避碰懲罰，已乘權重並併入 race_cost
 
     @property
     def feasible(self) -> bool:
@@ -106,17 +121,27 @@ class DefenseDecision:
 class CostBasedDefenseStrategy:
     """只輸出橫向目標，不計算方向盤角度，也不改變目標速度。"""
 
-    def __init__(self, config: DefenseConfig, ego_id: str) -> None:
+    def __init__(
+        self,
+        config: DefenseConfig,
+        ego_id: str,
+        prediction_config: BicyclePredictionConfig | None = None,
+    ) -> None:
         if not isinstance(ego_id, str) or not ego_id.strip():
             raise ValueError("ego_id must be a non-empty string")
         self.config = config
         self.ego_id = ego_id
+        # 有設定時，自車候選改用 Pure Pursuit＋自行車模型 rollout；否則沿用幾何預測。
+        self.prediction_config = prediction_config
         self.decision = DefenseDecision(
             DefenseMode.CRUISE, 0.0, None, None, "following centerline"
         )
         self.last_candidates: tuple[DefenseCandidate, ...] = ()
         self.last_evaluation_time = -math.inf
         self.last_rear_prediction: RearPrediction | None = None
+        # 責任約束用：所有其他車的等 d、等速預測，以及當下的有號縱向間距（對方 s − 自車 s）。
+        self.last_other_predictions: tuple[RearPrediction, ...] = ()
+        self.last_other_gaps: tuple[float, ...] = ()
 
     def update(
         self,
@@ -147,12 +172,27 @@ class CostBasedDefenseStrategy:
         # 指定對象在後方且位於偵測範圍內，才計算對齊成本。
         defending = (
             ego is not None
-            and -self.config.detection_range <= gap < -1
+            and -self.config.detection_range <= gap < 0
             and self.config.q_block > 0.0
         )
         ego_d = ego.track_position.d if defending and ego is not None else None
         self.last_rear_prediction = None
-        if self.config.collision_check_enabled and ego is not None:
+        self.last_other_predictions = ()
+        self.last_other_gaps = ()
+        if self.config.responsibility is not None:
+            # 責任約束不限指定對象：每台車都檢查，領先越多的對象約束越寬。
+            self.last_other_predictions = tuple(
+                predict_rear(
+                    other, track, self.config.collision_horizon, self.config.prediction_step,
+                    self.config.path_sample_spacing,
+                )
+                for other in others
+            )
+            self.last_other_gaps = tuple(
+                signed_longitudinal_gap(defender.track_position, other.track_position, length)
+                for other in others
+            )
+        elif self.config.collision_check_enabled and ego is not None:
             self.last_rear_prediction = predict_rear(
                 ego, track, self.config.collision_horizon, self.config.prediction_step,
                 self.config.path_sample_spacing,
@@ -226,28 +266,34 @@ class CostBasedDefenseStrategy:
                 defender.track_position.s, defender.track_position.d,
                 target_d, self.config.transition_length,
             )
-        candidate = replace(defender, maneuver=maneuver)
         step_count = math.ceil(self.config.prediction_horizon / self.config.prediction_step)
         cost_times = np.linspace(0.0, self.config.prediction_horizon, step_count + 1)
         rear = self.last_rear_prediction
-        times = cost_times if rear is None else np.union1d(cost_times, rear.times)
-        prediction = predict_path_trajectory(candidate, track, times, self.config.path_sample_spacing)
-        cost_indices = np.searchsorted(times, cost_times)
-        predicted_states = prediction.states
-        if rear is not None:
-            predicted_states = tuple(
-                prediction.states[index] for index in np.searchsorted(times, rear.times)
-            )
-            collision = has_predicted_collision(defender, predicted_states, rear)
-            if collision is not None:
-                return DefenseCandidate(target_d, maneuver, None, None, collision, predicted_states)
-        offsets = prediction.offsets[cost_indices]
-        # 走滿 v*T 後的 s_end - s_start；跨越起終點仍連續累積。
-        progress = float(prediction.progress[cost_indices[-1]])
-        # J_race：獎勵進度，保留原本的橫移平順成本。
+        check_times = self._check_times()
+        if self.prediction_config is None:
+            own = self._predict_geometric(defender, track, maneuver, cost_times, check_times)
+        else:
+            own = self._predict_bicycle(defender, track, maneuver, cost_times, check_times)
+        offsets, progress, predicted_states = own.offsets, own.progress, own.predicted_states
+        collision = None
+        leader_penalty = 0.0
+        if rear is not None and own.check_states is not None:
+            collision = has_predicted_collision(defender, own.check_states, rear)
+        elif self.last_other_predictions:
+            result = self._responsibility_result(defender, own)
+            collision, leader_penalty = result.violation, result.leader_penalty
+        if collision is not None:
+            return DefenseCandidate(target_d, maneuver, None, None, collision, predicted_states)
+        # 偏離中心線成本：與對齊成本相同的取樣點，d 的平方加總。
+        deviation_cost = float(self.config.deviation_weight * np.sum(offsets[1:] ** 2))
+        # 守方在前時不剔除，改把預測中心距離不足 r_col 的懲罰乘權重加入。
+        leader_cost = float(self.config.leader_penalty_weight * leader_penalty)
+        # J_race：獎勵進度，保留原本的橫移平順成本，再加偏離中心線與前車避碰成本。
         race_cost = float(
             -self.config.progress_weight * progress
             + self.config.smooth_weight * np.sum(np.diff(offsets) ** 2)
+            + deviation_cost
+            + leader_cost
         )
         # 對齊指定對象當下的 d，整段評分使用同一個位置。
         blocking_cost = 0.0
@@ -257,4 +303,100 @@ class CostBasedDefenseStrategy:
             )
         return DefenseCandidate(
             target_d, maneuver, race_cost, blocking_cost, predicted_states=predicted_states,
+            deviation_cost=deviation_cost, leader_cost=leader_cost,
         )
+
+    def _check_times(self) -> tuple[float, ...] | None:
+        """碰撞或責任檢查的時間點；其他車的預測都使用同一組時間。"""
+        if self.last_rear_prediction is not None:
+            return self.last_rear_prediction.times
+        if self.last_other_predictions:
+            return self.last_other_predictions[0].times
+        return None
+
+    def _responsibility_result(
+        self, defender: VehicleObservation, own: "_OwnPrediction",
+    ) -> ResponsibilityResult:
+        """逐對檢查避撞責任：對方在前或並排時自車要保持 r_col；leader_soft 時自車在前只計懲罰。"""
+        config = self.config.responsibility
+        if config is None or own.check_states is None or own.check_progress is None:
+            return ResponsibilityResult(None)
+        pairs = tuple(
+            PairPrediction(
+                other.vehicle_id, other.geometry, other.states,
+                # Δs＝起始間距＋對方進度－自車進度；正值表示對方在前。
+                gap + np.asarray(other.progress) - own.check_progress,
+            )
+            for other, gap in zip(self.last_other_predictions, self.last_other_gaps)
+        )
+        return evaluate_responsibility(
+            self.last_other_predictions[0].times, own.check_states,
+            defender.geometry, pairs, config,
+        )
+
+    def _predict_geometric(
+        self,
+        defender: VehicleObservation,
+        track: Track,
+        maneuver: LateralManeuver,
+        cost_times: np.ndarray,
+        check_times: tuple[float, ...] | None,
+    ) -> "_OwnPrediction":
+        """原本的幾何預測：沿候選折線以目前車速走滿 v*t。"""
+        candidate = replace(defender, maneuver=maneuver)
+        times = cost_times if check_times is None else np.union1d(cost_times, check_times)
+        prediction = predict_path_trajectory(candidate, track, times, self.config.path_sample_spacing)
+        cost_indices = np.searchsorted(times, cost_times)
+        check_states = None
+        check_progress = None
+        predicted_states = prediction.states
+        if check_times is not None:
+            check_indices = np.searchsorted(times, check_times)
+            check_states = tuple(prediction.states[index] for index in check_indices)
+            check_progress = np.asarray(prediction.progress)[check_indices]
+            predicted_states = check_states
+        # 走滿 v*T 後的 s_end - s_start；跨越起終點仍連續累積。
+        progress = float(prediction.progress[cost_indices[-1]])
+        return _OwnPrediction(
+            prediction.offsets[cost_indices], progress, check_states, check_progress,
+            predicted_states,
+        )
+
+    def _predict_bicycle(
+        self,
+        defender: VehicleObservation,
+        track: Track,
+        maneuver: LateralManeuver,
+        cost_times: np.ndarray,
+        check_times: tuple[float, ...] | None,
+    ) -> "_OwnPrediction":
+        """以防守車自己的 Pure Pursuit 與自行車模型 rollout，再插值到成本與碰撞時間點。"""
+        if self.prediction_config is None:
+            raise ValueError("bicycle prediction requires prediction_config")
+        horizon = self.config.prediction_horizon
+        if check_times is not None:
+            # 碰撞條件的時長可能較長，rollout 需同時涵蓋兩者。
+            horizon = max(horizon, check_times[-1])
+        prediction = predict_bicycle_trajectory(
+            defender, track, maneuver, self.prediction_config, horizon,
+        )
+        times = np.asarray(prediction.times)
+        offsets = np.interp(cost_times, times, prediction.offsets)
+        # 防守車依巡航速度加減速，進度取成本時域終點的 s_end - s_start。
+        progress = float(np.interp(self.config.prediction_horizon, times, prediction.progress))
+        check_states = None if check_times is None else states_at_times(prediction, check_times)
+        check_progress = None if check_times is None else np.interp(
+            check_times, times, prediction.progress,
+        )
+        return _OwnPrediction(offsets, progress, check_states, check_progress, prediction.states)
+
+
+@dataclass(frozen=True)
+class _OwnPrediction:
+    """防守車單一候選的預測：成本時間點的 d 與進度，以及檢查時間點的狀態與進度。"""
+
+    offsets: np.ndarray
+    progress: float
+    check_states: tuple[VehicleState, ...] | None
+    check_progress: np.ndarray | None
+    predicted_states: tuple[VehicleState, ...]

@@ -77,6 +77,14 @@ class GpPredictionTests(unittest.TestCase):
         result = predict_gp_trajectory(self.front, self.track, self.route, 0.0, 1.0, 0.02)
         self.assertTrue(all(state == self.front.state for state in result.states))
         self.assertEqual(self.model.queries, [])
+        self.assertEqual(result.offsets, (0.6,) * len(result.times))
+
+    def test_offsets_keep_observed_d_then_follow_gp(self) -> None:
+        model = LinearModel(offset=-2.0, slope=0.1)
+        result = predict_gp_trajectory(self.front, self.track, GpRoute(model), 4.0, 0.105, 0.02)
+        self.assertEqual(len(result.offsets), len(result.times))
+        self.assertAlmostEqual(result.offsets[0], 0.6)
+        np.testing.assert_allclose(result.offsets[1:], -2.0 + 0.1 * (22.0 + np.array(result.progress[1:])))
 
     def test_current_overlap_is_not_hidden_by_gp(self) -> None:
         route = GpRoute(LinearModel(offset=-0.6))

@@ -3,6 +3,7 @@
 from dataclasses import replace
 import math
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -10,10 +11,12 @@ from core.track import Track
 from core.track_geometry import track_to_world
 from core.vehicle_geometry import VehicleGeometry
 from core.vehicle_state import VehicleState
+from strategy.bicycle_prediction import predict_bicycle_trajectory
 from strategy.defending import CostBasedDefenseStrategy, DefenseConfig, DefenseMode
 from strategy.observations import VehicleObservation, create_vehicle_observation
 from strategy.offset_path import LateralManeuver
-from strategy.prediction import predict_vehicle_state
+from strategy.prediction import predict_path_trajectory, predict_vehicle_state
+from tests.test_bicycle_prediction import prediction_config
 
 
 def observation(
@@ -304,6 +307,108 @@ class DefendingStrategyTests(unittest.TestCase):
         strategy.update(self.defender, (self.ego,), self.track, 1.0)
         with self.assertRaisesRegex(ValueError, "backwards"):
             strategy.update(self.defender, (self.ego,), self.track, 0.5)
+
+
+class DefenseDeviationCostTests(unittest.TestCase):
+    """偏離中心線成本併入 J_race：w_dev × Σ d_k²，取樣點與對齊成本相同。"""
+
+    def setUp(self) -> None:
+        self.track = Track(np.array(((0, 0), (100, 0), (100, 100), (0, 100))), width=2.0)
+        self.config = DefenseConfig(collision_check_enabled=False, prediction_horizon=1.0)
+        self.defender = observation("defender", 20.0, 0.0, 3.0, self.track)
+        self.ego = observation("ego", 14.0, 0.6, 5.0, self.track)
+
+    def evaluate(self, weight: float, prediction=None) -> CostBasedDefenseStrategy:
+        strategy = CostBasedDefenseStrategy(
+            replace(self.config, deviation_weight=weight), "ego", prediction,
+        )
+        strategy.update(self.defender, (self.ego,), self.track, 0.0)
+        return strategy
+
+    def test_deviation_term_is_added_to_race_cost_for_both_predictions(self) -> None:
+        for prediction in (None, prediction_config(3.0)):
+            with self.subTest(bicycle=prediction is not None):
+                plain, weighted = self.evaluate(0.0, prediction), self.evaluate(2.0, prediction)
+                for before, after in zip(plain.last_candidates, weighted.last_candidates):
+                    self.assertEqual(before.deviation_cost, 0.0)
+                    self.assertGreaterEqual(after.deviation_cost, 0.0)
+                    self.assertAlmostEqual(after.race_cost, before.race_cost + after.deviation_cost)
+                    self.assertEqual(after.blocking_cost, before.blocking_cost)
+                center = next(item for item in weighted.last_candidates if item.target_d == 0.0)
+                self.assertAlmostEqual(center.deviation_cost, 0.0)
+                wide = next(item for item in weighted.last_candidates if item.target_d == 0.6)
+                self.assertGreater(wide.deviation_cost, 0.0)
+
+    def test_deviation_value_matches_sampled_offsets(self) -> None:
+        strategy = self.evaluate(2.0)
+        candidate = next(item for item in strategy.last_candidates if item.target_d == 0.6)
+        vehicle = replace(self.defender, maneuver=candidate.maneuver)
+        prediction = predict_path_trajectory(vehicle, self.track, np.linspace(0.0, 1.0, 11), 0.2)
+        self.assertAlmostEqual(candidate.deviation_cost,
+                               2.0 * float(np.sum(prediction.offsets[1:] ** 2)))
+
+    def test_large_weight_overrides_alignment_and_invalid_weight_is_rejected(self) -> None:
+        self.assertGreater(self.evaluate(0.0).decision.target_d, 0.0)
+        self.assertEqual(self.evaluate(100.0).decision.target_d, 0.0)
+        for value in (-1.0, float("nan")):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                DefenseConfig(deviation_weight=value)
+
+
+class BicycleDefensePredictionTests(unittest.TestCase):
+    """提供 prediction_config 時，自車候選改用 Pure Pursuit＋自行車模型 rollout。"""
+
+    def setUp(self) -> None:
+        self.track = Track(np.array(((0, 0), (100, 0), (100, 100), (0, 100))), width=2.0)
+        self.config = DefenseConfig(collision_check_enabled=False, prediction_horizon=1.0)
+        self.prediction = prediction_config(3.0)
+        self.defender = observation("defender", 20.0, 0.0, 3.0, self.track)
+        self.ego = observation("ego", 14.0, 0.6, 5.0, self.track)
+
+    def test_costs_use_interpolated_bicycle_rollout(self) -> None:
+        strategy = CostBasedDefenseStrategy(self.config, "ego", self.prediction)
+        with patch("strategy.defending.predict_bicycle_trajectory",
+                   wraps=predict_bicycle_trajectory) as rollout, \
+             patch("strategy.defending.predict_path_trajectory") as geometric:
+            decision = strategy.update(self.defender, (self.ego,), self.track, 0.0)
+        geometric.assert_not_called()
+        self.assertEqual(rollout.call_count, len(strategy.last_candidates))
+        self.assertTrue(all(call.args[4] == 1.0 for call in rollout.call_args_list))
+        self.assertIs(decision.mode, DefenseMode.DEFEND)
+        self.assertGreater(decision.target_d, 0.0)
+        for candidate in strategy.last_candidates:
+            with self.subTest(target=candidate.target_d):
+                result = predict_bicycle_trajectory(
+                    self.defender, self.track, candidate.maneuver, self.prediction, 1.0,
+                )
+                cost_times = np.linspace(0.0, 1.0, 11)
+                offsets = np.interp(cost_times, result.times, result.offsets)
+                expected_race = (-self.config.progress_weight * result.progress[-1]
+                                 + self.config.smooth_weight * np.sum(np.diff(offsets) ** 2))
+                expected_block = self.config.q_block * np.sum((offsets[1:] - 0.6) ** 2)
+                self.assertAlmostEqual(candidate.race_cost, expected_race)
+                self.assertAlmostEqual(candidate.blocking_cost, expected_block)
+                self.assertEqual(candidate.predicted_states, result.states)
+
+    def test_collision_condition_extends_rollout_and_uses_rear_sample_times(self) -> None:
+        config = replace(self.config, collision_check_enabled=True, collision_horizon=1.5)
+        strategy = CostBasedDefenseStrategy(config, "ego", self.prediction)
+        with patch("strategy.defending.predict_bicycle_trajectory",
+                   wraps=predict_bicycle_trajectory) as rollout, \
+             patch("strategy.defending.has_predicted_collision", return_value=None) as check:
+            strategy.update(self.defender, (self.ego,), self.track, 0.0)
+        self.assertTrue(all(call.args[4] == 1.5 for call in rollout.call_args_list))
+        rear_times = strategy.last_rear_prediction.times
+        self.assertTrue(all(len(call.args[1]) == len(rear_times) for call in check.call_args_list))
+        self.assertTrue(all(call.args[1][0] == self.defender.state for call in check.call_args_list))
+
+    def test_without_prediction_config_geometric_prediction_is_kept(self) -> None:
+        with patch("strategy.defending.predict_bicycle_trajectory") as rollout:
+            geometric = CostBasedDefenseStrategy(self.config, "ego")
+            decision = geometric.update(self.defender, (self.ego,), self.track, 0.0)
+        rollout.assert_not_called()
+        self.assertIsNone(geometric.prediction_config)
+        self.assertIs(decision.mode, DefenseMode.DEFEND)
 
 
 if __name__ == "__main__":

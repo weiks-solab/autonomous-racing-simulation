@@ -20,19 +20,21 @@ class RearPrediction:
     geometry: VehicleGeometry
     times: tuple[float, ...]
     states: tuple[VehicleState, ...]
+    progress: tuple[float, ...] = ()  # 自當下起累積的 s 進度；舊建構方式可省略。
 
 
 def predict_rear(
     rear: VehicleObservation, track: Track, horizon: float, step: float,
     sample_spacing: float = 0.2,
 ) -> RearPrediction:
-    """指定後車維持當下 d 與車身速度，忽略其已選路徑。"""
+    """指定車輛維持當下 d 與車身速度，忽略其已選路徑。"""
     snapshot = replace(rear, maneuver=None)
     count = math.ceil(horizon / step)
     times = tuple(float(time) for time in np.linspace(0.0, horizon, count + 1))
+    prediction = predict_path_trajectory(snapshot, track, times, sample_spacing)
     return RearPrediction(
-        rear.vehicle_id, rear.geometry, times,
-        predict_path_trajectory(snapshot, track, times, sample_spacing).states,
+        rear.vehicle_id, rear.geometry, times, prediction.states,
+        tuple(float(value) for value in prediction.progress),
     )
 
 

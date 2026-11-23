@@ -1,0 +1,62 @@
+C:\Users\kevin\OneDrive\Desktop\project\racing_sim\sim\visualizer.py:550: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  plt.show()
+ablation: {'defense_prediction': 'geometric'}
+vehicle-1 strategy: relative_overtake
+Strategy transitions: 0.00s ATTACK -> 4.14s NO_FEASIBLE_PATH -> 4.20s ATTACK -> 9.30s NO_FEASIBLE_PATH -> 9.42s ATTACK -> 12.48s NO_FEASIBLE_PATH -> 12.54s ATTACK
+Lateral targets: 0.00s +0.00m -> 1.50s +0.60m -> 2.52s +0.45m -> 2.82s +0.30m -> 2.88s +0.15m -> 2.94s +0.00m -> 3.00s -0.15m -> 3.12s -0.30m -> 3.24s -0.45m -> 3.30s -0.60m -> 3.36s -0.15m -> 3.42s -0.30m -> 3.48s -0.45m -> 3.54s -0.60m -> 3.72s +0.60m -> 3.96s -0.60m -> 4.14s -0.30m -> 4.20s +0.60m -> 4.38s -0.45m -> 4.50s +0.60m -> 4.62s +0.45m -> 4.80s +0.60m -> 5.04s +0.15m -> 5.10s +0.00m -> 5.28s -0.15m -> 5.40s -0.30m -> 5.46s -0.45m -> 5.58s -0.60m -> 5.70s +0.60m -> 5.76s +0.45m -> 5.82s +0.60m -> 5.88s +0.30m -> 5.94s +0.15m -> 6.06s +0.00m -> 6.18s +0.15m -> 6.24s -0.60m -> 6.30s -0.45m -> 6.42s -0.60m -> 6.54s -0.30m -> 6.60s -0.45m -> 6.66s -0.60m -> 6.84s -0.30m -> 6.90s +0.00m -> 7.02s -0.30m -> 7.14s -0.45m -> 7.20s -0.15m -> 7.26s +0.00m -> 7.32s +0.15m -> 7.56s +0.45m -> 7.62s +0.60m -> 7.86s +0.45m -> 8.10s +0.60m -> 8.22s +0.15m -> 8.34s +0.00m -> 8.46s -0.15m -> 8.64s -0.30m -> 8.70s -0.45m -> 8.76s -0.60m -> 8.88s -0.45m -> 8.94s +0.60m -> 9.06s +0.15m -> 9.12s +0.00m -> 9.18s -0.15m -> 9.30s +0.60m -> 9.42s +0.45m -> 9.48s +0.60m -> 9.54s +0.15m -> 9.66s +0.00m -> 9.72s -0.15m -> 9.84s -0.30m -> 9.96s -0.60m -> 10.08s +0.45m -> 10.14s +0.00m -> 10.20s -0.60m -> 10.26s +0.45m -> 10.32s +0.60m -> 10.50s -0.30m -> 10.56s -0.60m -> 10.74s +0.30m -> 10.92s +0.60m -> 11.04s +0.45m -> 11.10s +0.30m -> 11.16s +0.15m -> 11.22s +0.60m -> 11.28s +0.30m -> 11.34s +0.45m -> 11.46s -0.15m -> 11.58s -0.30m -> 11.76s -0.45m -> 11.88s -0.30m -> 11.94s -0.45m -> 12.00s -0.60m -> 12.06s -0.45m -> 12.12s -0.60m -> 12.18s +0.60m -> 12.24s +0.45m -> 12.30s +0.15m -> 12.42s +0.00m -> 12.48s +0.60m -> 12.54s +0.15m -> 12.60s +0.30m -> 12.66s +0.45m -> 13.20s +0.30m -> 13.26s -0.60m -> 13.38s +0.30m -> 13.50s +0.00m -> 14.16s +0.30m -> 14.22s +0.60m -> 14.34s +0.45m -> 14.40s +0.30m -> 14.52s +0.60m -> 14.58s +0.30m -> 14.64s +0.45m -> 14.70s +0.00m -> 14.76s -0.15m -> 14.94s -0.30m -> 15.06s -0.45m -> 15.12s -0.60m -> 15.18s +0.00m -> 15.24s -0.15m -> 15.30s -0.30m -> 15.36s -0.45m -> 15.42s +0.60m -> 15.54s +0.45m -> 15.60s +0.30m -> 15.66s +0.15m -> 15.84s +0.30m -> 15.90s +0.60m -> 15.96s +0.00m -> 16.02s +0.15m -> 16.08s +0.00m -> 16.20s -0.15m -> 16.32s -0.30m -> 16.38s -0.60m -> 16.44s +0.15m -> 16.50s -0.30m -> 16.56s -0.60m -> 16.68s +0.45m -> 16.86s -0.60m -> 16.98s +0.60m -> 17.16s -0.30m -> 17.34s -0.60m -> 17.40s +0.45m -> 17.46s +0.60m -> 17.58s +0.30m -> 17.64s +0.60m -> 17.70s +0.30m -> 17.82s +0.45m -> 17.88s +0.60m -> 18.00s +0.15m -> 18.18s +0.00m -> 18.24s -0.15m -> 18.36s -0.30m -> 18.42s -0.45m -> 18.60s +0.60m -> 18.66s +0.45m -> 18.72s +0.60m -> 18.78s +0.45m -> 18.84s +0.30m -> 19.02s +0.45m -> 19.08s -0.45m -> 19.26s -0.60m -> 19.44s -0.30m -> 19.56s -0.60m -> 19.74s -0.45m -> 19.80s +0.15m -> 19.92s -0.15m -> 19.98s -0.45m -> 20.04s -0.60m -> 20.10s +0.00m -> 20.16s +0.15m -> 20.28s +0.30m -> 20.34s +0.45m -> 20.52s -0.15m -> 20.64s +0.60m -> 20.76s +0.45m -> 20.82s +0.30m -> 20.88s +0.15m -> 20.94s +0.60m
+Final strategy reason: lowest predicted relative gap
+Final vehicle-1 d: +0.328 m
+vehicle-2 strategy: defend
+Strategy transitions: 0.00s DEFEND -> 4.20s CRUISE -> 4.40s RETURN -> 5.66s DEFEND -> 6.70s RETURN -> 7.10s DEFEND -> 8.14s RETURN -> 8.78s DEFEND -> 9.20s RETURN -> 10.04s DEFEND -> 11.72s RETURN -> 11.94s DEFEND -> 12.36s RETURN -> 13.42s DEFEND -> 15.72s RETURN -> 16.36s DEFEND -> 17.68s RETURN -> 18.56s DEFEND -> 19.62s RETURN -> 20.06s DEFEND
+Lateral targets: 0.00s +0.00m -> 1.70s +0.30m -> 1.90s +0.60m -> 2.74s +0.30m -> 3.16s +0.00m -> 3.38s -0.30m -> 3.78s -0.60m -> 4.00s +0.30m -> 4.20s +0.00m -> 4.40s +0.30m -> 4.60s +0.60m -> 5.66s -0.30m -> 6.06s +0.00m -> 6.48s -0.30m -> 6.70s +0.30m -> 6.90s +0.00m -> 7.10s -0.30m -> 7.52s +0.00m -> 7.74s +0.30m -> 7.94s +0.60m -> 8.78s -0.30m -> 9.20s +0.60m -> 10.04s -0.30m -> 10.46s +0.00m -> 11.10s +0.30m -> 11.72s +0.60m -> 11.94s -0.30m -> 12.36s +0.60m -> 13.42s +0.00m -> 14.46s +0.30m -> 15.10s +0.00m -> 15.30s -0.30m -> 15.72s +0.60m -> 16.36s +0.00m -> 16.58s -0.30m -> 17.02s +0.00m -> 17.24s +0.30m -> 17.46s -0.30m -> 17.68s +0.60m -> 18.56s -0.30m -> 18.76s +0.00m -> 19.40s -0.30m -> 19.62s +0.30m -> 19.84s +0.00m -> 20.06s -0.30m -> 20.48s +0.00m -> 20.90s +0.30m
+Final strategy reason: lowest cost
+Final vehicle-2 d: +0.089 m
+Detected collision pairs: vehicle-1/vehicle-2
+{
+  "track": "rounded_rectangle",
+  "simulation_seconds": 21.0,
+  "assignments": {
+    "vehicle-1": "relative_overtake",
+    "vehicle-2": "defend"
+  },
+  "wall_seconds_including_plot": 86.36689450003905,
+  "final_s_from_start": {
+    "vehicle-1": 184.8860867652928,
+    "vehicle-2": 185.8939866604171
+  },
+  "collision_steps": 11,
+  "first_collision_time": 4.14,
+  "collision_pairs": [
+    [
+      "vehicle-1",
+      "vehicle-2"
+    ]
+  ],
+  "strategies": {
+    "relative_overtake": {
+      "evaluations": 350,
+      "mean_ms": 245.28674600180238,
+      "max_ms": 265.7308999914676,
+      "total_s": 85.85036110063083,
+      "mode_counts": {
+        "attack": 346,
+        "no_feasible_path": 4
+      },
+      "speed_limited_evaluations": 214,
+      "max_candidates": 36
+    },
+    "defend": {
+      "evaluations": 100,
+      "mean_ms": 0.785158000071533,
+      "max_ms": 1.5359999961219728,
+      "total_s": 0.0785158000071533,
+      "mode_counts": {
+        "defend": 69,
+        "cruise": 1,
+        "return": 30
+      },
+      "speed_limited_evaluations": 0,
+      "max_candidates": 5
+    }
+  }
+}
