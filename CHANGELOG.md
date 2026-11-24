@@ -2,6 +2,30 @@
 
 ## 2026-11-24
 
+### 互動 GP 精簡檔與模型登記（tag `interaction-gp-v1`）
+
+- 使用者要求保存目前模型版本。M1-30 的 pkl 有 131 MB，超過 GitHub 單檔 100 MB。
+- 新增 `interaction_gp.py export`：把 pkl 轉成 `.npz` 精簡檔，只存標準化參數、訓練輸入與答案、kernel 數值。
+  - `InteractionGpModel.load()` 讀精簡檔時不經 pickle，以固定超參數重建。
+  - v1 精簡檔 375 KB；與原 pkl 的預測差最大 1.0e-13 m；兩個閉迴路場景決策逐步相同。
+- `main.py` 的 `INTERACTION_GP_MODEL_PATH` 改指向 `models/compact/interaction_gp_v1_m1_30.npz`，其他電腦也能直接執行。
+- 新增 [models/registry.md](models/registry.md) 記錄版本、雜湊、資料、指標與重建方式。
+- 本次提交同時收錄使用者在 main.py 的測試設定：vehicle-1 用 interaction_overtake、7/6 m/s、relative_overtake 的 deviation_weight=0.0。
+
+### 互動 GP 超車策略 interaction_overtake（既有策略行為不變）
+
+- 新增 `interaction_overtake`（`strategy/interaction_overtaking.py`）：繼承 `relative_overtake`，前車改用 13 維互動歷史 GP 預測。
+  - `conditioning="candidate"`：每個候選用自己的目標查詢。
+  - `conditioning="previous"`：用上一次目標查詢。
+  - 另檢查 平均 ± `band_sigma`·σ 的邊界軌跡。
+  - 超出 GP 訓練範圍或歷史不足時退回定速等 d。
+- 新增 `strategy/interaction_features.py`（訓練與線上共用特徵、歷史緩衝區）與 `strategy/interaction_gp.py`（模型載入、範圍檢查、前車軌跡）。
+  `training_data/interaction.py` 改呼叫共用函式，重建資料特徵逐位元相同。
+- `GpPredictionSnapshot` 加可選欄位：Δd 平均、標準差、時域、d_target；畫面標籤顯示 μ±σ。
+- `main.py`：⑤-2 設定（`INTERACTION_GP_MODEL_PATH`、`INTERACTION_OVERTAKING_CONFIG`）與 `--interaction-overtake` 示範場景；預設場景不變。
+- 新增 14 項測試；全套 439 項，只剩先前同名的 3 項失敗。11 個等價場景與修改前逐位元相同。
+- 第一版評估（20 組成對）：三組都沒有超車，GP 只在 6.6% 決策啟用。見 [評估](reports/experiments/2026-11-24_interaction_overtake/README.md)。
+
 ### 互動 GP 收集的控制條件（不改變既有資料）
 
 - `interaction_gp.py collect` 新增 `--speed-strata`、`--probe-amplitudes`、`--episode-prefix`：

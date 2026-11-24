@@ -43,6 +43,8 @@ from strategy.probe_following import ProbeFollowingConfig
 from strategy.relative_overtaking import RelativeOvertakingConfig
 from strategy.responsibility import ResponsibilityConfig
 from strategy.gp_prediction import GpRoute, load_gp_routes
+from strategy.interaction_gp import InteractionGpModel
+from strategy.interaction_overtaking import InteractionOvertakingConfig, TRAINED_OFFSETS
 
 
 # =====================================================================
@@ -51,9 +53,10 @@ from strategy.gp_prediction import GpRoute, load_gp_routes
 #   ② 車輛與控制器：模型、車身與碰撞框、Pure Pursuit、臨時路徑
 #   ③ 避撞責任約束：defend 與 relative_overtake 共用
 #   ④ 各策略參數：relative_overtake、defend、cost_overtake、progress、overtake
-#   ⑤ GP 對手預測
+#   ⑤ GP 對手預測；⑤-2 互動 GP 超車（interaction_overtake）
 #   ⑥ 畫面顯示
 #   ⑦ --probe-follow 示範場景
+#   ⑧ --interaction-overtake 示範場景
 # =====================================================================
 
 # ===== ① 場景 =====
@@ -74,20 +77,21 @@ TRACK_WIDTH = 2.0
 
 # 每台車的 ID、起始 s 與巡航目標速度。可增加其他車；負 s 會繞回封閉賽道。
 VEHICLE_SPECS = (
-    VehicleSpec("vehicle-1", start_s=0.0, target_speed=10.0),
-    VehicleSpec("vehicle-2", start_s=3.0, target_speed=9.0),
+    VehicleSpec("vehicle-1", start_s=0.0, target_speed=7.0),
+    VehicleSpec("vehicle-2", start_s=4.0, target_speed=6.0),
  ##   VehicleSpec("vehicle-3", start_s=4.0, target_speed=9.0),
 )
 
 # 此次模擬的策略對照表：只改這裡，就能把策略換到另一台車。每台車都有自己的策略物件。
 # relative_overtake：比較預測終點的相對間距（可加安全距離與偏離中心線成本），保留碰撞篩選。
+# interaction_overtake：同 relative_overtake，但前車改用互動 GP 預測（設定見 ⑤-2；只在 GP 訓練範圍內啟用）。
 # cost_overtake：固定候選的成本進攻（進度與超車獎勵）；overtake：原本的規則式進攻。
 # progress：固定候選只比較自車進度，不預測其他車或篩選碰撞。
 # probe_follow：追蹤目標車距，並輪流左右試探前車。
 # defend：防守指定對象，例如 StrategyAssignment("defend", target_vehicle_id="vehicle-2")。
 # centerline：跟隨中心線；未列出的車也會自動使用 centerline。
 STRATEGY_ASSIGNMENTS = {
-    "vehicle-1": StrategyAssignment("probe_follow"),
+    "vehicle-1": StrategyAssignment("interaction_overtake"),
     "vehicle-2": StrategyAssignment("defend", target_vehicle_id="vehicle-1"),
  ##   "vehicle-3": StrategyAssignment("progress"),
 }
@@ -144,7 +148,7 @@ RELATIVE_OVERTAKING_CONFIG = RelativeOvertakingConfig(
     extra_speed_candidate_deltas=(4.0,),  # 再加前車 -4 m/s；可填 (2.0, 4.0)，最低為 0。
     safety_weight=10.0,    # 安全距離成本權重（1/m）；0 關閉，只比預測終點間距。
     safety_distance=0.5,   # 碰撞矩形間隙小於 0.5 m 時開始懲罰，越近越大。
-    deviation_weight=3.0,  # 偏離中心線成本 w×mean(d²)（1/m）；0 關閉，尚未調參。
+    deviation_weight=0.0,  # 偏離中心線成本 w×mean(d²)（1/m）；0 關閉，尚未調參。
     responsibility=_RESPONSIBILITY,  # 啟用時取代矩形重疊剔除
     leader_penalty_weight=0.0,  # leader_soft 或 overlap_rule 下攻方不負責時的避碰懲罰（1/m）；尚未調參
 )
@@ -204,6 +208,19 @@ GP_MODEL_PATHS = {
     "vehicle-2": "models/gp/20261111T064250Z_dbc5bc95/model.pkl",
 }
 
+# ===== ⑤-2 互動 GP 超車（interaction_overtake）=====
+# 以 0.4 s 互動歷史與自車目標 d，預測前車 0.5 s 後的橫移；只在 GP 訓練範圍內啟用，否則退回定速等 d。
+# 訓練範圍只有圓角矩形、前車約 1.4～6.9 m/s、車距約 1.6～6.8 m；預設 10／9 m/s 場景不在範圍內，示範用 --interaction-overtake。
+# v1（M1-30）精簡檔已進 Git，其他電腦也能直接執行；本機原檔 models/gp/speed06_20261124_c_m1_30/model.pkl 預測相同。
+# 各版本見 models/registry.md。
+INTERACTION_GP_MODEL_PATH = "models/compact/interaction_gp_v1_m1_30.npz"
+INTERACTION_OVERTAKING_CONFIG = InteractionOvertakingConfig(
+    # 成本與避撞設定沿用 relative_overtake；候選只用 GP 訓練過的目標 d，橫移距離與訓練資料相同（3.0 m）。
+    relative=replace(RELATIVE_OVERTAKING_CONFIG, candidate_offsets=TRAINED_OFFSETS, transition_length=3.0),
+    conditioning="candidate",  # "candidate"：每個候選用自己的目標查 GP；"previous"：用上一次決策的目標查一次
+    band_sigma=2.0,            # 另檢查前車在 平均 ± 2σ 的邊界軌跡；0 表示只用平均
+)
+
 # ===== ⑥ 畫面顯示：True 顯示、False 隱藏 =====
 DISPLAY_OPTIONS = VisualizationConfig(
     # Track
@@ -250,6 +267,16 @@ PROBE_FOLLOWING_CONFIG = ProbeFollowingConfig(
     gap_weight=2.0, speed_weight=1.0, probe_weight=2.0, switch_weight=0.5,
 )
 
+# ===== ⑧ python main.py --interaction-overtake：互動 GP 超車示範（圓角矩形，速度在 GP 訓練範圍內）=====
+INTERACTION_VEHICLE_SPECS = (
+    VehicleSpec("rear", start_s=0.0, target_speed=7.0),
+    VehicleSpec("front", start_s=6.0, target_speed=6.0),
+)
+INTERACTION_STRATEGY_ASSIGNMENTS = {
+    "rear": StrategyAssignment("interaction_overtake"),
+    "front": StrategyAssignment("defend", target_vehicle_id="rear"),
+}
+
 
 def create_demo_track(name: str | None = None) -> Track:
     """Share the selected map with the simulation and training-data entry points."""
@@ -289,6 +316,7 @@ def _strategy_configs() -> StrategyConfigs:
         progress=PROGRESS_CONFIG,
         relative_overtake=RELATIVE_OVERTAKING_CONFIG,
         probe_follow=PROBE_FOLLOWING_CONFIG,
+        interaction_overtake=INTERACTION_OVERTAKING_CONFIG,
     )
 
 
@@ -348,6 +376,21 @@ def _load_gp_routes(
     return gp_routes
 
 
+def _load_interaction_model(
+    assignments: dict[str, StrategyAssignment], imported_track: bool,
+) -> InteractionGpModel | None:
+    """有車指派 interaction_overtake 時才載入互動 GP。"""
+    if not any(assignment.name == "interaction_overtake" for assignment in assignments.values()):
+        return None
+    if imported_track:
+        print("Interaction GP was trained on the rounded rectangle only; inputs outside its range fall back.")
+    model = InteractionGpModel.load(INTERACTION_GP_MODEL_PATH)
+    print(f"Interaction GP: {INTERACTION_GP_MODEL_PATH} "
+          f"(conditioning={INTERACTION_OVERTAKING_CONFIG.conditioning}, "
+          f"band={INTERACTION_OVERTAKING_CONFIG.band_sigma:g} sigma)")
+    return model
+
+
 def _print_replay_progress(done_steps: int, total_steps: int) -> None:
     """--replay 計算期間每 10% 印一次進度。"""
     if done_steps == total_steps or done_steps % max(1, total_steps // 10) == 0:
@@ -398,20 +441,28 @@ def run_simulation(
     defense_enabled: bool = DEFENSE_ENABLED,
     probe_follow_demo: bool = False,
     replay: bool = False,
+    interaction_demo: bool = False,
 ) -> None:
     """realtime：邊算邊畫。replay：先算完整場、不開視窗，再依實際時間平順播放（優先於 realtime）。"""
-    track = (create_demo_track("rounded_rectangle") if probe_follow_demo
-             else create_demo_track())
-    vehicle_specs = PROBE_VEHICLE_SPECS if probe_follow_demo else VEHICLE_SPECS
-    assignments = PROBE_STRATEGY_ASSIGNMENTS if probe_follow_demo else STRATEGY_ASSIGNMENTS
+    if probe_follow_demo and interaction_demo:
+        raise ValueError("choose either the probe-follow or the interaction-overtake demo")
+    demo = probe_follow_demo or interaction_demo
+    track = create_demo_track("rounded_rectangle") if demo else create_demo_track()
+    if probe_follow_demo:
+        vehicle_specs, assignments = PROBE_VEHICLE_SPECS, PROBE_STRATEGY_ASSIGNMENTS
+    elif interaction_demo:
+        vehicle_specs, assignments = INTERACTION_VEHICLE_SPECS, INTERACTION_STRATEGY_ASSIGNMENTS
+    else:
+        vehicle_specs, assignments = VEHICLE_SPECS, STRATEGY_ASSIGNMENTS
     model_config = MODEL_CONFIG
     vehicles = [
         _create_vehicle(vehicle_id, start_s, target_speed, model_config, track)
         for vehicle_id, start_s, target_speed in vehicle_specs
     ]
     validate_unique_vehicle_ids(vehicles)
-    imported_track = not probe_follow_demo and TRACK_NAME not in BUILTIN_TRACKS
+    imported_track = not demo and TRACK_NAME not in BUILTIN_TRACKS
     gp_routes = _load_gp_routes(vehicles, assignments, imported_track)
+    interaction_model = _load_interaction_model(assignments, imported_track)
     configs = _strategy_configs()
     # 參考路徑不夠涵蓋被指派策略的橫移時自動延長，例如規則式 overtake 的 6 m。
     path_config = configs.path_config_for(OFFSET_PATH_CONFIG, assignments.values())
@@ -428,7 +479,8 @@ def run_simulation(
         configs.overtake,
         configs.defend,
         defense_enabled=defense_enabled,
-        strategy_factories=create_strategy_factories(configs, prediction_configs, gp_routes),
+        strategy_factories=create_strategy_factories(configs, prediction_configs, gp_routes,
+                                                     interaction_model),
         prediction_configs=prediction_configs,  # defend 以 bicycle model 預測自車候選
     )
     live = realtime and not replay
@@ -436,6 +488,9 @@ def run_simulation(
     if probe_follow_demo:
         display_options = replace(display_options, show_centerline=True,
                                   show_strategy_status=True, show_gp_predictions=False)
+    if interaction_demo:
+        display_options = replace(display_options, show_centerline=True,
+                                  show_strategy_status=True, show_gp_predictions=True)
     if imported_track:
         display_options = replace(display_options, show_gp_predictions=False)
     # PNG 背景只屬於下載圖；--probe-follow 固定使用圓角矩形。
@@ -526,6 +581,11 @@ if __name__ == "__main__":
         help="run the rounded-rectangle probe-following and defense demo",
     )
     parser.add_argument(
+        "--interaction-overtake",
+        action="store_true",
+        help="run the rounded-rectangle interaction-GP overtaking demo against a defender",
+    )
+    parser.add_argument(
         "--no-defense",
         action="store_true",
         help="replace every defend assignment with centerline following",
@@ -539,6 +599,8 @@ if __name__ == "__main__":
     parser.add_argument("--track", help="track for this run only (default: TRACK_NAME)")
     parser.add_argument("--seconds", type=float, help="simulated seconds for this run only (default: SIMULATION_SECONDS)")
     arguments = parser.parse_args()
+    if arguments.probe_follow and arguments.interaction_overtake:
+        parser.error("--probe-follow and --interaction-overtake cannot be combined")
     # 命令列只覆寫這次執行的設定，不修改檔案。
     for option in ("speed", "seconds"):
         value = getattr(arguments, option)
@@ -555,4 +617,5 @@ if __name__ == "__main__":
         defense_enabled=DEFENSE_ENABLED and not arguments.no_defense,
         probe_follow_demo=arguments.probe_follow,
         replay=arguments.replay,
+        interaction_demo=arguments.interaction_overtake,
     )

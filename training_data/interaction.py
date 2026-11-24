@@ -4,13 +4,12 @@ from collections import Counter
 import math
 from typing import Literal, Mapping
 
-import numpy as np
-
 from core.track import Track
-from core.track_geometry import (
-    signed_longitudinal_gap, track_length, track_tangent_angle, track_to_world,
+from core.track_geometry import signed_longitudinal_gap, track_length
+# 特徵計算與線上策略共用，確保訓練與使用時算法一致。
+from strategy.interaction_features import (
+    centerline_curvature as curvature, heading_error, history_state_features,
 )
-from strategy.observations import VehicleObservation
 from training_data.schema import (
     DatasetSchema, FieldSpec, RecordedEpisode, SamplingConfig, TrainingDataset,
     TrainingSample, VehiclePair,
@@ -46,15 +45,6 @@ def history_descriptions(segment_seconds: float) -> tuple[str, ...]:
             f"後車 d 在 {late} 的變化", f"前車 d 在 {late} 的變化")
 
 
-def curvature(track: Track, s: float, spacing: float = 0.5) -> float:
-    """用中心線前後各 0.5 m 的三點估計有號曲率，左彎為正。"""
-    a, b, c = (np.asarray(track_to_world(s + offset, 0.0, track))
-               for offset in (-spacing, 0.0, spacing))
-    u, v = b - a, c - a
-    denominator = np.linalg.norm(u) * np.linalg.norm(v) * np.linalg.norm(c - b)
-    return 0.0 if denominator < 1e-12 else float(2 * (u[0] * v[1] - u[1] * v[0]) / denominator)
-
-
 def features(episode: RecordedEpisode, index: int, pair: VehiclePair, track: Track) -> tuple[float, ...]:
     """橫向速度只用最近至多 0.1 s 的過去差分，禁止未來差分。"""
     frame = episode.frames[index]
@@ -70,12 +60,6 @@ def features(episode: RecordedEpisode, index: int, pair: VehiclePair, track: Tra
     return (gap, rear.track_position.d, front.track_position.d,
             rear.state.velocity - front.state.velocity, front.state.velocity,
             lateral_speed, curvature(track, front.track_position.s))
-
-
-def heading_error(observation: VehicleObservation, track: Track) -> float:
-    """車頭角減所在中心線線段的切線角，包裝到 [-π, π]，左轉為正。"""
-    tangent = track_tangent_angle(observation.track_position.s, track)
-    return math.remainder(observation.state.yaw - tangent, 2.0 * math.pi)
 
 
 def history_segment_steps(segment_seconds: float, time_step: float) -> int:
@@ -94,17 +78,12 @@ def history_features(
     """只讀 t-2段、t-1段與 t 三幀；歷史四項依序為後車前段、前車前段、後車後段、前車後段。"""
     if segment_steps < 1 or index < 2 * segment_steps:
         raise ValueError("not enough history before this frame")
-    frames = (episode.frames[index - 2 * segment_steps], episode.frames[index - segment_steps],
-              episode.frames[index])
-    rear_d, front_d = ([frame.observations[key].track_position.d for frame in frames]
-                       for key in (pair.ego_id, pair.opponent_id))
-    rear, front = (frames[-1].observations[key] for key in (pair.ego_id, pair.opponent_id))
-    gap = signed_longitudinal_gap(rear.track_position, front.track_position, track_length(track))
-    return (gap, rear.track_position.d, heading_error(rear, track), rear.state.velocity,
-            front.track_position.d, heading_error(front, track), front.state.velocity,
-            curvature(track, front.track_position.s),
-            rear_d[1] - rear_d[0], front_d[1] - front_d[0],
-            rear_d[2] - rear_d[1], front_d[2] - front_d[1])
+    past = (episode.frames[index - 2 * segment_steps], episode.frames[index - segment_steps])
+    rear_past, front_past = (tuple(frame.observations[key].track_position.d for frame in past)
+                             for key in (pair.ego_id, pair.opponent_id))
+    current = episode.frames[index]
+    return history_state_features(current.observations[pair.ego_id], current.observations[pair.opponent_id],
+                                  rear_past, front_past, track)
 
 
 def build_interaction_dataset(

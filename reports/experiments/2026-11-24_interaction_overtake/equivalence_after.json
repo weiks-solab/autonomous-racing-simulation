@@ -1,0 +1,239 @@
+{
+  "commit": "4cf0c426fa32e3f042c66ca6af0e74dbdf828a28",
+  "executed_at_utc": "2026-11-24T10:45:35+00:00",
+  "scenarios": {
+    "cost_overtake_defend_3s": {
+      "background": null,
+      "display_options": "ef059b1897657873098596b2a5131fa04029986099015f714f6753ee4152c4c7",
+      "final_frame": "11a977c0a1a764adf356052202721b33e0da63f38bb2f283e25b005b331fb827",
+      "seconds": 2.59,
+      "stdout_sha256": "6cd9d2ba7a2178604224c2fe0d21d5cd05303eb1b927aede8d077157df8db26e",
+      "stdout_tail": "Detected collision pairs: none",
+      "track": "3fbf486f44b98d1357931c0692d76a65455b993fdb375d91155ccd235fd4b72f",
+      "trajectories": {
+        "vehicle-1": {
+          "sha256": "9aee0b75fae1be63b0b798c1d6b4ae5fd449ee5835afa78069420635e6499717",
+          "steps": 151
+        },
+        "vehicle-2": {
+          "sha256": "13100dabf2077faf9a7406569ee6ca01b2eadcc755e16a190dc57cc6b3fb6493",
+          "steps": 151
+        }
+      }
+    },
+    "data_generation_2s": {
+      "decisions_and_commands": {
+        "count": 200,
+        "sha256": "73b1a16e6f2d99ad96175566e324281356fd0a3b35bb04dc8b128eec60f399f6"
+      },
+      "frames": {
+        "count": 101,
+        "sha256": "fa5b43203b1de1fb330c129601170e74a5b38db7f27a3ec93bce5ebcd45ba96f"
+      },
+      "scenario": "e447df7060154b9f4e1c4349e030314382e99e11f5dae9d0ee48e458084d6416",
+      "seconds": 2.42
+    },
+    "default_6s": {
+      "background": null,
+      "display_options": "ef059b1897657873098596b2a5131fa04029986099015f714f6753ee4152c4c7",
+      "final_frame": "f630d1a912b908ab72611f6e592bc01e44d722edf7f7aef4b75dd27d2530f919",
+      "seconds": 7.31,
+      "stdout_sha256": "60f3e8bda2180bab7707cc70e3706ca82523dd4561a107b1c7cdf169eb1e0972",
+      "stdout_tail": "Detected collision pairs: none",
+      "track": "3fbf486f44b98d1357931c0692d76a65455b993fdb375d91155ccd235fd4b72f",
+      "trajectories": {
+        "vehicle-1": {
+          "sha256": "818ca24b447ddd8ffa1f7d6f0abed50b6d401258129f0b25dd94befc8c5c4a80",
+          "steps": 301
+        },
+        "vehicle-2": {
+          "sha256": "d22851f6c37e7558948d7909ced5722d172e4233bf0e42beeb33dade3d3cc42c",
+          "steps": 301
+        }
+      }
+    },
+    "default_no_defense_3s": {
+      "background": null,
+      "display_options": "ef059b1897657873098596b2a5131fa04029986099015f714f6753ee4152c4c7",
+      "final_frame": "a1b631ab6ae55d3029e4432cce7c16591072c21dba44ab57ff269bee2a9d18e5",
+      "seconds": 2.68,
+      "stdout_sha256": "7a2fce26ea86d670d85ef352e89596f33b99e99615302771eded990b1a261bef",
+      "stdout_tail": "Detected collision pairs: none",
+      "track": "3fbf486f44b98d1357931c0692d76a65455b993fdb375d91155ccd235fd4b72f",
+      "trajectories": {
+        "vehicle-1": {
+          "sha256": "6725962e3c685579242b4536365f6e2ed0435cde6d262a61519a8437ccd2855a",
+          "steps": 151
+        },
+        "vehicle-2": {
+          "sha256": "7333925670b45ead714bc256487b3eed3eb3d4c7fe5e3bdbf1d533e442543b0a",
+          "steps": 151
+        }
+      }
+    },
+    "gp_relative_3s": {
+      "background": null,
+      "display_options": "ef059b1897657873098596b2a5131fa04029986099015f714f6753ee4152c4c7",
+      "final_frame": "20e59f0f8b955dfba17dca67eb16f67dca8ac700b819e80accca41bb3c95a446",
+      "seconds": 4.14,
+      "stdout_sha256": "5267d07be7c19ee5cd3fb08be7e59ed8319e6972f29b5b667ab90076215b2eb9",
+      "stdout_tail": "Detected collision pairs: none",
+      "track": "3fbf486f44b98d1357931c0692d76a65455b993fdb375d91155ccd235fd4b72f",
+      "trajectories": {
+        "vehicle-1": {
+          "sha256": "b192e9da29fb966823c2651e273779ce53b27f6605e8bd7cf1908f44da2d0abe",
+          "steps": 151
+        },
+        "vehicle-2": {
+          "sha256": "b645c01822ce07f0e2b6ed499afe8fafc62f702babd25ee0df9264176c80ceac",
+          "steps": 151
+        }
+      }
+    },
+    "imported_track_2s": {
+      "background": "Oschersleben_map.png",
+      "display_options": "12f4e972cf64195d390444535c4d9e84bb493e8b158c7dc14775315b553c12ab",
+      "final_frame": "23d11aee0feb1c96927ee6ec96eb5480abc120c3b4579d37f58207befb6fc287",
+      "seconds": 3.02,
+      "stdout_sha256": "8d7aa516bfd648b4dd381b3fdcd32df405d3619302c8a0217096c0049a898dbd",
+      "stdout_tail": "Detected collision pairs: none",
+      "track": "a50cb4729824450f7bc612453569a1f9ded55878d2b55ea63855b7eaaba1c27d",
+      "trajectories": {
+        "vehicle-1": {
+          "sha256": "bc100b3ce8b80d5d27f5f9bbc670611af42cbaf726d847c8bd4209e80dc7f6a4",
+          "steps": 101
+        },
+        "vehicle-2": {
+          "sha256": "a05c18d8e3b828f8553e7ae92cf7b6e32878e11ad71f6a69849622e5dc1edb4b",
+          "steps": 101
+        }
+      }
+    },
+    "overtake_defend_auto_path_8s": {
+      "background": null,
+      "display_options": "ef059b1897657873098596b2a5131fa04029986099015f714f6753ee4152c4c7",
+      "final_frame": "d093f2a2319fd3ebf07ab78d74b472d6a8a5cd5581118dfecdd628e736a107ac",
+      "seconds": 4.06,
+      "stdout_sha256": "f3dbe9ad8dd39cc4e2df0aac088914486e46d9fe741150d8b862a41f4fae51f2",
+      "stdout_tail": "Detected collision pairs: vehicle-1/vehicle-2",
+      "track": "3fbf486f44b98d1357931c0692d76a65455b993fdb375d91155ccd235fd4b72f",
+      "trajectories": {
+        "vehicle-1": {
+          "sha256": "eb4ea85439f103b34d104593a7e81b6fc1ba6536dace7ede926326b674a8ed68",
+          "steps": 401
+        },
+        "vehicle-2": {
+          "sha256": "a8929593056551a39f5b900b089434e0d496f5fe33acbf9c3b062aeca04511f6",
+          "steps": 401
+        },
+        "vehicle-3": {
+          "sha256": "5cc439c37c8f5a1f8e527601a4fc1e31d4e0af35cb45e6520e038f60e21b611a",
+          "steps": 401
+        }
+      }
+    },
+    "overtake_defend_path6_8s": {
+      "background": null,
+      "display_options": "ef059b1897657873098596b2a5131fa04029986099015f714f6753ee4152c4c7",
+      "final_frame": "d093f2a2319fd3ebf07ab78d74b472d6a8a5cd5581118dfecdd628e736a107ac",
+      "seconds": 4.07,
+      "stdout_sha256": "f3dbe9ad8dd39cc4e2df0aac088914486e46d9fe741150d8b862a41f4fae51f2",
+      "stdout_tail": "Detected collision pairs: vehicle-1/vehicle-2",
+      "track": "3fbf486f44b98d1357931c0692d76a65455b993fdb375d91155ccd235fd4b72f",
+      "trajectories": {
+        "vehicle-1": {
+          "sha256": "eb4ea85439f103b34d104593a7e81b6fc1ba6536dace7ede926326b674a8ed68",
+          "steps": 401
+        },
+        "vehicle-2": {
+          "sha256": "a8929593056551a39f5b900b089434e0d496f5fe33acbf9c3b062aeca04511f6",
+          "steps": 401
+        },
+        "vehicle-3": {
+          "sha256": "5cc439c37c8f5a1f8e527601a4fc1e31d4e0af35cb45e6520e038f60e21b611a",
+          "steps": 401
+        }
+      }
+    },
+    "probe_follow_demo_3s": {
+      "background": null,
+      "display_options": "c68b16e48eb5d6a26265febb6a9b82f801e6cec3b9bee9d4105e24ae8119cb13",
+      "final_frame": "99728518139d5a8a0f4f6f5c1767b5b7d08bfc71eed12009071623ce35bbf157",
+      "seconds": 2.94,
+      "stdout_sha256": "b4c5279fd9cee1faa7c59ca1fb1e49054e6ea1b9b9e0a6565f559f90a0353662",
+      "stdout_tail": "Detected collision pairs: none",
+      "track": "3fbf486f44b98d1357931c0692d76a65455b993fdb375d91155ccd235fd4b72f",
+      "trajectories": {
+        "front": {
+          "sha256": "ff304d2e027829370da649c295d5ef4f2bd187bfa16f32f55af36a4271e757f1",
+          "steps": 151
+        },
+        "rear": {
+          "sha256": "e26b514203088b0ac54f9a29bfb7b11ce97bd4ba711bd4f3f43ce56c38e6d7a9",
+          "steps": 151
+        }
+      }
+    },
+    "progress_centerline_3s": {
+      "background": null,
+      "display_options": "ef059b1897657873098596b2a5131fa04029986099015f714f6753ee4152c4c7",
+      "final_frame": "978038587a2c428b34b33d0b91f76bd2c06f22ab2c99f6520e073dc85cd66707",
+      "seconds": 2.54,
+      "stdout_sha256": "d6a18d574a6b09dcf15d923e832fe6e3ed891b75ce5507773be496a99d9778f5",
+      "stdout_tail": "Detected collision pairs: none",
+      "track": "3fbf486f44b98d1357931c0692d76a65455b993fdb375d91155ccd235fd4b72f",
+      "trajectories": {
+        "vehicle-1": {
+          "sha256": "a0de31040b97923e6dc4893332394c76b94fb72520a759a5499caef6d8f237f5",
+          "steps": 151
+        },
+        "vehicle-2": {
+          "sha256": "2225c2e1107825d3410c55b9d3538f8d1dbe8b98bc3ab3baada099d902c23e87",
+          "steps": 151
+        },
+        "vehicle-3": {
+          "sha256": "c095f7fd5824315598cd8a9150a585f9b3b3bf2f60babafe4ca1c94aeceb6fd0",
+          "steps": 151
+        }
+      }
+    },
+    "rectangle_collision_checks_3s": {
+      "background": null,
+      "display_options": "ef059b1897657873098596b2a5131fa04029986099015f714f6753ee4152c4c7",
+      "final_frame": "20e59f0f8b955dfba17dca67eb16f67dca8ac700b819e80accca41bb3c95a446",
+      "seconds": 4.2,
+      "stdout_sha256": "5267d07be7c19ee5cd3fb08be7e59ed8319e6972f29b5b667ab90076215b2eb9",
+      "stdout_tail": "Detected collision pairs: none",
+      "track": "3fbf486f44b98d1357931c0692d76a65455b993fdb375d91155ccd235fd4b72f",
+      "trajectories": {
+        "vehicle-1": {
+          "sha256": "b192e9da29fb966823c2651e273779ce53b27f6605e8bd7cf1908f44da2d0abe",
+          "steps": 151
+        },
+        "vehicle-2": {
+          "sha256": "b645c01822ce07f0e2b6ed499afe8fafc62f702babd25ee0df9264176c80ceac",
+          "steps": 151
+        }
+      }
+    }
+  },
+  "uncommitted_files": [
+    "M README.md",
+    " M main.py",
+    " M sim/data_generation.py",
+    " M sim/visualizer.py",
+    " M strategy/assignment.py",
+    " M strategy/base.py",
+    " M training_data/interaction.py",
+    "?? reports/experiments/2026-11-24_interaction_overtake/",
+    "?? strategy/interaction_features.py",
+    "?? strategy/interaction_gp.py",
+    "?? strategy/interaction_overtaking.py",
+    "?? tests/test_interaction_features.py",
+    "?? tests/test_interaction_overtaking.py"
+  ],
+  "versions": {
+    "numpy": "2.2.6",
+    "python": "3.10.20"
+  }
+}

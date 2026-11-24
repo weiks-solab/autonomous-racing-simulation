@@ -37,6 +37,11 @@ class GpPredictionSnapshot:
     vehicle_id: str
     states: tuple[VehicleState, ...]
     times: tuple[float, ...]
+    # 互動 GP 才有：前車 horizon_seconds 後的 Δd 平均與標準差（m），以及查詢用的自車目標 d。
+    delta_d_mean: float | None = None
+    delta_d_std: float | None = None
+    horizon_seconds: float | None = None
+    d_target: float | None = None
 
 
 @dataclass(frozen=True)

@@ -370,9 +370,37 @@ def train(data: Path, output: Path, seed: int, max_train: int,
     print(json.dumps(report["splits"]["test"], indent=2), flush=True)
 
 
+def export(model: Path, output: Path) -> None:
+    """由 pkl 產生可放進 Git 的精簡檔，並確認兩者在訓練輸入上的預測一致。"""
+    from strategy.interaction_gp import InteractionGpModel, compact_arrays
+    if output.suffix != ".npz":
+        raise ValueError("compact model output must end with .npz")
+    source = model.read_bytes()
+    bundle = pickle.loads(source)   # 只處理自己訓練、可信任的模型
+    output.parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(output, **compact_arrays(bundle, hashlib.sha256(source).hexdigest()))
+    original, compact = InteractionGpModel.load(model), InteractionGpModel.load(output)
+    gp = bundle["pipeline"].named_steps["gp"]
+    inputs = bundle["pipeline"].named_steps["scaler"].inverse_transform(gp.X_train_)
+    rows = inputs[np.linspace(0, len(inputs) - 1, min(500, len(inputs))).astype(int)]
+    (mean_a, std_a), (mean_b, std_b) = original.predict(rows), compact.predict(rows)
+    difference = float(max(np.abs(mean_a - mean_b).max(), np.abs(std_a - std_b).max()))
+    same_ranges = (np.array_equal(original.lower, compact.lower) and np.array_equal(original.upper, compact.upper)
+                   and original.trained_targets == compact.trained_targets)
+    report = {"source": str(model), "source_sha256": hashlib.sha256(source).hexdigest(),
+              "compact": str(output), "compact_sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
+              "compact_bytes": output.stat().st_size, "checked_rows": len(rows),
+              "max_prediction_difference": difference, "same_input_ranges": same_ranges}
+    print(json.dumps(report, indent=2), flush=True)
+    if difference > 1e-9 or not same_ranges:
+        output.unlink()
+        raise ValueError("compact model does not reproduce the original predictions; output removed")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("collect", "train"))
+    parser.add_argument("mode", choices=("collect", "train", "export"))
+    parser.add_argument("--model", help="export：要轉成精簡檔的 model.pkl")
     parser.add_argument("--output", required=True)
     parser.add_argument("--data")
     parser.add_argument("--episodes", type=int, default=20)
@@ -400,6 +428,10 @@ if __name__ == "__main__":
         collect(output, args.episodes, args.seconds, args.seed, args.features, args.randomize_probes,
                 None if args.speed_strata is None else speed_strata(args.speed_strata),
                 tuple(args.probe_amplitudes), args.episode_prefix)
+    elif args.mode == "export":
+        if args.model is None:
+            parser.error("export requires --model")
+        export(project_path(args.model), output)
     else:
         if args.data is None:
             parser.error("train requires --data")

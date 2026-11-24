@@ -1,0 +1,62 @@
+{
+  "relative": {
+    "episodes_with_lead": 0,
+    "median_first_lead_s": null,
+    "episodes_ahead_at_end": 0,
+    "collision_steps_total": 5,
+    "episodes_with_collision": 1,
+    "no_feasible_total": 0,
+    "target_switches_mean": 12.35,
+    "decisions_total": 6680,
+    "gp_active_total": 0,
+    "gp_off_reasons": {},
+    "online_gp": null,
+    "wall_seconds_mean": 52.55125527499767
+  },
+  "previous": {
+    "episodes_with_lead": 0,
+    "median_first_lead_s": null,
+    "episodes_ahead_at_end": 0,
+    "collision_steps_total": 5,
+    "episodes_with_collision": 1,
+    "no_feasible_total": 0,
+    "target_switches_mean": 12.35,
+    "decisions_total": 6680,
+    "gp_active_total": 443,
+    "gp_off_reasons": {
+      "no_history": 140,
+      "out_of_range:gap": 6097
+    },
+    "online_gp": {
+      "n": 443,
+      "mae": 0.034205772534878276,
+      "coverage_2std": 0.9503386004514672,
+      "switch_decisions": 31,
+      "switch_mae": 0.10137204918571636
+    },
+    "wall_seconds_mean": 53.508178764997865
+  },
+  "candidate": {
+    "episodes_with_lead": 0,
+    "median_first_lead_s": null,
+    "episodes_ahead_at_end": 0,
+    "collision_steps_total": 5,
+    "episodes_with_collision": 1,
+    "no_feasible_total": 0,
+    "target_switches_mean": 12.35,
+    "decisions_total": 6680,
+    "gp_active_total": 443,
+    "gp_off_reasons": {
+      "no_history": 140,
+      "out_of_range:gap": 6097
+    },
+    "online_gp": {
+      "n": 443,
+      "mae": 0.03089809038484303,
+      "coverage_2std": 0.9729119638826185,
+      "switch_decisions": 31,
+      "switch_mae": 0.05410420426747759
+    },
+    "wall_seconds_mean": 53.672096454995334
+  }
+}

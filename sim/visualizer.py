@@ -510,10 +510,12 @@ class SimulationVisualizer:
                 on_right = endpoint.x > self._label_mid_x
                 artists.label.set_position((-8 if on_right else 8, 8))
                 artists.label.set_horizontalalignment("right" if on_right else "left")
-                artists.label.set_text(
-                    f"GP {observer_id} -> {prediction.vehicle_id}\n"
-                    f"@ {snapshot.evaluated_at:.2f}s, +{prediction.times[-1]:.2f}s"
-                )
+                text = (f"GP {observer_id} -> {prediction.vehicle_id}\n"
+                        f"@ {snapshot.evaluated_at:.2f}s, +{prediction.times[-1]:.2f}s")
+                if prediction.delta_d_mean is not None and prediction.delta_d_std is not None:
+                    text += (f"\nΔd(+{prediction.horizon_seconds:g}s)={prediction.delta_d_mean:+.2f}"
+                             f"±{prediction.delta_d_std:.2f} m")
+                artists.label.set_text(text)
                 artists.label.set_visible(self.config.show_gp_prediction_labels)
         # 沒有新快照或停用 GP 時，隱藏舊預測；圖元保留供下次重用。
         for key, artists in self._gp_prediction_artists.items():

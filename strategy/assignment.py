@@ -15,6 +15,8 @@ from strategy.centerline import CenterlineStrategy
 from strategy.cost_overtaking import CostBasedOvertakingStrategy, CostOvertakingConfig
 from strategy.defending import CostBasedDefenseStrategy, DefenseConfig, DefenseMode
 from strategy.gp_prediction import GpRoute
+from strategy.interaction_gp import InteractionGpModel
+from strategy.interaction_overtaking import InteractionOvertakingConfig, InteractionOvertakingStrategy
 from strategy.observations import VehicleObservation
 from strategy.offset_path import LateralManeuver, OffsetPathConfig
 from strategy.overtaking import OvertakingConfig, OvertakingMode, RuleBasedOvertakingStrategy
@@ -180,6 +182,7 @@ class StrategyConfigs:
     progress: ProgressConfig = field(default_factory=ProgressConfig)
     relative_overtake: RelativeOvertakingConfig = field(default_factory=RelativeOvertakingConfig)
     probe_follow: ProbeFollowingConfig = field(default_factory=ProbeFollowingConfig)
+    interaction_overtake: InteractionOvertakingConfig = field(default_factory=InteractionOvertakingConfig)
 
     def path_config_for(
         self, base: OffsetPathConfig, assignments: Iterable[StrategyAssignment],
@@ -197,9 +200,17 @@ def create_strategy_factories(
     configs: StrategyConfigs,
     prediction_configs: Mapping[str, BicyclePredictionConfig],
     gp_routes: Mapping[str, GpRoute] | None = None,
+    interaction_model: InteractionGpModel | None = None,
 ) -> dict[str, Callable[[str], VehicleStrategy]]:
-    """以 bicycle 模型預測的策略。每次呼叫工廠都建立新物件，各車狀態互相獨立。"""
+    """以 bicycle 模型預測的策略。每次呼叫工廠都建立新物件，各車狀態互相獨立。
+
+    interaction_model 為 None 時，interaction_overtake 一律退回定速等 d，行為與 relative_overtake 相同。
+    """
     return {
+        "interaction_overtake": lambda vehicle_id: InteractionOvertakingStrategy(
+            configs.interaction_overtake, prediction_configs[vehicle_id], prediction_configs,
+            interaction_model,
+        ),
         "probe_follow": lambda vehicle_id: ProbeFollowingStrategy(
             configs.probe_follow, prediction_configs[vehicle_id], prediction_configs,
         ),

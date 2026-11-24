@@ -224,6 +224,35 @@ GP_MODEL_PATHS = {
 這次僅接入 `main.py` 的 `relative_overtake`；資料收集入口與其他進攻策略保留原行為。
 原始模型被 Git 忽略，其他電腦需自行提供相容模型並修改路徑，或關閉 GP。
 
+### 互動歷史 GP 超車：interaction_overtake
+
+```powershell
+.\.venv\Scripts\python.exe main.py --interaction-overtake --replay
+```
+
+示範場景是圓角矩形：rear 用 `interaction_overtake`（4 m/s），front 用 `defend`（3 m/s）。設定在 `main.py` 的 ⑤-2：
+
+- `INTERACTION_GP_MODEL_PATH`：13 維互動歷史 GP，預設是 M1-30，只在本機。
+- `INTERACTION_OVERTAKING_CONFIG`：
+  - `conditioning="candidate"`：每個橫向候選用自己的目標 d 查 GP，與訓練時 d_target 的定義（當下採用的目標）一致。
+  - `conditioning="previous"`：用上一次決策的目標查一次，所有候選共用。
+  - `band_sigma`：另檢查前車在 平均 ± kσ 的邊界軌跡。
+
+做法：
+
+1. 每步記錄雙車 d，用 t−0.2、t−0.4 s 的歷史組成與訓練相同的 13 維特徵（`strategy/interaction_features.py`，訓練資料也呼叫同一套函式）。
+2. GP 預測前車 0.5 s 後的 Δd（平均 μ、標準差 σ）。前車軌跡縱向定速，d 在 0.5 s 內線性移到 d0+μ，之後維持。
+3. 候選、成本與避撞責任約束都沿用 `relative_overtake`，只換掉前車預測，另加 ±kσ 邊界檢查。
+4. 以下情況退回定速等 d，此時行為與 `relative_overtake` 相同，決策說明會標示 `gp=off(原因)`：
+   - 歷史不足 0.4 s。
+   - 任一輸入超出模型訓練資料的最小～最大值。
+   - 後車與前車速度差超出訓練範圍。
+   - 目標 d 不是訓練過的值。
+
+限制：模型只在圓角矩形、前車約 1.4～6.9 m/s、車距約 1.6～6.8 m 的資料上訓練。
+並排超越（車距 <1.6 m）一定退回；候選只能用訓練過的 0、±0.3、±0.45、±0.6 m。
+評估見 [互動 GP 超車評估](reports/experiments/2026-11-24_interaction_overtake/README.md)。
+
 模型載入與預測在 `strategy/gp_prediction.py`，選路與成本仍在 `strategy/relative_overtaking.py`。
 
 ### 顯示 GP 路線與即時預測
@@ -479,6 +508,7 @@ STRATEGY_ASSIGNMENTS = {
 | `cost_overtake` | 固定候選 bicycle 預測，以進度與超車獎勵選路徑 | `strategy/cost_overtaking.py` |
 | `progress` | 固定候選 bicycle 預測，只選最大進度，不預測其他車或篩選碰撞 | `strategy/progress.py` |
 | `relative_overtake` | 最小化預測終點的對手 s 減自車 s，加上可選安全距離成本；保留碰撞篩選 | `strategy/relative_overtaking.py` |
+| `interaction_overtake` | 同 `relative_overtake`，但前車改用互動歷史 GP 預測；超出 GP 訓練範圍時退回 | `strategy/interaction_overtaking.py` |
 | `defend` | 依成本選擇橫向防守位置 | `strategy/defending.py` |
 
 例如想改成第二台車進攻，第三台車防守第二台，只需改成：

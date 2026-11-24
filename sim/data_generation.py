@@ -21,6 +21,8 @@ from strategy.assignment import (
 from strategy.bicycle_prediction import BicyclePredictionConfig
 from strategy.cost_overtaking import CostOvertakingConfig
 from strategy.defending import DefenseConfig
+from strategy.interaction_gp import InteractionGpModel
+from strategy.interaction_overtaking import InteractionOvertakingConfig
 from strategy.observations import VehicleObservation, create_vehicle_observation
 from strategy.offset_path import LateralManeuver, OffsetPathConfig, generate_offset_track
 from strategy.overtaking import OvertakingConfig
@@ -80,6 +82,10 @@ class SimulationSettings:
     progress_config: ProgressConfig = field(default_factory=ProgressConfig)
     relative_overtaking_config: RelativeOvertakingConfig = field(default_factory=RelativeOvertakingConfig)
     probe_following_config: ProbeFollowingConfig = field(default_factory=ProbeFollowingConfig)
+    interaction_overtaking_config: InteractionOvertakingConfig = field(
+        default_factory=InteractionOvertakingConfig)
+    # interaction_overtake 使用的互動 GP；None 時該策略退回定速等 d 預測。
+    interaction_model: InteractionGpModel | None = None
 
     @property
     def strategy_configs(self) -> StrategyConfigs:
@@ -89,6 +95,7 @@ class SimulationSettings:
             cost_overtake=self.cost_overtaking_config, progress=self.progress_config,
             relative_overtake=self.relative_overtaking_config,
             probe_follow=self.probe_following_config,
+            interaction_overtake=self.interaction_overtaking_config,
         )
 
 
@@ -171,7 +178,8 @@ def _create_manager(
         [vehicle.vehicle_id for vehicle in vehicles], scenario.assignments,
         configs.overtake, configs.defend,
         defense_enabled=settings.defense_enabled,
-        strategy_factories=create_strategy_factories(configs, prediction_configs),
+        strategy_factories=create_strategy_factories(
+            configs, prediction_configs, interaction_model=settings.interaction_model),
         prediction_configs=prediction_configs,
     )
 
