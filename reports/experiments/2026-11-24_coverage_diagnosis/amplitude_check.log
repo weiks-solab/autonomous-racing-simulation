@@ -1,0 +1,10 @@
+validation |d_target|=0.30/0.45  n= 230 cov=0.965 rmse=0.0242 meanstd=0.0249 eps=['006', '010', '012', '019']
+validation |d_target|=0.60       n=  16 cov=0.625 rmse=0.0695 meanstd=0.0281 eps=['006']
+validation |d_target|=0 (center) n= 322 cov=0.984 rmse=0.0168 meanstd=0.0212 eps=['006', '010', '012', '019']
+test       |d_target|=0.30/0.45  n= 133 cov=0.940 rmse=0.0242 meanstd=0.0264 eps=['007', '009', '014', '015']
+test       |d_target|=0.60       n= 170 cov=0.571 rmse=0.0731 meanstd=0.0311 eps=['007', '009', '014', '015']
+test       |d_target|=0 (center) n= 265 cov=0.947 rmse=0.0276 meanstd=0.0236 eps=['007', '009', '014', '015']
+--- |d_target|=0.6, val+test, by front_speed
+speed [0,4.5) n= 55 cov=0.709 rmse=0.0567 meanstd=0.0333 | per-episode 015:0.71(n=55)
+speed [4.5,5.5) n=0
+speed [5.5,9) n=131 cov=0.519 rmse=0.0786 meanstd=0.0299 | per-episode 006:0.62(n=16) 007:0.45(n=44) 009:0.57(n=44) 014:0.48(n=27)

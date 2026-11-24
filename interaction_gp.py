@@ -6,10 +6,12 @@ from dataclasses import asdict, replace
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import pickle
 import platform
+import re
 import subprocess
 import time
 from typing import Sequence
@@ -47,24 +49,70 @@ def write_csv(path: Path, rows: list[dict]) -> None:
         writer.writerows(rows)
 
 
-def random_probe_config(base: ProbeFollowingConfig, rng: np.random.Generator) -> ProbeFollowingConfig:
-    """產生一場的試探序列與保持時間；其他試探跟車參數沿用 base。"""
-    first = 1.0 if rng.random() < 0.5 else -1.0
+def check_amplitudes(amplitudes: Sequence[float]) -> tuple[float, ...]:
+    values = tuple(float(value) for value in amplitudes)
+    if not values or any(not math.isfinite(value) or value <= 0.0 for value in values):
+        raise ValueError("probe amplitudes must be positive and finite")
+    return values
+
+
+def random_probe_config(
+    base: ProbeFollowingConfig, rng: np.random.Generator,
+    amplitudes: Sequence[float] = PROBE_AMPLITUDES, first_side: float | None = None,
+) -> ProbeFollowingConfig:
+    """產生一場的試探序列與保持時間；first_side 為 None 時隨機先左或先右（+1 左、-1 右）。"""
+    choices = check_amplitudes(amplitudes)
+    if first_side is None:
+        first = 1.0 if rng.random() < 0.5 else -1.0
+    elif first_side in (1.0, -1.0):
+        first = float(first_side)
+    else:
+        raise ValueError("first_side must be 1, -1 or None")
     sequence: list[float] = []
     for number in range(PROBE_SIDE_COUNT):
         side = first if number % 2 == 0 else -first
-        sequence += [side * float(rng.choice(PROBE_AMPLITUDES)), 0.0]
+        sequence += [side * float(rng.choice(choices)), 0.0]
     return replace(base, probe_sequence=tuple(sequence),
                    hold_seconds=float(rng.uniform(*PROBE_HOLD_RANGE)))
 
 
+def speed_strata(edges: Sequence[float]) -> tuple[tuple[float, float], ...]:
+    """前車巡航速度區間，例如邊界 3 4 5 6 7 得到四個 1 m/s 區間。"""
+    values = [float(value) for value in edges]
+    if (len(values) < 2 or any(not math.isfinite(value) or value <= 0.0 for value in values)
+            or any(high <= low for low, high in zip(values, values[1:]))):
+        raise ValueError("speed strata need at least two increasing positive edges")
+    return tuple(zip(values[:-1], values[1:]))
+
+
+def stratified_design(number: int, strata_count: int) -> tuple[int, float, bool]:
+    """速度區間輪流分配；同區間依序為（先左、靜止）（先右、靜止）（先左、移動）（先右、移動）。"""
+    if number < 0 or strata_count < 1:
+        raise ValueError("episode number must be non-negative and strata_count positive")
+    stratum, block = number % strata_count, number // strata_count
+    return stratum, 1.0 if block % 2 == 0 else -1.0, (block // 2) % 2 == 1
+
+
 def collect(output: Path, episodes: int, seconds: float, seed: int,
-            feature_set: str = "basic", randomize_probes: bool = False) -> None:
+            feature_set: str = "basic", randomize_probes: bool = False,
+            strata: Sequence[tuple[float, float]] | None = None,
+            probe_amplitudes: Sequence[float] = PROBE_AMPLITUDES,
+            episode_prefix: str = "interaction") -> None:
     import main
     if episodes < 5:
         raise ValueError("use at least five episodes for train/validation/test")
     if feature_set not in ("basic", "history"):
         raise ValueError("feature_set must be 'basic' or 'history'")
+    amplitudes = check_amplitudes(probe_amplitudes)
+    if amplitudes != PROBE_AMPLITUDES and not randomize_probes:
+        raise ValueError("probe amplitudes only apply with randomize_probes")
+    if strata is not None:
+        if not randomize_probes:
+            raise ValueError("speed strata require randomize_probes")
+        if episodes % (4 * len(strata)):
+            raise ValueError("episodes must be a multiple of 4 x strata for a balanced design")
+    if re.fullmatch(r"[A-Za-z0-9_]+", episode_prefix) is None:
+        raise ValueError("episode_prefix may contain only letters, digits and underscores")
     settings, _, _ = _demo_settings(False)
     settings = replace(settings, track=main.create_demo_track("rounded_rectangle"))
     dt = settings.model_config.time_step
@@ -78,20 +126,30 @@ def collect(output: Path, episodes: int, seconds: float, seed: int,
     for number in range(episodes):
         # 各場獨立初始狀態，固定防守配置；前半樣本涵蓋移動中起步。
         origin = float(rng.uniform(0, track_length(settings.track)))
-        gap, speed = float(rng.uniform(2, 5)), float(rng.uniform(3, 7))
-        initial = speed if number % 2 else 0.0
+        design = None
+        if strata is None:
+            gap, speed = float(rng.uniform(2, 5)), float(rng.uniform(3, 7))
+            initial, first_side = (speed if number % 2 else 0.0), None
+        else:
+            # 平衡設計：速度區間、先行側與起步狀態依場次編號分配，避免彼此混在一起。
+            stratum, first_side, moving = stratified_design(number, len(strata))
+            gap, speed = float(rng.uniform(2, 5)), float(rng.uniform(*strata[stratum]))
+            initial = speed if moving else 0.0
+            design = {"speed_stratum": list(strata[stratum]),
+                      "first_side": "left" if first_side > 0 else "right", "moving_start": moving}
         episode_settings = settings
         if randomize_probes:
             episode_settings = replace(settings, probe_following_config=random_probe_config(
-                settings.probe_following_config, probe_rng))
+                settings.probe_following_config, probe_rng, amplitudes, first_side))
         probe = episode_settings.probe_following_config
-        scenario = EpisodeScenario(f"interaction-{number:03d}", (
+        scenario = EpisodeScenario(f"{episode_prefix}-{number:03d}", (
             VehicleInitialCondition("rear", origin, 0.0, initial, speed + 2),
             VehicleInitialCondition("front", origin + gap, 0.0, initial, speed),
         ), {"rear": StrategyAssignment("probe_follow"),
             "front": StrategyAssignment("defend", target_vehicle_id="rear")})
         scenarios.append({"id": scenario.episode_id, "vehicles": [asdict(v) for v in scenario.vehicles],
-                          "probe_sequence": list(probe.sequence), "hold_seconds": probe.hold_seconds})
+                          "probe_sequence": list(probe.sequence), "hold_seconds": probe.hold_seconds,
+                          **({} if design is None else {"design": design})})
 
         def observe(step, observation, decision, command):
             if observation.vehicle_id != "rear":
@@ -122,9 +180,15 @@ def collect(output: Path, episodes: int, seconds: float, seed: int,
         metadata["history_segment_seconds"] = HISTORY_SEGMENT_SECONDS
     if randomize_probes:
         metadata["probe_randomization"] = {
-            "amplitudes_m": PROBE_AMPLITUDES, "hold_seconds_range": PROBE_HOLD_RANGE,
+            "amplitudes_m": amplitudes, "hold_seconds_range": PROBE_HOLD_RANGE,
             "side_count": PROBE_SIDE_COUNT, "rng": "numpy default_rng([seed, 1])",
-            "note": "每場隨機先左或先右，左右交替；每次側向幅度獨立抽樣；hold_seconds 整場相同。"}
+            "note": ("先行側依平衡設計，" if strata is not None else "每場隨機先左或先右，")
+                    + "左右交替；每次側向幅度獨立抽樣；hold_seconds 整場相同。"}
+    if strata is not None:
+        metadata["speed_strata"] = [list(stratum) for stratum in strata]
+        metadata["design_rule"] = "速度區間依場次輪流；同區間依序為（先左、靜止）（先右、靜止）（先左、移動）（先右、移動）"
+    if episode_prefix != "interaction":
+        metadata["episode_prefix"] = episode_prefix
     export_dataset(dataset, collector.episodes, settings.track, output, metadata)
     write_csv(output / "actions.csv", actions)
     print(f"Collected X={dataset.X.shape}; skipped={dict(dataset.skipped)}", flush=True)
@@ -321,13 +385,21 @@ if __name__ == "__main__":
                         help="collect：每場隨機試探順序、幅度與保持時間")
     parser.add_argument("--feature-subset", nargs="+", metavar="NAME",
                         help="train：只用這些輸入欄位（依名稱），例如消融比較")
+    parser.add_argument("--speed-strata", nargs="+", type=float, metavar="EDGE",
+                        help="collect：前車巡航速度區間邊界（m/s），例如 3 4 5 6 7；平衡分配場次，需 --randomize-probes")
+    parser.add_argument("--probe-amplitudes", nargs="+", type=float, default=list(PROBE_AMPLITUDES), metavar="M",
+                        help="collect：側向試探幅度候選（m），需 --randomize-probes")
+    parser.add_argument("--episode-prefix", default="interaction",
+                        help="collect：場次 ID 前綴，合併不同資料集時避免重複")
     args = parser.parse_args()
     output = project_path(args.output)
     if output.exists():
         parser.error("output already exists")
     os.environ.setdefault("MPLCONFIGDIR", str(project_path(".cache/matplotlib")))
     if args.mode == "collect":
-        collect(output, args.episodes, args.seconds, args.seed, args.features, args.randomize_probes)
+        collect(output, args.episodes, args.seconds, args.seed, args.features, args.randomize_probes,
+                None if args.speed_strata is None else speed_strata(args.speed_strata),
+                tuple(args.probe_amplitudes), args.episode_prefix)
     else:
         if args.data is None:
             parser.error("train requires --data")

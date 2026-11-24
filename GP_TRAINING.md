@@ -28,6 +28,18 @@ d 左正；歷史以 t−0.4、t−0.2、t 三幀切兩段。
 .\.venv\Scripts\python.exe interaction_gp.py train --data data/training/my_history --max-train 0 --output models/gp/h_action
 ```
 
+控制條件的收集（需 `--randomize-probes`）：
+
+- `--probe-amplitudes 0.6`：側向試探幅度候選，預設 0.3／0.45／0.6 m。
+- `--speed-strata 3 4 5 6 7`：前車巡航速度依區間輪流分配。同一區間依序為（先左、靜止）（先右、靜止）（先左、移動）（先右、移動），場數須為 4×區間數的倍數。
+- `--episode-prefix speed06`：場次 ID 前綴，合併不同資料集時避免重複。
+
+不加這三項時，同一 seed 產生的資料與之前相同。
+
+```powershell
+.\.venv\Scripts\python.exe interaction_gp.py collect --features history --randomize-probes --probe-amplitudes 0.6 --speed-strata 3 4 5 6 7 --episodes 16 --seconds 30 --seed 43 --episode-prefix speed06 --output data/training/my_speed06
+```
+
 不給 `--feature-subset` 時使用全部欄位。評估子集與等速基準一律由全部欄位計算，三組可直接比較；
 歷史資料的等速基準為 `front_dd_late/0.2×0.5`，另報告後車橫移中（|rear_dd_late|>0.02 m）與保持中的誤差。
 model.pkl 記錄實際輸入名稱、單位與歷史長度；此模型尚未接入規劃器。

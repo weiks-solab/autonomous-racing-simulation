@@ -2,6 +2,15 @@
 
 ## 2026-11-24
 
+### 互動 GP 收集的控制條件（不改變既有資料）
+
+- `interaction_gp.py collect` 新增 `--speed-strata`、`--probe-amplitudes`、`--episode-prefix`：
+  - 前車速度依區間平衡分配，先行側與起步狀態也平衡。
+  - 可固定試探幅度，並為場次 ID 加前綴。
+- 不加這三項時資料不變：舊參數重收的前 5 場場景設定與樣本逐筆相同。
+- 新增 3 項測試；全套 425 項，只剩先前同名的 3 項失敗。
+- 涵蓋率診斷與速度 × ±0.6 m 實驗見 [診斷](reports/experiments/2026-11-24_coverage_diagnosis/README.md)、[實驗](reports/experiments/2026-11-24_speed_amplitude_probe/README.md)。
+
 ### 互動歷史 GP（不改變既有模擬結果）
 
 - `interaction_gp.py collect` 新增 `--features history`：13 欄 = gap、雙車 d／heading_error／speed、前車曲率、過去 0.4 s 兩段雙車 Δd、d_target。歷史不足或歷史窗內有碰撞的樣本略過。

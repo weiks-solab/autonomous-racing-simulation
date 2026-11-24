@@ -1,0 +1,63 @@
+== a_basic8: noise std (m) = 0.0300; train y std = 0.1426
+  validation: n=568 cov=0.951 k95=1.981 zstd=0.916 rmse=0.083 mean_std=0.094 kurt=7.214
+     rear_moving    n=263 cov=0.916 k95=2.412 zstd=1.063 rmse=0.101 mean_std=0.092 kurt=5.860
+     rear_holding   n=305 cov=0.980 k95=1.592 zstd=0.765 rmse=0.063 mean_std=0.095 kurt=6.224
+     |actual|>0.1   n=172 cov=0.884 k95=2.803 zstd=1.248 rmse=0.116 mean_std=0.090 kurt=4.521
+     |actual|<=0.1  n=396 cov=0.980 k95=1.573 zstd=0.718 rmse=0.063 mean_std=0.095 kurt=5.818
+     per-episode coverage ['006:0.82', '010:1.00', '012:0.99', '019:1.00']; residual autocorr lag0.1s=0.94 lag0.5s=0.40
+  test: n=568 cov=0.852 k95=3.259 zstd=1.457 rmse=0.139 mean_std=0.112 kurt=3.748
+     rear_moving    n=297 cov=0.798 k95=3.431 zstd=1.617 rmse=0.168 mean_std=0.116 kurt=2.784
+     rear_holding   n=271 cov=0.911 k95=2.664 zstd=1.257 rmse=0.096 mean_std=0.107 kurt=5.245
+     |actual|>0.1   n=231 cov=0.745 k95=3.963 zstd=1.884 rmse=0.188 mean_std=0.125 kurt=2.272
+     |actual|<=0.1  n=337 cov=0.926 k95=2.421 zstd=1.060 rmse=0.090 mean_std=0.103 kurt=6.624
+     per-episode coverage ['007:0.79', '009:0.82', '014:0.82', '015:0.99']; residual autocorr lag0.1s=0.93 lag0.5s=0.27
+== b_history12: noise std (m) = 0.0383; train y std = 0.1426
+  validation: n=568 cov=0.970 k95=1.535 zstd=0.792 rmse=0.032 mean_std=0.041 kurt=14.020
+     rear_moving    n=263 cov=0.981 k95=1.318 zstd=0.714 rmse=0.030 mean_std=0.042 kurt=13.394
+     rear_holding   n=305 cov=0.961 k95=1.795 zstd=0.851 rmse=0.035 mean_std=0.040 kurt=13.696
+     |actual|>0.1   n=172 cov=0.930 k95=2.270 zstd=1.129 rmse=0.047 mean_std=0.043 kurt=9.170
+     |actual|<=0.1  n=396 cov=0.987 k95=1.314 zstd=0.589 rmse=0.024 mean_std=0.040 kurt=11.216
+     per-episode coverage ['006:0.91', '010:1.00', '012:0.99', '019:0.98']; residual autocorr lag0.1s=0.62 lag0.5s=-0.16
+  test: n=568 cov=0.887 k95=2.867 zstd=1.320 rmse=0.057 mean_std=0.043 kurt=7.261
+     rear_moving    n=297 cov=0.919 k95=2.518 zstd=1.137 rmse=0.053 mean_std=0.045 kurt=6.663
+     rear_holding   n=271 cov=0.852 k95=3.022 zstd=1.485 rmse=0.061 mean_std=0.041 kurt=6.964
+     |actual|>0.1   n=231 cov=0.818 k95=3.741 zstd=1.725 rmse=0.075 mean_std=0.046 kurt=5.401
+     |actual|<=0.1  n=337 cov=0.935 k95=2.340 zstd=0.945 rmse=0.040 mean_std=0.041 kurt=5.081
+     per-episode coverage ['007:0.83', '009:0.87', '014:0.90', '015:0.94']; residual autocorr lag0.1s=0.69 lag0.5s=0.03
+== c_action13: noise std (m) = 0.0188; train y std = 0.1426
+  validation: n=568 cov=0.967 k95=1.677 zstd=0.935 rmse=0.023 mean_std=0.023 kurt=13.626
+     rear_moving    n=263 cov=0.981 k95=1.621 zstd=0.816 rmse=0.020 mean_std=0.024 kurt=7.727
+     rear_holding   n=305 cov=0.954 k95=1.776 zstd=1.025 rmse=0.026 mean_std=0.022 kurt=14.463
+     |actual|>0.1   n=172 cov=0.959 k95=1.752 zstd=1.096 rmse=0.028 mean_std=0.025 kurt=10.920
+     |actual|<=0.1  n=396 cov=0.970 k95=1.477 zstd=0.856 rmse=0.020 mean_std=0.022 kurt=14.286
+     per-episode coverage ['006:0.91', '010:1.00', '012:0.99', '019:0.96']; residual autocorr lag0.1s=0.72 lag0.5s=-0.13
+  test: n=568 cov=0.833 k95=3.848 zstd=1.613 rmse=0.046 mean_std=0.027 kurt=6.059
+     rear_moving    n=297 cov=0.862 k95=3.515 zstd=1.390 rmse=0.044 mean_std=0.028 kurt=5.551
+     rear_holding   n=271 cov=0.801 k95=4.392 zstd=1.820 rmse=0.048 mean_std=0.025 kurt=5.926
+     |actual|>0.1   n=231 cov=0.788 k95=4.340 zstd=1.822 rmse=0.054 mean_std=0.030 kurt=5.207
+     |actual|<=0.1  n=337 cov=0.864 k95=3.529 zstd=1.450 rmse=0.039 mean_std=0.024 kurt=6.658
+     per-episode coverage ['007:0.79', '009:0.81', '014:0.86', '015:0.87']; residual autocorr lag0.1s=0.75 lag0.5s=0.02
+== split conditions (seed 42 episode split)
+test       front speed 4.15-6.57 mean 5.70
+    ('015', 4.15, 3.16, 'move', 1.09, 'R', 0.6)
+    ('009', 5.73, 2.46, 'move', 1.63, 'L', 0.6)
+    ('014', 6.33, 2.94, 'stop', 2.21, 'R', 0.6)
+    ('007', 6.57, 4.91, 'move', 1.76, 'R', 0.6)
+validation front speed 3.46-6.03 mean 4.42
+    ('019', 3.46, 2.42, 'move', 1.67, 'R', 0.45)
+    ('012', 3.91, 3.43, 'stop', 1.31, 'R', 0.45)
+    ('010', 4.3, 4.9, 'stop', 1.42, 'R', 0.3)
+    ('006', 6.03, 3.89, 'stop', 1.08, 'R', 0.6)
+train      front speed 3.26-6.90 mean 5.07
+    ('005', 3.26, 3.66, 'move', 1.7, 'R', 0.6)
+    ('002', 3.51, 4.36, 'stop', 1.76, 'L', 0.6)
+    ('011', 3.76, 3.41, 'move', 1.41, 'L', 0.45)
+    ('016', 3.8, 2.42, 'stop', 1.81, 'R', 0.6)
+    ('004', 4.77, 4.47, 'stop', 2.26, 'R', 0.6)
+    ('018', 4.84, 4.34, 'stop', 1.51, 'L', 0.6)
+    ('008', 4.87, 2.58, 'stop', 1.38, 'L', 0.6)
+    ('017', 5.66, 4.36, 'move', 1.21, 'L', 0.45)
+    ('013', 6.33, 3.31, 'move', 1.0, 'R', 0.6)
+    ('000', 6.43, 3.32, 'stop', 1.95, 'R', 0.6)
+    ('003', 6.71, 3.11, 'move', 1.52, 'R', 0.45)
+    ('001', 6.9, 2.28, 'move', 2.24, 'R', 0.6)

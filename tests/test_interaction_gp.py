@@ -13,7 +13,8 @@ import math
 
 from core.track import Track
 from interaction_gp import (
-    PROBE_AMPLITUDES, PROBE_HOLD_RANGE, random_probe_config, select_features, split_groups, train,
+    PROBE_AMPLITUDES, PROBE_HOLD_RANGE, random_probe_config, select_features, speed_strata,
+    split_groups, stratified_design, train,
 )
 from strategy.probe_following import ProbeFollowingConfig
 from training_data.io import export_dataset
@@ -209,6 +210,31 @@ class HistoryFeatureTests(unittest.TestCase):
         self.assertTrue(np.all(signs[1:] == -signs[:-1]))
         self.assertTrue(PROBE_HOLD_RANGE[0] <= config.hold_seconds <= PROBE_HOLD_RANGE[1])
         self.assertEqual(config.target_gap, base.target_gap)
+
+    def test_explicit_default_amplitudes_keep_original_draws(self):
+        base = ProbeFollowingConfig(target_gap=2.5)
+        self.assertEqual(random_probe_config(base, np.random.default_rng([42, 1])),
+                         random_probe_config(base, np.random.default_rng([42, 1]), PROBE_AMPLITUDES, None))
+
+    def test_fixed_amplitude_and_first_side(self):
+        base = ProbeFollowingConfig(target_gap=2.5)
+        config = random_probe_config(base, np.random.default_rng(1), (0.6,), -1.0)
+        self.assertEqual(config.sequence, (-0.6, 0.0, 0.6, 0.0, -0.6, 0.0, 0.6, 0.0))
+        for kwargs in ({"amplitudes": ()}, {"amplitudes": (0.0,)}, {"first_side": 0.5}):
+            with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
+                random_probe_config(base, np.random.default_rng(1), **kwargs)
+
+    def test_stratified_design_balances_side_and_start_within_each_stratum(self):
+        cells = {}
+        for number in range(16):
+            stratum, side, moving = stratified_design(number, 4)
+            cells.setdefault(stratum, set()).add((side, moving))
+        expected = {(1.0, False), (-1.0, False), (1.0, True), (-1.0, True)}
+        self.assertEqual(cells, {stratum: expected for stratum in range(4)})
+        self.assertEqual(speed_strata([3, 4, 5]), ((3.0, 4.0), (4.0, 5.0)))
+        for edges in ([3], [4, 3], [0, 1], [3, float("nan")]):
+            with self.subTest(edges=edges), self.assertRaises(ValueError):
+                speed_strata(edges)
 
 
 if __name__ == "__main__":

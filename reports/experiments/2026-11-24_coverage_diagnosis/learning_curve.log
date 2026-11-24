@@ -1,0 +1,30 @@
+== model c (13 inputs): sanity, all 12 train episodes, full 15 s
+c 12ep x 15s                 n= 1704 fit= 19.2s | val: MAE=0.0141 RMSE=0.0231 cov=0.967 meanstd=0.0229 | test: MAE=0.0298 RMSE=0.0458 cov=0.833 meanstd=0.0265
+== duration: 12 train episodes truncated to T seconds (samples with time+0.5<=T)
+c 12ep x 5s                  n=  504 fit=  2.4s | val: MAE=0.0346 RMSE=0.0522 cov=0.896 meanstd=0.0364 | test: MAE=0.0549 RMSE=0.0753 cov=0.824 meanstd=0.0498
+c 12ep x 7.5s                n=  804 fit=  3.9s | val: MAE=0.0205 RMSE=0.0306 cov=0.919 meanstd=0.0255 | test: MAE=0.0476 RMSE=0.0693 cov=0.766 meanstd=0.0368
+c 12ep x 10s                 n= 1104 fit=  9.8s | val: MAE=0.0168 RMSE=0.0264 cov=0.956 meanstd=0.0256 | test: MAE=0.0436 RMSE=0.0656 cov=0.799 meanstd=0.0331
+b 12ep x 7.5s                n=  804 fit=  3.9s | val: MAE=0.0250 RMSE=0.0404 cov=0.958 meanstd=0.0385 | test: MAE=0.0489 RMSE=0.0715 cov=0.820 meanstd=0.0444
+b 12ep x 15s                 n= 1704 fit= 20.7s | val: MAE=0.0195 RMSE=0.0325 cov=0.970 meanstd=0.0408 | test: MAE=0.0375 RMSE=0.0568 cov=0.887 meanstd=0.0433
+== episode count: k random train episodes x 15 s, 3 draws each
+c 3ep x 15s draw0            n=  426 fit=  1.4s | val: MAE=0.0560 RMSE=0.0773 cov=0.996 meanstd=0.1403 | test: MAE=0.0985 RMSE=0.1377 cov=0.905 meanstd=0.1148
+c 3ep x 15s draw1            n=  426 fit=  1.2s | val: MAE=0.0563 RMSE=0.0825 cov=0.979 meanstd=0.1417 | test: MAE=0.0850 RMSE=0.1173 cov=0.910 meanstd=0.1288
+c 3ep x 15s draw2            n=  426 fit=  1.3s | val: MAE=0.0504 RMSE=0.0971 cov=0.944 meanstd=0.0609 | test: MAE=0.1019 RMSE=0.1444 cov=0.769 meanstd=0.0904
+c 6ep x 15s draw0            n=  852 fit=  6.0s | val: MAE=0.0300 RMSE=0.0484 cov=0.963 meanstd=0.0459 | test: MAE=0.0616 RMSE=0.0953 cov=0.842 meanstd=0.0590
+c 6ep x 15s draw1            n=  852 fit=  4.9s | val: MAE=0.0397 RMSE=0.0563 cov=0.982 meanstd=0.0693 | test: MAE=0.0933 RMSE=0.1302 cov=0.813 meanstd=0.0932
+c 6ep x 15s draw2            n=  852 fit=  5.2s | val: MAE=0.0363 RMSE=0.0597 cov=0.974 meanstd=0.0611 | test: MAE=0.0900 RMSE=0.1295 cov=0.842 meanstd=0.0979
+c 9ep x 15s draw0            n= 1278 fit= 12.7s | val: MAE=0.0164 RMSE=0.0250 cov=0.967 meanstd=0.0236 | test: MAE=0.0355 RMSE=0.0522 cov=0.835 meanstd=0.0305
+c 9ep x 15s draw1            n= 1278 fit= 12.4s | val: MAE=0.0158 RMSE=0.0269 cov=0.940 meanstd=0.0191 | test: MAE=0.0332 RMSE=0.0505 cov=0.815 meanstd=0.0291
+c 9ep x 15s draw2            n= 1278 fit= 16.4s | val: MAE=0.0153 RMSE=0.0259 cov=0.954 meanstd=0.0227 | test: MAE=0.0315 RMSE=0.0483 cov=0.810 meanstd=0.0261
+== grouped 5-fold CV over all 20 episodes (model c, 16 train eps each)
+c CV fold0                   n= 2272 fit= 42.3s | test: MAE=0.0261 RMSE=0.0429 cov=0.898 meanstd=0.0291
+c CV fold1                   n= 2272 fit= 38.7s | test: MAE=0.0174 RMSE=0.0258 cov=0.967 meanstd=0.0295
+c CV fold2                   n= 2272 fit= 32.6s | test: MAE=0.0316 RMSE=0.0484 cov=0.836 meanstd=0.0272
+c CV fold3                   n= 2272 fit= 44.6s | test: MAE=0.0176 RMSE=0.0303 cov=0.931 meanstd=0.0272
+c CV fold4                   n= 2272 fit= 37.0s | test: MAE=0.0168 RMSE=0.0255 cov=0.938 meanstd=0.0247
+CV pooled: n=2840 MAE=0.0219 cov=0.914 k95=2.71
+per-episode CV coverage: 001:0.77 007:0.82 009:0.84 000:0.85 008:0.85 013:0.85 003:0.91 006:0.92 014:0.92 004:0.92 005:0.92 018:0.92 002:0.94 015:0.95 019:0.96 017:0.97 012:0.99 010:1.00 011:1.00 016:1.00
+episodes with coverage >= 0.95: 7/20
+front_speed [3.0,4.5) n=1156 RMSE=0.0247 meanstd=0.0282 cov=0.970
+front_speed [4.5,5.5) n= 399 RMSE=0.0392 meanstd=0.0276 cov=0.892
+front_speed [5.5,7.5) n=1241 RMSE=0.0431 meanstd=0.0266 cov=0.866

@@ -1,0 +1,13 @@
+{
+  "interaction_gp.py": "a03c68e505d8c2f398563d1c7906173bb859c68973f7df86419dab6020276871",
+  "training_data/interaction.py": "44c481bcc47ee4bc4847f1c1949ef947540945409086a40f8c096649b7e59ce2",
+  "strategy/probe_following.py": "b26f65db11eb05dd1cf5351f3dfc622999fdbfb47f62f5cc767b159a7d24a187",
+  "train_gp.py": "6097b19b97ac63cec20e9a980850a82a9c057fb96ac7811fc292e36fed4f8fa2",
+  "main.py": "48dcefe8a6899498d9eb5451eadd36a7a3d56e3352f8ac2f0d0cd4786f4fef33",
+  "reports/experiments/2026-11-24_speed_amplitude_probe/compare.py": "c3f43da670bcc2e52a8896b3588096a9c3a6fd0feaa77da01346853c0db7936f",
+  "data/training/history_speed06_20261124/samples.csv": "ddd76542724935918e39cbf386999c9ad72f0ee6c7de71d2f66a7e82c52ec2ea",
+  "data/training/history_gp_20261124/samples.csv": "48d2cd404b395764feebcef82b76039de3e8acdb17c8eb9c46602a82b37ac5f9",
+  "models/gp/history_20261124_c_action13/model.pkl": "3f1566faa10f86c64a08684429a9bca6fa3637b1ee071c05cec77211663c9eb6",
+  "models/gp/speed06_20261124_c_m1_15/model.pkl": "e29ad93264a2873cbe19e85c2ebf0076d417a9bd919c6cdb99690870308b1047",
+  "models/gp/speed06_20261124_c_m1_30/model.pkl": "93f3c1828b517e883a5ae2bc89c87ded480a4c5696d2daad6d491aef6d5068e9"
+}
