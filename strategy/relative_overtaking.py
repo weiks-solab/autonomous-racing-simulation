@@ -9,16 +9,24 @@ import numpy as np
 from core.pure_pursuit import validate_speed_limit
 from core.track import Track
 from core.track_geometry import TrackPosition, signed_longitudinal_gap, track_length
+from core.validation import (
+    require_finite_values, require_nonnegative, require_nonnegative_values, require_positive,
+)
 from strategy.base import CandidatePath, CandidateSnapshot, GpPredictionSnapshot, StrategyDecision
 from strategy.bicycle_prediction import (
-    BicyclePrediction, BicyclePredictionConfig, predict_bicycle_trajectory,
+    BicyclePrediction, BicyclePredictionConfig, constant_offset_maneuver,
+    predict_bicycle_trajectory, prediction_config_for,
 )
 from strategy.collision_check import (
     PredictedCollision, PredictedVehicle, first_predicted_collision, states_at_times,
 )
+from strategy.common import (
+    RelativeTargetState, accumulated_gap, check_other_ids, check_track_and_time,
+    decision_due, lateral_targets, nearest_vehicle_ahead,
+)
 from strategy.gp_prediction import GpRoute, predict_gp_trajectory
 from strategy.observations import VehicleObservation
-from strategy.offset_path import LateralManeuver, continue_lateral_maneuver
+from strategy.offset_path import LateralManeuver, start_or_continue_maneuver
 from strategy.responsibility import (
     PairPrediction, ResponsibilityConfig, ResponsibilityResult, evaluate_responsibility,
 )
@@ -49,25 +57,12 @@ class RelativeOvertakingConfig:
         if self.responsibility is not None and not isinstance(
                 self.responsibility, ResponsibilityConfig):
             raise ValueError("responsibility must be a ResponsibilityConfig or None")
-        if not math.isfinite(self.leader_penalty_weight) or self.leader_penalty_weight < 0.0:
-            raise ValueError("leader_penalty_weight must be non-negative and finite")
-        positive = (self.detection_range, self.transition_length,
-                    self.decision_period, self.prediction_horizon)
-        if any(not math.isfinite(value) or value <= 0.0 for value in positive):
-            raise ValueError("relative overtaking distances and timing must be positive and finite")
-        if not math.isfinite(self.safety_margin) or self.safety_margin < 0.0:
-            raise ValueError("safety_margin must be non-negative and finite")
-        if not all(math.isfinite(value) for value in self.candidate_offsets):
-            raise ValueError("candidate_offsets must be finite")
-        if not math.isfinite(self.speed_candidate_delta) or self.speed_candidate_delta < 0.0:
-            raise ValueError("speed_candidate_delta must be non-negative and finite")
-        if any(not math.isfinite(delta) or delta < 0.0 for delta in self.extra_speed_candidate_deltas):
-            raise ValueError("extra speed candidate deltas must be non-negative and finite")
-        if any(not math.isfinite(value) or value < 0.0
-               for value in (self.safety_weight, self.safety_distance, self.deviation_weight)):
-            raise ValueError(
-                "safety_weight, safety_distance and deviation_weight must be non-negative and finite"
-            )
+        require_positive(self, "detection_range", "transition_length",
+                         "decision_period", "prediction_horizon")
+        require_nonnegative(self, "safety_margin", "speed_candidate_delta", "safety_weight",
+                            "safety_distance", "deviation_weight", "leader_penalty_weight")
+        require_finite_values(self, "candidate_offsets")
+        require_nonnegative_values(self, "extra_speed_candidate_deltas")
 
 
 @dataclass(frozen=True)
@@ -100,16 +95,6 @@ class RelativeCandidate:
         return self.relative_cost + self.safety_cost + self.deviation_cost + self.leader_cost
 
 
-@dataclass(frozen=True)
-class RelativeTargetState:
-    """保存同一對象的累積間距，避免領先半圈或一圈時跳回最短距離。"""
-
-    vehicle_id: str
-    vehicle_position: TrackPosition
-    target_position: TrackPosition
-    gap: float
-
-
 class RelativeOvertakingStrategy:
     """每台車持有獨立狀態；其他車每輪只預測一次，供所有候選共用。"""
 
@@ -140,16 +125,9 @@ class RelativeOvertakingStrategy:
         track: Track,
         time_seconds: float,
     ) -> StrategyDecision:
-        if not track.closed:
-            raise ValueError("relative overtaking requires a closed track")
-        if not math.isfinite(time_seconds) or time_seconds < 0.0:
-            raise ValueError("time_seconds must be non-negative and finite")
-        if time_seconds < self.last_evaluation_time:
-            raise ValueError("time_seconds must not move backwards")
-        ids = [other.vehicle_id for other in others]
-        if len(set(ids)) != len(ids) or vehicle.vehicle_id in ids:
-            raise ValueError("vehicle IDs must be unique; exclude self from others")
-        if time_seconds - self.last_evaluation_time < self.config.decision_period:
+        check_track_and_time("relative overtaking", track, time_seconds, self.last_evaluation_time)
+        ids = check_other_ids(vehicle, others)
+        if not decision_due(time_seconds, self.last_evaluation_time, self.config.decision_period):
             return self.decision
 
         target, gap = self._select_target(vehicle, others, track)
@@ -173,7 +151,9 @@ class RelativeOvertakingStrategy:
             self._evaluate_candidate(
                 vehicle, track, target_d, gap, obstacles, others, speed_limit=speed_limit,
             )
-            for target_d in self._candidate_targets(vehicle, track)
+            for target_d in lateral_targets(
+                self.config.candidate_offsets, track, vehicle.geometry, self.config.safety_margin,
+            )
             for speed_limit in speed_limits
         )
         feasible = [candidate for candidate in self.last_candidates if candidate.feasible]
@@ -216,7 +196,7 @@ class RelativeOvertakingStrategy:
         self, vehicle: VehicleObservation, others: Sequence[VehicleObservation], track: Track,
     ) -> tuple[VehicleObservation | None, float]:
         """優先選最近的新前車；沒有前車時保留原對象，超車後仍繼續評分。"""
-        target, gap = self._front_vehicle(vehicle, others, track)
+        target, gap = nearest_vehicle_ahead(vehicle, others, track, self.config.detection_range)
         previous = self.target_state
         if target is None and previous is not None:
             target = next((other for other in others if other.vehicle_id == previous.vehicle_id), None)
@@ -224,67 +204,33 @@ class RelativeOvertakingStrategy:
             self.target_state = None
             return None, 0.0
         if previous is not None and previous.vehicle_id == target.vehicle_id:
-            length = track_length(track)
-            own_progress = signed_longitudinal_gap(previous.vehicle_position,
-                                                   vehicle.track_position, length)
-            target_progress = signed_longitudinal_gap(previous.target_position,
-                                                      target.track_position, length)
-            gap = previous.gap + target_progress - own_progress
+            gap = accumulated_gap(previous, vehicle, target, track)
         self.target_state = RelativeTargetState(
             target.vehicle_id, vehicle.track_position, target.track_position, gap,
         )
         return target, gap
 
-    def _front_vehicle(
-        self, vehicle: VehicleObservation, others: Sequence[VehicleObservation], track: Track,
-    ) -> tuple[VehicleObservation | None, float]:
-        length = track_length(track)
-        ahead = [
-            (signed_longitudinal_gap(vehicle.track_position, other.track_position, length),
-             other.vehicle_id, other)
-            for other in others
-        ]
-        ahead = [item for item in ahead if 0.0 < item[0] <= self.config.detection_range]
-        if not ahead:
-            return None, 0.0
-        gap, _, target = min(ahead, key=lambda item: item[:2])
-        return target, gap
-
     def _predict_other(
         self, other: VehicleObservation, track: Track, time_seconds: float,
     ) -> BicyclePrediction:
-        config = self.other_prediction_configs.get(other.vehicle_id)
-        if config is None:
-            raise ValueError(f"missing prediction configuration for {other.vehicle_id}")
-        if other.vehicle_id in self.gp_routes:
-            # 先估計沿 s 的速度；第一次沒有歷史時，以目前車速近似。
-            speed = other.state.velocity
-            previous = self.previous_gp_positions.get(other.vehicle_id)
-            if previous is not None and time_seconds > previous[1]:
-                distance = signed_longitudinal_gap(previous[0], other.track_position, track_length(track))
-                speed = max(0.0, distance / (time_seconds - previous[1]))
-            self.previous_gp_positions[other.vehicle_id] = (other.track_position, time_seconds)
-            return predict_gp_trajectory(
-                other, track, self.gp_routes[other.vehicle_id], speed,
-                self.config.prediction_horizon, config.model.time_step,
+        config = prediction_config_for(self.other_prediction_configs, other.vehicle_id)
+        if other.vehicle_id not in self.gp_routes:
+            # 未指定 GP 的車保留原本的定速、等 d 自行車預測。
+            return predict_bicycle_trajectory(
+                other, track, constant_offset_maneuver(other, config), config,
+                self.config.prediction_horizon, constant_speed=True,
             )
-        # 未指定 GP 的車保留原本的定速、等 d 自行車預測。
-        maneuver = LateralManeuver(
-            other.track_position.s, other.track_position.d,
-            other.track_position.d, config.path.path_length,
+        # 先估計沿 s 的速度；第一次沒有歷史時，以目前車速近似。
+        speed = other.state.velocity
+        previous = self.previous_gp_positions.get(other.vehicle_id)
+        if previous is not None and time_seconds > previous[1]:
+            distance = signed_longitudinal_gap(previous[0], other.track_position, track_length(track))
+            speed = max(0.0, distance / (time_seconds - previous[1]))
+        self.previous_gp_positions[other.vehicle_id] = (other.track_position, time_seconds)
+        return predict_gp_trajectory(
+            other, track, self.gp_routes[other.vehicle_id], speed,
+            self.config.prediction_horizon, config.model.time_step,
         )
-        return predict_bicycle_trajectory(
-            other, track, maneuver, config, self.config.prediction_horizon, constant_speed=True,
-        )
-
-    def _candidate_targets(self, vehicle: VehicleObservation, track: Track) -> tuple[float, ...]:
-        maximum_d = track.width / 2.0 - vehicle.geometry.width / 2.0 - self.config.safety_margin
-        if maximum_d < 0.0:
-            raise ValueError("track is too narrow for vehicle width and safety_margin")
-        return tuple(dict.fromkeys(
-            target for target in (0.0, *self.config.candidate_offsets)
-            if abs(target) <= maximum_d
-        ))
 
     def _latest_collision(
         self, candidates: Sequence[RelativeCandidate],
@@ -377,16 +323,10 @@ class RelativeOvertakingStrategy:
         obstacles: Sequence[PredictedVehicle], others: Sequence[VehicleObservation] = (),
         speed_limit: float | None = None,
     ) -> RelativeCandidate:
-        maneuver = self.decision.maneuver
-        if maneuver is None or maneuver.target_d != target_d:
-            maneuver = LateralManeuver(
-                vehicle.track_position.s, vehicle.track_position.d,
-                target_d, self.config.transition_length,
-            )
-        else:
-            maneuver = continue_lateral_maneuver(
-                maneuver, vehicle.track_position.s, track_length(track),
-            )
+        maneuver = start_or_continue_maneuver(
+            self.decision.maneuver, vehicle.track_position, target_d,
+            self.config.transition_length, track,
+        )
         prediction = predict_bicycle_trajectory(
             vehicle, track, maneuver, self.prediction_config, self.config.prediction_horizon,
             speed_limit=speed_limit,

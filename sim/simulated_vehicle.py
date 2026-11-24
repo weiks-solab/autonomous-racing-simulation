@@ -2,13 +2,21 @@
 
 from dataclasses import dataclass, field
 from itertools import combinations
-from typing import Iterable
+from typing import Iterable, NamedTuple
 
 from core.pure_pursuit import PurePursuitController, PursuitTarget
 from core.track import Track
 from core.vehicle_geometry import VehicleGeometry, rectangles_overlap
 from core.vehicle_model import KinematicBicycleModel
 from core.vehicle_state import ControlCommand, VehicleState
+
+
+class VehicleSpec(NamedTuple):
+    """場景中的一台車；也能像一般 tuple 一樣拆成 (ID, 起始 s, 巡航目標速度)。"""
+
+    vehicle_id: str
+    start_s: float        # m，沿中心線的起始位置；負值會繞回封閉賽道
+    target_speed: float   # m/s，Pure Pursuit 的巡航目標速度
 
 
 @dataclass

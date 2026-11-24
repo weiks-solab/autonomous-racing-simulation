@@ -1,5 +1,72 @@
 # 變更紀錄
 
+## 2026-11-24
+
+### 互動歷史 GP（不改變既有模擬結果）
+
+- `interaction_gp.py collect` 新增 `--features history`：13 欄 = gap、雙車 d／heading_error／speed、前車曲率、過去 0.4 s 兩段雙車 Δd、d_target。歷史不足或歷史窗內有碰撞的樣本略過。
+- 新增 `--randomize-probes`（每場隨機試探序列與 hold，獨立亂數）與 train 的 `--feature-subset`（依名稱選欄做消融）。
+- train 的評估子集與等速基準改為依欄位名稱查找；舊 7／8 輸入資料照常訓練。
+- `ProbeFollowingConfig.probe_sequence`：自訂試探目標序列，預設 None 等同原本左、中、右、中。
+- `core/track_geometry.track_tangent_angle()`：取得中心線切線角。
+- 三組消融測試 MAE 0.102／0.038／0.030 m，見 [實驗紀錄](reports/experiments/2026-11-24_history_gp/README.md)。全套 422 項，只剩先前同名的 3 項失敗。
+
+### 決策週期容差與橫移接續（會改變部分模擬結果）
+
+- 依使用者決定，修正先前列為已知問題的兩項：
+  - B2：`decision_due` 預設容差改為 1e-9。`decision_period=0.1` 時，原本在 5／6 步之間跳動的決策，改為每 5 步準時一次。
+  - B3：defend 與規則式 overtake 完成橫移後，改用從目前位置起算的等偏移線。同一目標保持超過一圈時，參考線不再重播過渡。
+- 新增 4 項測試，修正前全部失敗：決策次數 55≠60；保持一圈後路徑起點 d 為 0.073／0.001 m，而不是 0.6 m。
+- 量測：
+  - 預設 relative＋defend 場景（0.05 s 週期）在 6 s 與 21 s 都與修正前完全相同。
+  - progress、cost_overtake 的決策由 55→60 次／6 s。
+  - cost_overtake＋defend 6 s 的碰撞步數 13→0，完全來自 B2 改變了決策時間點；這只是單一場景，不代表更安全。
+  - 資料生成的車輛狀態不變，但記錄的 maneuver 起點欄位在完成橫移後改為接續點。
+- 使用 0.1 s 週期策略的結果，不可直接與修正前比較。
+- 全套 413 項只剩先前同名的 3 項失敗。見 [修正紀錄](reports/experiments/2026-11-24_decision_period_and_maneuver_fix/README.md)。
+
+### 平順播放與賽道幾何快取（模擬結果不變）
+
+- 使用者回報即時畫面卡頓。實測預設場景：每 3 步重新決策一次，該步策略計算平均約 214 ms，其餘步約 0.03 ms；每幀繪圖約 10 ms。卡頓來自邊算邊畫，不是繪圖。
+- 新增 `--replay`（`sim/replay.py`）：先不開視窗算完整場、每 10% 印進度，再依模擬時間播放；跟不上時跳幀維持速度，最後一幀一定顯示。
+  - `--speed` 調倍率，預設 `PLAYBACK_SPEED=1.0`。
+  - Windows 播放期間暫時把計時器改為 1 ms：實測 Tk 的 `after(20)` 原本約 31 ms，改後約 20.2 ms。
+  - `SimulationVisualizer.wait()` 讓等待期間仍處理視窗事件。
+  - `--realtime` 維持原本邊算邊畫。
+- 即時、最後一幀與播放改用同一份畫面資料組裝（`record_frame`／`frame_kwargs`）。
+- 新增 `--track`、`--seconds`：只覆寫這次執行，不必改檔。
+- `Track` 快取線段、累積長度與總長（`Track.segments`），座標轉換不再每一步重算整條中心線，算式不變。
+  - 預設場景 6 s、各 2 次：進攻每次決策 162.6→106.9 ms、防守 47.0→31.0 ms，總耗時 21.1→13.9 s。
+- 驗證：
+  - 11 個等價場景與前一次重構後的結果逐位元相同。
+  - 全套 409 項（新增 8 項）只剩先前同名的 3 項失敗。
+  - Agg 下幀間隔：`--realtime` 中位數 12.9 ms、p95 171 ms，34% 超過 50 ms；`--replay` 中位數 20.0 ms、p95 20.0 ms。
+  - 實際 TkAgg 視窗未目視確認。
+  - 見 [播放與快取紀錄](reports/experiments/2026-11-24_replay_and_track_cache/README.md)。
+- README 移除已過時的現值描述，改為指向 `main.py` 參數區：vehicle-2 的策略、GP 預設開關、候選數、`deviation_weight`、`collision_horizon` 等。
+
+### 架構整理（模擬結果不變）
+
+- 依使用者要求檢查架構，這次只做「策略去重複」與「main 參數區整理」，不改變模擬結果。
+- 新增 `strategy/common.py`：集中 5 個策略各自複製的輸入檢查、決策時機、候選橫向目標、前車選擇與跨圈累積間距。另新增 `offset_path.start_or_continue_maneuver()`、`bicycle_prediction.constant_offset_maneuver()`／`prediction_config_for()` 取代複製版本。
+- `strategy/assignment.py` 新增 `StrategyConfigs` 與 `create_strategy_factories()`；`main.py` 與 `sim/data_generation.py` 共用同一份策略工廠與參考路徑長度規則。新增策略的步驟見 README「隨時替換策略」。
+- 修正：`main.py` 指派規則式 `overtake` 時，參考路徑 4 m 短於過渡 6 m 而報錯。改為與資料生成入口相同，自動延長到涵蓋被指派策略的 `transition_length`；預設場景的路徑長度不變。
+- 修正：`--probe-follow` 搭配下載圖名稱時，不再把下載圖的 PNG 背景畫在圓角矩形上。只影響畫面。
+- `main.py` 參數區分成 7 區並附目錄：
+  - `VEHICLE_SPECS` 改用具名的 `VehicleSpec`，仍可當 tuple 拆解。
+  - 顯示設定上移為 `DISPLAY_OPTIONS`。
+  - 修正過時註解：候選數、`collision_horizon` 說明、`leader_penalty_weight` 適用模式、`prediction_horizon=1` 改為 `1.0`。
+  - 常數名稱與數值不變。
+- 新增 `core/validation.py`：8 個設定類別的錯誤訊息改為寫出類別與欄位，例如 `RelativeOvertakingConfig.decision_period must be positive and finite (got 0.0)`。未知策略、車輛 ID、防守對象與地圖名稱會列出可用選項。
+- 驗證：
+  - 重構前後以 11 個場景比對逐步狀態、最後畫面資料與終端輸出的 SHA-256。10 個相同；`overtake` 不 patch 路徑長度的場景由報錯改為可執行，結果與基線中 patch 為 6 m 的場景相同。
+  - 測試中 4 處 patch 目標改為 `strategy.assignment`（策略類別改由該處建立），斷言不變。
+  - 全套 401 項（Agg）只剩先前同名的 3 項失敗。
+  - 見 [等價驗證](reports/experiments/2026-11-24_refactor_equivalence/README.md)。
+- 已知問題（當時使用者決定不改，修正會改變模擬結果；同日稍後依使用者決定修正，見上方「決策週期容差與橫移接續」）：
+  - 決策週期浮點漂移：dt=0.02、`decision_period=0.1` 時，實際間隔在 5 步與 6 步之間跳動，6 s 內 55 次而非 60 次。probe_follow 有 1e-9 容差，其他策略沒有；目前 main 的 0.05 s 不受影響。
+  - defend 未呼叫 `continue_lateral_maneuver`：同一非零目標保持超過一圈時，`wrapped_forward_distance` 繞回，參考線會重播整段橫移。規則式 overtake 也是同樣寫法。
+
 ## 2026-11-23
 
 - 依使用者要求，`relative_overtake` 啟用速度候選時，改為每條橫向候選都搭配巡航與各低速要求（最多 9×4 條）；成本可加安全距離項 `safety_weight`／`safety_distance`。類別預設 0 維持舊成本，main 設為 10／0.5 m。

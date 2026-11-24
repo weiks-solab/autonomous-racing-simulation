@@ -1,17 +1,29 @@
-"""把策略名稱轉成各車獨立的策略，統一呼叫既有攻防演算法。"""
+"""把策略名稱轉成各車獨立的策略，統一呼叫既有攻防演算法。
 
-from dataclasses import dataclass, replace
+新增策略：演算法放在 strategy/ 的獨立檔案，再於本檔的 StrategyConfigs 加入同名設定欄位，
+並在 create_strategy_factories() 加一行工廠；模擬迴圈與 StrategyManager 都不必修改。
+"""
+
+from dataclasses import dataclass, field, fields, replace
 import math
-from typing import Callable, Mapping, Sequence
+from typing import Callable, Iterable, Mapping, Sequence
 
 from core.track import Track
 from strategy.base import CandidatePath, CandidateSnapshot, StrategyDecision, VehicleStrategy
 from strategy.bicycle_prediction import BicyclePredictionConfig
 from strategy.centerline import CenterlineStrategy
+from strategy.cost_overtaking import CostBasedOvertakingStrategy, CostOvertakingConfig
 from strategy.defending import CostBasedDefenseStrategy, DefenseConfig, DefenseMode
+from strategy.gp_prediction import GpRoute
 from strategy.observations import VehicleObservation
-from strategy.offset_path import LateralManeuver
+from strategy.offset_path import LateralManeuver, OffsetPathConfig
 from strategy.overtaking import OvertakingConfig, OvertakingMode, RuleBasedOvertakingStrategy
+from strategy.probe_following import ProbeFollowingConfig, ProbeFollowingStrategy
+from strategy.progress import ProgressConfig, ProgressStrategy
+from strategy.relative_overtaking import RelativeOvertakingConfig, RelativeOvertakingStrategy
+
+# StrategyManager 直接建立的策略；其他名稱由 create_strategy_factories() 的工廠建立。
+BUILTIN_STRATEGY_NAMES = ("centerline", "overtake", "defend")
 
 
 @dataclass(frozen=True)
@@ -158,6 +170,52 @@ def create_strategy(
     raise ValueError("unknown strategy assignment")
 
 
+@dataclass(frozen=True)
+class StrategyConfigs:
+    """每種策略一份參數；欄位名稱就是 StrategyAssignment 使用的策略名稱。"""
+
+    overtake: OvertakingConfig = field(default_factory=OvertakingConfig)
+    defend: DefenseConfig = field(default_factory=DefenseConfig)
+    cost_overtake: CostOvertakingConfig = field(default_factory=CostOvertakingConfig)
+    progress: ProgressConfig = field(default_factory=ProgressConfig)
+    relative_overtake: RelativeOvertakingConfig = field(default_factory=RelativeOvertakingConfig)
+    probe_follow: ProbeFollowingConfig = field(default_factory=ProbeFollowingConfig)
+
+    def path_config_for(
+        self, base: OffsetPathConfig, assignments: Iterable[StrategyAssignment],
+    ) -> OffsetPathConfig:
+        """臨時參考路徑要涵蓋每個被指派策略的完整橫移；不足時延長 path_length。"""
+        configs = {item.name: getattr(self, item.name) for item in fields(self)}
+        transitions = (
+            getattr(configs.get(assignment.name), "transition_length", 0.0)
+            for assignment in assignments
+        )
+        return replace(base, path_length=max((base.path_length, *transitions)))
+
+
+def create_strategy_factories(
+    configs: StrategyConfigs,
+    prediction_configs: Mapping[str, BicyclePredictionConfig],
+    gp_routes: Mapping[str, GpRoute] | None = None,
+) -> dict[str, Callable[[str], VehicleStrategy]]:
+    """以 bicycle 模型預測的策略。每次呼叫工廠都建立新物件，各車狀態互相獨立。"""
+    return {
+        "probe_follow": lambda vehicle_id: ProbeFollowingStrategy(
+            configs.probe_follow, prediction_configs[vehicle_id], prediction_configs,
+        ),
+        "cost_overtake": lambda vehicle_id: CostBasedOvertakingStrategy(
+            configs.cost_overtake, prediction_configs[vehicle_id], prediction_configs,
+        ),
+        "progress": lambda vehicle_id: ProgressStrategy(
+            configs.progress, prediction_configs[vehicle_id],
+        ),
+        "relative_overtake": lambda vehicle_id: RelativeOvertakingStrategy(
+            configs.relative_overtake, prediction_configs[vehicle_id], prediction_configs,
+            gp_routes=gp_routes,
+        ),
+    }
+
+
 class StrategyManager:
     """依照對照表，替任意數量的車建立與更新策略。"""
 
@@ -174,12 +232,20 @@ class StrategyManager:
         """prediction_configs 提供時，defend 依自己的 ID 取用並改用 bicycle 預測自車。"""
         if not vehicle_ids or len(set(vehicle_ids)) != len(vehicle_ids):
             raise ValueError("vehicle_ids must be non-empty and unique")
-        if set(assignments) - set(vehicle_ids):
-            raise ValueError("strategy assignment contains an unknown vehicle ID")
+        unknown_ids = sorted(set(assignments) - set(vehicle_ids))
+        if unknown_ids:
+            raise ValueError(
+                f"strategy assignments refer to unknown vehicle IDs {unknown_ids}; "
+                f"vehicles in this run: {list(vehicle_ids)}"
+            )
         factories = dict(strategy_factories or {})
-        known_names = {"centerline", "overtake", "defend"} | set(factories)
-        if any(assignment.name not in known_names for assignment in assignments.values()):
-            raise ValueError("strategy assignment contains an unregistered strategy name")
+        known_names = sorted({*BUILTIN_STRATEGY_NAMES, *factories})
+        for vehicle_id, assignment in assignments.items():
+            if assignment.name not in known_names:
+                raise ValueError(
+                    f"unknown strategy {assignment.name!r} for {vehicle_id}; "
+                    f"available strategies: {', '.join(known_names)}"
+                )
 
         self.assignments: dict[str, StrategyAssignment] = {}
         self.strategies: dict[str, VehicleStrategy] = {}
@@ -191,7 +257,10 @@ class StrategyManager:
             if assignment.name == "defend":
                 target_id = assignment.target_vehicle_id
                 if target_id not in vehicle_ids or target_id == vehicle_id:
-                    raise ValueError("defense target must be an existing, different vehicle")
+                    raise ValueError(
+                        f"defense target {target_id!r} for {vehicle_id} must be another "
+                        f"vehicle in this run: {list(vehicle_ids)}"
+                    )
             self.assignments[vehicle_id] = assignment
             if assignment.name in factories:
                 self.strategies[vehicle_id] = factories[assignment.name](vehicle_id)

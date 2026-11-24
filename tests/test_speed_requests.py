@@ -211,7 +211,7 @@ class SpeedCandidateIntegrationTests(unittest.TestCase):
             SIMULATION_SECONDS=horizon,
         ), patch("main.create_demo_track", return_value=track), \
              patch("main._create_vehicle", return_value=runtime), \
-             patch("main.RelativeOvertakingStrategy", return_value=frozen_strategy), \
+             patch("strategy.assignment.RelativeOvertakingStrategy", return_value=frozen_strategy), \
              patch("main.SimulationVisualizer"), \
              patch.object(runtime, "step", side_effect=record_step), \
              redirect_stdout(io.StringIO()):
@@ -482,7 +482,7 @@ class SpeedCandidateIntegrationTests(unittest.TestCase):
                         if candidate.speed_limit == decision.speed_limit)
         frozen_strategy = Mock()
         frozen_strategy.update.return_value = decision
-        with patch("sim.data_generation.RelativeOvertakingStrategy", return_value=frozen_strategy):
+        with patch("strategy.assignment.RelativeOvertakingStrategy", return_value=frozen_strategy):
             run_episode(scenario, settings, collector, 1.0)
         actual = [frame.observations["ego"].state for frame in collector.episodes[0].frames]
         self.assertLess(actual[1].velocity, actual[0].velocity)
@@ -543,7 +543,7 @@ class SpeedCandidateIntegrationTests(unittest.TestCase):
 
         collector = TrainingDataCollector(self.prediction.model.time_step)
         # 工廠提供真實策略物件。兩個包裝函式皆保留原輸入與原輸出。
-        with patch("sim.data_generation.RelativeOvertakingStrategy", return_value=strategy), \
+        with patch("strategy.assignment.RelativeOvertakingStrategy", return_value=strategy), \
              patch.object(strategy, "update", side_effect=record_update), \
              patch.object(SimulatedVehicle, "step", new=record_step):
             run_episode(scenario, settings, collector, 1.0)

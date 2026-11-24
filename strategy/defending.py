@@ -9,12 +9,14 @@ import numpy as np
 
 from core.track import Track
 from core.track_geometry import signed_longitudinal_gap, track_length
+from core.validation import require_finite_values, require_nonnegative, require_positive
 from core.vehicle_state import VehicleState
 from strategy.bicycle_prediction import BicyclePredictionConfig, predict_bicycle_trajectory
 from strategy.collision_check import PredictedCollision, states_at_times
+from strategy.common import check_other_ids, check_track_and_time, decision_due, lateral_targets
 from strategy.defense_conditions import RearPrediction, has_predicted_collision, predict_rear
 from strategy.observations import VehicleObservation
-from strategy.offset_path import LateralManeuver
+from strategy.offset_path import LateralManeuver, start_or_continue_maneuver
 from strategy.prediction import predict_path_trajectory
 from strategy.responsibility import (
     PairPrediction, ResponsibilityConfig, ResponsibilityResult, evaluate_responsibility,
@@ -56,24 +58,15 @@ class DefenseConfig:
         if self.responsibility is not None and not isinstance(
                 self.responsibility, ResponsibilityConfig):
             raise ValueError("responsibility must be a ResponsibilityConfig or None")
-        nonnegative = (
-            self.q_block, self.progress_weight, self.smooth_weight,
-            self.return_tolerance, self.safety_margin, self.deviation_weight,
-            self.leader_penalty_weight,
+        require_nonnegative(
+            self, "q_block", "progress_weight", "smooth_weight", "return_tolerance",
+            "safety_margin", "deviation_weight", "leader_penalty_weight",
         )
-        positive = (
-            self.detection_range, self.transition_length,
-            self.decision_period, self.prediction_horizon, self.prediction_step,
-            self.collision_horizon, self.path_sample_spacing,
+        require_positive(
+            self, "detection_range", "transition_length", "decision_period", "prediction_horizon",
+            "prediction_step", "collision_horizon", "path_sample_spacing",
         )
-        if any(not math.isfinite(value) or value < 0.0 for value in nonnegative):
-            raise ValueError(
-                "defense weights, margins and tolerances must be non-negative and finite"
-            )
-        if any(not math.isfinite(value) or value <= 0.0 for value in positive):
-            raise ValueError("defense distances and timing must be positive and finite")
-        if not all(math.isfinite(value) for value in self.candidate_offsets):
-            raise ValueError("candidate_offsets must be finite")
+        require_finite_values(self, "candidate_offsets")
         if not isinstance(self.collision_check_enabled, bool):
             raise ValueError("collision_check_enabled must be a bool")
 
@@ -150,19 +143,12 @@ class CostBasedDefenseStrategy:
         track: Track,
         time_seconds: float,
     ) -> DefenseDecision:
-        # 只在固定間隔重新比較路徑。
-        if not track.closed:
-            raise ValueError("defending requires a closed base track")
-        if not math.isfinite(time_seconds) or time_seconds < 0.0:
-            raise ValueError("time_seconds must be non-negative and finite")
-        if time_seconds < self.last_evaluation_time:
-            raise ValueError("time_seconds must not move backwards")
-        ids = [other.vehicle_id for other in others]
-        if len(set(ids)) != len(ids) or defender.vehicle_id in ids:
-            raise ValueError("vehicle IDs must be unique; exclude defender from others")
+        check_track_and_time("defending", track, time_seconds, self.last_evaluation_time)
+        check_other_ids(defender, others)
         if defender.vehicle_id == self.ego_id:
             raise ValueError("defender and ego must be different vehicles")
-        if time_seconds - self.last_evaluation_time < self.config.decision_period:
+        # 只在固定間隔重新比較路徑。
+        if not decision_due(time_seconds, self.last_evaluation_time, self.config.decision_period):
             return self.decision
         length = track_length(track)
         ego = next((other for other in others if other.vehicle_id == self.ego_id), None)
@@ -199,7 +185,10 @@ class CostBasedDefenseStrategy:
             )
 
         # 可關閉的碰撞條件先篩選，通過後才參與成本比較。
-        targets = self._candidate_targets(defender, track)
+        # 中心線固定列入候選；不加入對方位置或臨時目標。
+        targets = lateral_targets(
+            self.config.candidate_offsets, track, defender.geometry, self.config.safety_margin,
+        )
         self.last_candidates = tuple(
             self._evaluate_candidate(defender, track, target, ego_d)
             for target in targets
@@ -236,22 +225,6 @@ class CostBasedDefenseStrategy:
         self.last_evaluation_time = time_seconds
         return self.decision
 
-    def _candidate_targets(
-        self,
-        defender: VehicleObservation,
-        track: Track,
-    ) -> tuple[float, ...]:
-        maximum_d = (
-            track.width / 2.0 - defender.geometry.width / 2.0 - self.config.safety_margin
-        )
-        if maximum_d < 0.0:
-            raise ValueError("track is too narrow for defender width and safety_margin")
-        # 中心線固定列入候選；不加入對方位置或臨時目標。
-        return tuple(dict.fromkeys(
-            target for target in (0.0, *self.config.candidate_offsets)
-            if abs(target) <= maximum_d
-        ))
-
     def _evaluate_candidate(
         self,
         defender: VehicleObservation,
@@ -259,13 +232,12 @@ class CostBasedDefenseStrategy:
         target_d: float,
         ego_d: float | None,
     ) -> DefenseCandidate:
-        # 保留未完成動作的起點，避免每次更新都重新開始過渡。
-        maneuver = self.decision.maneuver
-        if maneuver is None or not math.isclose(maneuver.target_d, target_d):
-            maneuver = LateralManeuver(
-                defender.track_position.s, defender.track_position.d,
-                target_d, self.config.transition_length,
-            )
+        # 保留未完成動作的起點，避免每次更新都重新開始過渡；
+        # 完成橫移後改為等偏移線，同一目標保持超過一圈時才不會重播過渡。
+        maneuver = start_or_continue_maneuver(
+            self.decision.maneuver, defender.track_position, target_d,
+            self.config.transition_length, track,
+        )
         step_count = math.ceil(self.config.prediction_horizon / self.config.prediction_step)
         cost_times = np.linspace(0.0, self.config.prediction_horizon, step_count + 1)
         rear = self.last_rear_prediction

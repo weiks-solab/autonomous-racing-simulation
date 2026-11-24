@@ -112,6 +112,27 @@ class SimulationVisualizerTests(unittest.TestCase):
                 if interval > 0:
                     loop.assert_called_with(interval)
 
+    def test_wait_processes_events_and_skips_non_positive_time(self) -> None:
+        visualizer = SimulationVisualizer(self.track, VisualizationConfig(realtime=True))
+        plt.ioff()
+        canvas = visualizer.figure.canvas
+        with patch("sim.visualizer.plt.pause") as pause, \
+             patch.object(canvas, "start_event_loop") as loop:
+            for seconds in (0.0, -0.01, float("nan")):
+                visualizer.wait(seconds)
+            loop.assert_not_called()
+            visualizer.wait(0.02)
+        loop.assert_called_once_with(0.02)
+        pause.assert_not_called()
+
+        with patch("matplotlib.backends.backend_agg.FigureCanvasAgg.supports_blit", False):
+            fallback = SimulationVisualizer(self.track, VisualizationConfig(realtime=True))
+        plt.ioff()
+        with patch("sim.visualizer.plt.pause") as pause:
+            fallback.wait(0.02)
+            fallback.wait(0.0)
+        pause.assert_called_once_with(0.02)
+
     def test_all_dynamic_elements_can_be_hidden(self) -> None:
         visualizer = SimulationVisualizer(
             self.track,

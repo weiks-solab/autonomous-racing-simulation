@@ -24,12 +24,12 @@ overlap_rule=True 時，依決策當下兩車中心的縱向差 Δs₀ᶜ 與碰
 """
 
 from dataclasses import dataclass
-import math
 from typing import Sequence
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
+from core.validation import require_finite, require_positive
 from core.vehicle_geometry import VehicleGeometry
 from core.vehicle_state import VehicleState
 from strategy.collision_check import PredictedCollision
@@ -50,12 +50,8 @@ class ResponsibilityConfig:
             raise ValueError("overlap_rule must be a bool")
         if self.leader_soft and self.overlap_rule:
             raise ValueError("leader_soft and overlap_rule cannot both be enabled")
-        if not math.isfinite(self.collision_radius) or self.collision_radius <= 0.0:
-            raise ValueError("collision_radius must be positive and finite")
-        if not math.isfinite(self.slope) or self.slope <= 0.0:
-            raise ValueError("responsibility slope must be positive and finite")
-        if not math.isfinite(self.offset):
-            raise ValueError("responsibility offset must be finite")
+        require_positive(self, "collision_radius", "slope")
+        require_finite(self, "offset")
 
 
 @dataclass(frozen=True)

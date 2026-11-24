@@ -63,21 +63,14 @@ class TrackBoundaryStatus(Enum):
 def _segments(
     track: Track,
 ) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
-    points = track.centerline
-    if track.closed:
-        starts = points
-        ends = np.roll(points, -1, axis=0)
-    else:
-        starts = points[:-1]
-        ends = points[1:]
-    vectors = ends - starts
-    lengths = np.linalg.norm(vectors, axis=1)
-    return starts, vectors, lengths
+    # 線段資料由 Track 快取；每一步預測都會呼叫，不再重算整條中心線。
+    segments = track.segments
+    return segments.starts, segments.vectors, segments.lengths
 
 
 def track_length(track: Track) -> float:
     """Return centerline polyline length in metres."""
-    return float(np.sum(_segments(track)[2]))
+    return track.segments.total_length
 
 
 def world_to_track(state: VehicleState, track: Track) -> TrackPosition:
@@ -92,7 +85,7 @@ def world_to_track(state: VehicleState, track: Track) -> TrackPosition:
     squared_distances = np.einsum("ij,ij->i", differences, differences)
     segment_index = int(np.argmin(squared_distances))
 
-    cumulative_lengths = np.concatenate(([0.0], np.cumsum(lengths)))
+    cumulative_lengths = track.segments.cumulative
     s = float(
         cumulative_lengths[segment_index]
         + parameters[segment_index] * lengths[segment_index]
@@ -112,7 +105,7 @@ def track_to_world(s: float, d: float, track: Track) -> NDArray[np.float64]:
     if not math.isfinite(s) or not math.isfinite(d):
         raise ValueError("s and d must be finite")
     starts, vectors, lengths = _segments(track)
-    cumulative_lengths = np.concatenate(([0.0], np.cumsum(lengths)))
+    cumulative_lengths = track.segments.cumulative
     total_length = float(cumulative_lengths[-1])
     if track.closed:
         normalized_s = s % total_length
@@ -133,6 +126,28 @@ def track_to_world(s: float, d: float, track: Track) -> NDArray[np.float64]:
     return center_point + d * left_normal
 
 
+def track_tangent_angle(s: float, track: Track) -> float:
+    """Return the world heading of the centerline segment containing ``s``, in radians."""
+    if not math.isfinite(s):
+        raise ValueError("s must be finite")
+    _, vectors, lengths = _segments(track)
+    cumulative_lengths = track.segments.cumulative
+    total_length = float(cumulative_lengths[-1])
+    if track.closed:
+        normalized_s = s % total_length
+    else:
+        if not 0.0 <= s <= total_length:
+            raise ValueError("s must lie within an open track")
+        normalized_s = s
+    # 與 track_to_world 相同的線段查找，切線方向即 s 增加的方向。
+    segment_index = int(
+        np.searchsorted(cumulative_lengths, normalized_s, side="right") - 1
+    )
+    segment_index = min(max(segment_index, 0), len(lengths) - 1)
+    vector = vectors[segment_index]
+    return float(math.atan2(vector[1], vector[0]))
+
+
 def track_to_world_points(
     s: NDArray[np.float64],
     d: NDArray[np.float64],
@@ -146,7 +161,7 @@ def track_to_world_points(
     if not np.all(np.isfinite(distances)) or not np.all(np.isfinite(offsets)):
         raise ValueError("s and d must be finite")
     starts, vectors, lengths = _segments(track)
-    cumulative = np.concatenate(([0.0], np.cumsum(lengths)))
+    cumulative = track.segments.cumulative
     if track.closed:
         distances = distances % cumulative[-1]
     elif np.any((distances < 0.0) | (distances > cumulative[-1])):

@@ -153,6 +153,24 @@ class ProbeFollowingTests(unittest.TestCase):
         self.assertEqual(strategy.phase_index, 1)
         self.assertEqual(decision.mode, "return")
 
+    def test_custom_probe_sequence_sets_order_and_side(self) -> None:
+        config = replace(self.config, prediction_horizon=0.1, hold_seconds=1.0,
+                         probe_sequence=(-0.45, 0.0, 0.3, 0.0))
+        strategy = self.strategy(config)
+        decision = strategy.update(self.ego, (self.front,), self.track, 0.0)
+        self.assertEqual((decision.mode, decision.target_d), ("probe_right", -0.45))
+        arrived = observation(self.track, "rear", 20.0, -0.45, 3.0)
+        strategy.update(arrived, (self.front,), self.track, 1.0)
+        decision = strategy.update(arrived, (self.front,), self.track, 2.0)
+        self.assertEqual((strategy.phase_index, decision.mode), (1, "return"))
+
+    def test_default_sequence_is_unchanged_and_invalid_sequences_are_rejected(self) -> None:
+        self.assertEqual(ProbeFollowingConfig(probe_offset=0.5).sequence, (0.5, 0.0, -0.5, 0.0))
+        self.assertEqual(ProbeFollowingConfig(probe_sequence=[0.3, 0]).probe_sequence, (0.3, 0.0))
+        for sequence in ((), (float("nan"),)):
+            with self.subTest(sequence=sequence), self.assertRaises(ValueError):
+                ProbeFollowingConfig(probe_sequence=sequence)
+
     def test_probe_target_is_held_even_when_center_has_lower_cost(self) -> None:
         config = replace(self.config, gap_weight=0.0, speed_weight=0.0, probe_weight=0.0)
         strategy = self.strategy(config)
@@ -295,7 +313,7 @@ class ProbeFollowingIntegrationTests(unittest.TestCase):
         }
         with patch("main.VEHICLE_SPECS", specs), patch("main.STRATEGY_ASSIGNMENTS", assignments), \
              patch("main.TRACK_NAME", "rounded_rectangle"), patch("main.SIMULATION_SECONDS", 0.12), \
-             patch("main.ProbeFollowingStrategy", wraps=ProbeFollowingStrategy) as factory, \
+             patch("strategy.assignment.ProbeFollowingStrategy", wraps=ProbeFollowingStrategy) as factory, \
              patch("main.SimulationVisualizer") as visualizer, redirect_stdout(io.StringIO()):
             main.run_simulation()
         factory.assert_called_once()

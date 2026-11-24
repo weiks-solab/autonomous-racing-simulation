@@ -1,0 +1,104 @@
+{
+  "executed_at_utc": "2026-11-24T02:44:42+00:00",
+  "commit": "901ae7fc897e92242a63b947c2c407f2fe527bd3",
+  "scenarios": {
+    "progress_centerline_6s": {
+      "decisions": {
+        "vehicle-1": {
+          "count": 60,
+          "interval_steps": [
+            5
+          ]
+        },
+        "vehicle-3": {
+          "count": 60,
+          "interval_steps": [
+            5
+          ]
+        }
+      },
+      "collision_steps": 0,
+      "progress_m": {
+        "vehicle-1": 55.6428,
+        "vehicle-2": 44.6446,
+        "vehicle-3": 43.154
+      },
+      "final_d_m": {
+        "vehicle-1": 0.5899,
+        "vehicle-2": -0.0503,
+        "vehicle-3": 0.5851
+      }
+    },
+    "cost_overtake_defend_6s": {
+      "decisions": {
+        "vehicle-1": {
+          "count": 60,
+          "interval_steps": [
+            5
+          ]
+        },
+        "vehicle-2": {
+          "count": 100,
+          "interval_steps": [
+            3
+          ]
+        }
+      },
+      "collision_steps": 0,
+      "progress_m": {
+        "vehicle-1": 55.1081,
+        "vehicle-2": 45.2028
+      },
+      "final_d_m": {
+        "vehicle-1": 0.6108,
+        "vehicle-2": -0.032
+      }
+    },
+    "default_relative_defend_6s": {
+      "decisions": {
+        "vehicle-1": {
+          "count": 100,
+          "interval_steps": [
+            3
+          ]
+        },
+        "vehicle-2": {
+          "count": 100,
+          "interval_steps": [
+            3
+          ]
+        }
+      },
+      "collision_steps": 12,
+      "progress_m": {
+        "vehicle-1": 51.1587,
+        "vehicle-2": 44.9941
+      },
+      "final_d_m": {
+        "vehicle-1": 0.2704,
+        "vehicle-2": -0.0423
+      }
+    },
+    "overtake_defend_12s": {
+      "decisions": {
+        "vehicle-2": {
+          "count": 200,
+          "interval_steps": [
+            3
+          ]
+        }
+      },
+      "collision_steps": 59,
+      "progress_m": {
+        "vehicle-1": 69.1135,
+        "vehicle-2": 57.2301,
+        "vehicle-3": 45.2725
+      },
+      "final_d_m": {
+        "vehicle-1": 0.0,
+        "vehicle-2": 0.0015,
+        "vehicle-3": 0.0291
+      }
+    }
+  }
+}

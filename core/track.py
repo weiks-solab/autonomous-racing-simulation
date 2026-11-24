@@ -1,10 +1,22 @@
 """Closed centerline track representation and geometry queries."""
 
 from dataclasses import dataclass
+from functools import cached_property
 import math
 
 import numpy as np
 from numpy.typing import NDArray
+
+
+@dataclass(frozen=True)
+class TrackSegments:
+    """中心線各段的起點、向量、長度與累積長度；每條賽道只計算一次。"""
+
+    starts: NDArray[np.float64]
+    vectors: NDArray[np.float64]
+    lengths: NDArray[np.float64]
+    cumulative: NDArray[np.float64]  # 長度為段數＋1，首項為 0
+    total_length: float              # np.sum(lengths)，與原本 track_length 的算法相同
 
 
 @dataclass(frozen=True)
@@ -31,6 +43,23 @@ class Track:
         points = points.copy()
         points.setflags(write=False)
         object.__setattr__(self, "centerline", points)
+
+    @cached_property
+    def segments(self) -> TrackSegments:
+        """座標轉換共用的線段資料。centerline 唯讀，所以快取不會過期。"""
+        points = self.centerline
+        if self.closed:
+            starts = points
+            ends = np.roll(points, -1, axis=0)
+        else:
+            starts = points[:-1]
+            ends = points[1:]
+        vectors = ends - starts
+        lengths = np.linalg.norm(vectors, axis=1)
+        cumulative = np.concatenate(([0.0], np.cumsum(lengths)))
+        for array in (vectors, lengths, cumulative):
+            array.setflags(write=False)
+        return TrackSegments(starts, vectors, lengths, cumulative, float(np.sum(lengths)))
 
     @classmethod
     def create_oval(

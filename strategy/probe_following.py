@@ -8,13 +8,20 @@ import numpy as np
 
 from core.track import Track
 from core.track_geometry import signed_longitudinal_gap, track_length, world_to_track
+from core.validation import require_finite_values, require_nonnegative, require_positive
 from core.vehicle_geometry import VehicleGeometry, oriented_rectangle_corners
 from strategy.base import CandidatePath, CandidateSnapshot, StrategyDecision
-from strategy.bicycle_prediction import BicyclePrediction, BicyclePredictionConfig, predict_bicycle_trajectory
+from strategy.bicycle_prediction import (
+    BicyclePrediction, BicyclePredictionConfig, constant_offset_maneuver,
+    predict_bicycle_trajectory, prediction_config_for,
+)
 from strategy.collision_check import PredictedVehicle, first_predicted_collision
+from strategy.common import (
+    RelativeTargetState, accumulated_gap, check_other_ids, check_track_and_time,
+    decision_due, lateral_targets, nearest_vehicle_ahead,
+)
 from strategy.observations import VehicleObservation
-from strategy.offset_path import LateralManeuver, continue_lateral_maneuver
-from strategy.relative_overtaking import RelativeTargetState
+from strategy.offset_path import LateralManeuver, start_or_continue_maneuver
 
 
 @dataclass(frozen=True)
@@ -38,22 +45,31 @@ class ProbeFollowingConfig:
     speed_weight: float = 1.0
     probe_weight: float = 2.0
     switch_weight: float = 0.5
+    # 依序輪流的橫向試探目標 d（m，左正）；None 時為左、回中、右、回中。
+    probe_sequence: tuple[float, ...] | None = None
 
     def __post_init__(self) -> None:
-        positive = (
-            self.target_gap, self.detection_range, self.prediction_horizon,
-            self.decision_period, self.transition_length, self.speed_step,
-            self.probe_offset, self.probe_gap_tolerance, self.lateral_tolerance,
-            self.hold_seconds, self.gap_scale, self.speed_scale, self.lateral_scale,
+        require_positive(
+            self, "target_gap", "detection_range", "prediction_horizon", "decision_period",
+            "transition_length", "speed_step", "probe_offset", "probe_gap_tolerance",
+            "lateral_tolerance", "hold_seconds", "gap_scale", "speed_scale", "lateral_scale",
         )
-        nonnegative = (self.clearance, self.safety_margin, self.gap_weight,
-                       self.speed_weight, self.probe_weight, self.switch_weight)
-        if any(not math.isfinite(value) or value <= 0.0 for value in positive):
-            raise ValueError("probe distances, timing and scales must be positive and finite")
-        if any(not math.isfinite(value) or value < 0.0 for value in nonnegative):
-            raise ValueError("probe margins and weights must be non-negative and finite")
+        require_nonnegative(self, "clearance", "safety_margin", "gap_weight",
+                            "speed_weight", "probe_weight", "switch_weight")
         if self.target_gap <= self.clearance:
             raise ValueError("target_gap must exceed clearance")
+        if self.probe_sequence is not None:
+            object.__setattr__(self, "probe_sequence", tuple(float(value) for value in self.probe_sequence))
+            if not self.probe_sequence:
+                raise ValueError("ProbeFollowingConfig.probe_sequence must not be empty")
+            require_finite_values(self, "probe_sequence")
+
+    @property
+    def sequence(self) -> tuple[float, ...]:
+        """實際使用的試探目標序列。"""
+        if self.probe_sequence is not None:
+            return self.probe_sequence
+        return (self.probe_offset, 0.0, -self.probe_offset, 0.0)
 
 
 @dataclass(frozen=True)
@@ -119,16 +135,9 @@ class ProbeFollowingStrategy:
         self, vehicle: VehicleObservation, others: Sequence[VehicleObservation],
         track: Track, time_seconds: float,
     ) -> StrategyDecision:
-        if not track.closed:
-            raise ValueError("probe following requires a closed track")
-        if not math.isfinite(time_seconds) or time_seconds < 0.0:
-            raise ValueError("time_seconds must be non-negative and finite")
-        if time_seconds < self.last_evaluation_time:
-            raise ValueError("time_seconds must not move backwards")
-        ids = [other.vehicle_id for other in others]
-        if len(set(ids)) != len(ids) or vehicle.vehicle_id in ids:
-            raise ValueError("vehicle IDs must be unique; exclude self from others")
-        if time_seconds - self.last_evaluation_time < self.config.decision_period - 1e-9:
+        check_track_and_time("probe following", track, time_seconds, self.last_evaluation_time)
+        check_other_ids(vehicle, others)
+        if not decision_due(time_seconds, self.last_evaluation_time, self.config.decision_period):
             return self.decision
         self.last_evaluation_time = time_seconds
 
@@ -145,7 +154,10 @@ class ProbeFollowingStrategy:
         self.last_candidates = tuple(
             self._evaluate_candidate(vehicle, track, target_d, speed, gap, desired_d,
                                      front.prediction, front_bounds, obstacles)
-            for target_d in self._candidate_targets(vehicle, track, desired_d)
+            # 僅比較回中、目前目標與本次試探目標，每條路徑最多比較四種速度。
+            for target_d in lateral_targets(
+                (self.decision.target_d, desired_d), track, vehicle.geometry, self.config.safety_margin,
+            )
             for speed in speeds
         )
         feasible = [candidate for candidate in self.last_candidates if candidate.feasible]
@@ -192,23 +204,18 @@ class ProbeFollowingStrategy:
     ) -> tuple[VehicleObservation | None, float]:
         """一次試探鎖定同一前車，沿用既有累積進度表示法處理跨起終點。"""
         previous = self.target_state
-        target = next((other for other in others
-                       if previous is not None and other.vehicle_id == previous.vehicle_id), None)
-        length = track_length(track)
-        gap = 0.0
+        target = None if previous is None else next(
+            (other for other in others if other.vehicle_id == previous.vehicle_id), None)
         if target is None:
-            ahead = [(signed_longitudinal_gap(vehicle.track_position, other.track_position, length),
-                      other.vehicle_id, other) for other in others]
-            ahead = [item for item in ahead if 0.0 < item[0] <= self.config.detection_range]
+            # 換新對象時，試探循環從頭開始。
             self.phase_index, self.hold_started_at = 0, None
             self.phase_active = False
-            if not ahead:
+            target, gap = nearest_vehicle_ahead(vehicle, others, track, self.config.detection_range)
+            if target is None:
                 self.target_state = None
                 return None, gap
-            gap, _, target = min(ahead, key=lambda item: item[:2])
         else:
-            gap = previous.gap + signed_longitudinal_gap(previous.target_position, target.track_position, length)
-            gap -= signed_longitudinal_gap(previous.vehicle_position, vehicle.track_position, length)
+            gap = accumulated_gap(previous, vehicle, target, track)
         self.target_state = RelativeTargetState(
             target.vehicle_id, vehicle.track_position, target.track_position, gap,
         )
@@ -223,7 +230,7 @@ class ProbeFollowingStrategy:
             self.hold_started_at = None
             return 0.0, "follow"
         self.phase_active = True
-        sequence = (self.config.probe_offset, 0.0, -self.config.probe_offset, 0.0)
+        sequence = self.config.sequence
         desired_d = sequence[self.phase_index]
         reached = abs(vehicle.track_position.d - desired_d) <= self.config.lateral_tolerance
         # 首次實際到達後才計時；正常追蹤誤差不重置計時。
@@ -242,14 +249,11 @@ class ProbeFollowingStrategy:
         return desired_d, mode
 
     def _predict_other(self, other: VehicleObservation, track: Track) -> PredictedVehicle:
-        config = self.other_prediction_configs.get(other.vehicle_id)
-        if config is None:
-            raise ValueError(f"missing prediction configuration for {other.vehicle_id}")
+        config = prediction_config_for(self.other_prediction_configs, other.vehicle_id)
         # 沿用定速、等 d 的對手假設，實際防守仍由對手自己的策略執行。
-        maneuver = LateralManeuver(other.track_position.s, other.track_position.d,
-                                   other.track_position.d, config.path.path_length)
         prediction = predict_bicycle_trajectory(
-            other, track, maneuver, config, self.config.prediction_horizon, constant_speed=True,
+            other, track, constant_offset_maneuver(other, config), config,
+            self.config.prediction_horizon, constant_speed=True,
         )
         return PredictedVehicle(other.vehicle_id, other.geometry, prediction)
 
@@ -263,28 +267,15 @@ class ProbeFollowingStrategy:
         speeds.append(cruise)
         return tuple(dict.fromkeys(speeds))
 
-    def _candidate_targets(
-        self, vehicle: VehicleObservation, track: Track, desired_d: float,
-    ) -> tuple[float, ...]:
-        maximum_d = track.width / 2.0 - vehicle.geometry.width / 2.0 - self.config.safety_margin
-        if maximum_d < 0.0:
-            raise ValueError("track is too narrow for vehicle width and safety_margin")
-        # 僅比較回中、目前目標與本次試探目標，每條路徑最多比較四種速度。
-        return tuple(dict.fromkeys(
-            target for target in (0.0, self.decision.target_d, desired_d) if abs(target) <= maximum_d
-        ))
-
     def _evaluate_candidate(
         self, vehicle: VehicleObservation, track: Track, target_d: float, speed_limit: float,
         gap: float, desired_d: float, front: BicyclePrediction, front_bounds: np.ndarray,
         obstacles: Sequence[PredictedVehicle],
     ) -> ProbeCandidate:
-        maneuver = self.decision.maneuver
-        if maneuver is None or maneuver.target_d != target_d:
-            maneuver = LateralManeuver(vehicle.track_position.s, vehicle.track_position.d,
-                                       target_d, self.config.transition_length)
-        else:
-            maneuver = continue_lateral_maneuver(maneuver, vehicle.track_position.s, track_length(track))
+        maneuver = start_or_continue_maneuver(
+            self.decision.maneuver, vehicle.track_position, target_d,
+            self.config.transition_length, track,
+        )
         prediction = predict_bicycle_trajectory(
             vehicle, track, maneuver, self.prediction_config, self.config.prediction_horizon,
             speed_limit=speed_limit,

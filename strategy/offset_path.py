@@ -7,6 +7,7 @@ import numpy as np
 
 from core.track import Track
 from core.track_geometry import TrackPosition, track_length, track_to_world_points
+from core.validation import require_positive
 
 
 @dataclass(frozen=True)
@@ -39,10 +40,7 @@ class OffsetPathConfig:
     path_length: float = 18.0
 
     def __post_init__(self) -> None:
-        if not math.isfinite(self.sample_spacing) or self.sample_spacing <= 0.0:
-            raise ValueError("sample_spacing must be positive and finite")
-        if not math.isfinite(self.path_length) or self.path_length <= 0.0:
-            raise ValueError("path_length must be positive and finite")
+        require_positive(self, "sample_spacing", "path_length")
 
 
 def smoothstep(xi: float) -> float:
@@ -100,6 +98,19 @@ def continue_lateral_maneuver(
     return LateralManeuver(
         current_s, maneuver.target_d, maneuver.target_d, maneuver.transition_length,
     )
+
+
+def start_or_continue_maneuver(
+    previous: LateralManeuver | None,
+    position: TrackPosition,
+    target_d: float,
+    transition_length: float,
+    track: Track,
+) -> LateralManeuver:
+    """目標相同時沿用原動作起點；目標不同時從目前位置開始新的橫移。"""
+    if previous is None or previous.target_d != target_d:
+        return LateralManeuver(position.s, position.d, target_d, transition_length)
+    return continue_lateral_maneuver(previous, position.s, track_length(track))
 
 
 def generate_offset_track(

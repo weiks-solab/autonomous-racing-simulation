@@ -1,0 +1,40 @@
+{
+  "executed_at_utc": "2026-11-24T02:39:23+00:00",
+  "commit": "901ae7fc897e92242a63b947c2c407f2fe527bd3",
+  "python": "3.10.20",
+  "simulation_seconds": 4.0,
+  "frame_period_ms": 20.0,
+  "note": "Agg＋忙等模擬 GUI 等待；不含 TkAgg 畫面傳輸。",
+  "results": [
+    {
+      "mode": {
+        "realtime": true
+      },
+      "wall_seconds_total": 12.79,
+      "frames_shown": 200,
+      "playback_seconds": 12.67,
+      "interval_ms": {
+        "mean": 63.67,
+        "median": 12.87,
+        "p95": 170.91,
+        "max": 180.07,
+        "share_over_50ms": 0.337
+      }
+    },
+    {
+      "mode": {
+        "replay": true
+      },
+      "wall_seconds_total": 14.38,
+      "frames_shown": 198,
+      "playback_seconds": 3.98,
+      "interval_ms": {
+        "mean": 20.2,
+        "median": 20.0,
+        "p95": 20.01,
+        "max": 75.92,
+        "share_over_50ms": 0.005
+      }
+    }
+  ]
+}

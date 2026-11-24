@@ -1,5 +1,37 @@
 # GP 模型訓練
 
+## 互動歷史 GP：試探反應預測
+
+`interaction_gp.py collect --features history` 收集 13 欄，答案仍為前車 `d(t+0.5)−d(t)`（使用時加回 front_d 即絕對位置）。
+d 左正；歷史以 t−0.4、t−0.2、t 三幀切兩段。
+
+| 欄位 | 定義 | 單位 |
+| --- | --- | --- |
+| gap | 前車 s − 後車 s | m |
+| rear_d／front_d | 當下橫向位置 | m |
+| rear_heading_error／front_heading_error | 車頭角 − 所在中心線線段切線角，包裝到 ±π | rad |
+| rear_speed／front_speed | 車身速度（運動學模型無側滑） | m/s |
+| front_curvature | 前車所在中心線曲率，左彎正 | 1/m |
+| rear_dd_early／front_dd_early | d(t−0.2) − d(t−0.4) | m |
+| rear_dd_late／front_dd_late | d(t) − d(t−0.2) | m |
+| d_target | 後車當下實際採用的目標 d | m |
+
+歷史不足 0.4 s 的樣本略過；歷史窗或標籤窗內有碰撞矩形重疊也略過。
+`--randomize-probes` 讓每場隨機先左或先右、左右交替，每次幅度取 0.3／0.45／0.6 m，整場 hold 取 1.0～2.5 s；
+使用獨立亂數，起點、車距、速度抽樣與不加此選項時相同。不加時 probe_follow 行為不變。
+
+```powershell
+.\.venv\Scripts\python.exe interaction_gp.py collect --features history --randomize-probes --episodes 20 --seconds 15 --seed 42 --output data/training/my_history
+# 消融：同一資料、同一切分，只改輸入欄位
+.\.venv\Scripts\python.exe interaction_gp.py train --data data/training/my_history --max-train 0 --output models/gp/h_basic --feature-subset gap rear_d rear_heading_error rear_speed front_d front_heading_error front_speed front_curvature
+.\.venv\Scripts\python.exe interaction_gp.py train --data data/training/my_history --max-train 0 --output models/gp/h_history --feature-subset gap rear_d rear_heading_error rear_speed front_d front_heading_error front_speed front_curvature rear_dd_early front_dd_early rear_dd_late front_dd_late
+.\.venv\Scripts\python.exe interaction_gp.py train --data data/training/my_history --max-train 0 --output models/gp/h_action
+```
+
+不給 `--feature-subset` 時使用全部欄位。評估子集與等速基準一律由全部欄位計算，三組可直接比較；
+歷史資料的等速基準為 `front_dd_late/0.2×0.5`，另報告後車橫移中（|rear_dd_late|>0.02 m）與保持中的誤差。
+model.pkl 記錄實際輸入名稱、單位與歷史長度；此模型尚未接入規劃器。
+
 ## 試探互動第一階段：0.5 秒反應預測
 
 新增獨立入口 `interaction_gp.py`，重用正式雙車步進與既有 GP kernel。

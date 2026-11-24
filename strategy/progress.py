@@ -5,13 +5,14 @@ import math
 from typing import Sequence
 
 from core.track import Track
-from core.track_geometry import track_length
+from core.validation import require_finite_values, require_nonnegative, require_positive
 from strategy.base import CandidatePath, CandidateSnapshot, StrategyDecision
 from strategy.bicycle_prediction import (
     BicyclePrediction, BicyclePredictionConfig, predict_bicycle_trajectory,
 )
+from strategy.common import check_track_and_time, decision_due, lateral_targets
 from strategy.observations import VehicleObservation
-from strategy.offset_path import LateralManeuver, continue_lateral_maneuver
+from strategy.offset_path import LateralManeuver, start_or_continue_maneuver
 
 
 @dataclass(frozen=True)
@@ -23,13 +24,9 @@ class ProgressConfig:
     safety_margin: float = 0.1
 
     def __post_init__(self) -> None:
-        positive = (self.transition_length, self.decision_period, self.prediction_horizon)
-        if any(not math.isfinite(value) or value <= 0.0 for value in positive):
-            raise ValueError("progress distances and timing must be positive and finite")
-        if not math.isfinite(self.safety_margin) or self.safety_margin < 0.0:
-            raise ValueError("safety_margin must be non-negative and finite")
-        if not all(math.isfinite(value) for value in self.candidate_offsets):
-            raise ValueError("candidate_offsets must be finite")
+        require_positive(self, "transition_length", "decision_period", "prediction_horizon")
+        require_nonnegative(self, "safety_margin")
+        require_finite_values(self, "candidate_offsets")
 
 
 @dataclass(frozen=True)
@@ -60,18 +57,15 @@ class ProgressStrategy:
         time_seconds: float,
     ) -> StrategyDecision:
         """others 僅保留共用介面；其他車的位置、速度與路徑不影響選擇。"""
-        if not track.closed:
-            raise ValueError("progress strategy requires a closed track")
-        if not math.isfinite(time_seconds) or time_seconds < 0.0:
-            raise ValueError("time_seconds must be non-negative and finite")
-        if time_seconds < self.last_evaluation_time:
-            raise ValueError("time_seconds must not move backwards")
-        if time_seconds - self.last_evaluation_time < self.config.decision_period:
+        check_track_and_time("progress strategy", track, time_seconds, self.last_evaluation_time)
+        if not decision_due(time_seconds, self.last_evaluation_time, self.config.decision_period):
             return self.decision
 
         self.last_candidates = tuple(
             self._evaluate_candidate(vehicle, track, target_d)
-            for target_d in self._candidate_targets(vehicle, track)
+            for target_d in lateral_targets(
+                self.config.candidate_offsets, track, vehicle.geometry, self.config.safety_margin,
+            )
         )
         best = max(self.last_candidates, key=lambda candidate: candidate.progress)
         snapshot = CandidateSnapshot(
@@ -99,28 +93,13 @@ class ProgressStrategy:
         self.last_evaluation_time = time_seconds
         return self.decision
 
-    def _candidate_targets(self, vehicle: VehicleObservation, track: Track) -> tuple[float, ...]:
-        maximum_d = track.width / 2.0 - vehicle.geometry.width / 2.0 - self.config.safety_margin
-        if maximum_d < 0.0:
-            raise ValueError("track is too narrow for vehicle width and safety_margin")
-        return tuple(dict.fromkeys(
-            target for target in (0.0, *self.config.candidate_offsets)
-            if abs(target) <= maximum_d
-        ))
-
     def _evaluate_candidate(
         self, vehicle: VehicleObservation, track: Track, target_d: float,
     ) -> ProgressCandidate:
-        maneuver = self.decision.maneuver
-        if maneuver is None or maneuver.target_d != target_d:
-            maneuver = LateralManeuver(
-                vehicle.track_position.s, vehicle.track_position.d,
-                target_d, self.config.transition_length,
-            )
-        else:
-            maneuver = continue_lateral_maneuver(
-                maneuver, vehicle.track_position.s, track_length(track),
-            )
+        maneuver = start_or_continue_maneuver(
+            self.decision.maneuver, vehicle.track_position, target_d,
+            self.config.transition_length, track,
+        )
         prediction = predict_bicycle_trajectory(
             vehicle, track, maneuver, self.prediction_config, self.config.prediction_horizon,
         )

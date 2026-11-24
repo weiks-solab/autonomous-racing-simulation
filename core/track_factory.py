@@ -6,7 +6,9 @@ import math
 import numpy as np
 
 from core.track import Track
-from core.track_loader import DEFAULT_MAP_ROOT, find_centerline, load_centerline
+from core.track_loader import DEFAULT_MAP_ROOT, available_maps, find_centerline, load_centerline
+
+BUILTIN_TRACKS = ("oval", "rounded_rectangle")  # 其他名稱都視為 map_root 下的下載圖
 
 
 @dataclass(frozen=True)
@@ -34,7 +36,15 @@ def create_track(config: TrackConfig) -> Track:
         )
     if config.name == "rounded_rectangle":
         return _rounded_rectangle(config)
-    return load_centerline(find_centerline(config.name, config.map_root), config.sample_spacing)
+    try:
+        path = find_centerline(config.name, config.map_root)
+    except ValueError as error:
+        downloaded = ", ".join(available_maps(config.map_root)) or "none"
+        raise ValueError(
+            f"{error}. Built-in tracks: {', '.join(BUILTIN_TRACKS)}; "
+            f"downloaded tracks in {config.map_root}: {downloaded}"
+        ) from error
+    return load_centerline(path, config.sample_spacing)
 
 
 def _rounded_rectangle(config: TrackConfig) -> Track:

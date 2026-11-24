@@ -1,0 +1,76 @@
+{
+  "executed_at_utc": "2026-11-24T02:34:33+00:00",
+  "commit": "901ae7fc897e92242a63b947c2c407f2fe527bd3",
+  "uncommitted_files": [
+    " M CHANGELOG.md",
+    " M README.md",
+    " M core/track.py",
+    " M core/track_factory.py",
+    " M core/track_geometry.py",
+    " M core/track_loader.py",
+    " M main.py",
+    " M sim/data_generation.py",
+    " M sim/simulated_vehicle.py",
+    " M strategy/assignment.py",
+    " M strategy/bicycle_prediction.py",
+    " M strategy/cost_overtaking.py",
+    " M strategy/defending.py",
+    " M strategy/offset_path.py",
+    " M strategy/overtaking.py",
+    " M strategy/probe_following.py",
+    " M strategy/progress.py",
+    " M strategy/relative_overtaking.py",
+    " M strategy/responsibility.py",
+    " M tests/test_probe_following.py",
+    " M tests/test_speed_requests.py",
+    "?? core/validation.py",
+    "?? reports/experiments/2026-11-24_refactor_equivalence/",
+    "?? reports/experiments/2026-11-24_replay_and_track_cache/",
+    "?? strategy/common.py"
+  ],
+  "python": "3.10.20",
+  "scenario": {
+    "track": "rounded_rectangle",
+    "simulation_seconds": 6.0,
+    "assignments": {
+      "vehicle-1": "relative_overtake",
+      "vehicle-2": "defend"
+    }
+  },
+  "runs": [
+    {
+      "wall_seconds": 13.895,
+      "decisions": {
+        "relative_overtake": {
+          "count": 100,
+          "mean_ms": 107.04,
+          "median_ms": 125.5,
+          "p95_ms": 132.19
+        },
+        "defend": {
+          "count": 100,
+          "mean_ms": 31.03,
+          "median_ms": 30.83,
+          "p95_ms": 32.13
+        }
+      }
+    },
+    {
+      "wall_seconds": 13.862,
+      "decisions": {
+        "relative_overtake": {
+          "count": 100,
+          "mean_ms": 106.66,
+          "median_ms": 125.83,
+          "p95_ms": 127.88
+        },
+        "defend": {
+          "count": 100,
+          "mean_ms": 31.07,
+          "median_ms": 30.92,
+          "p95_ms": 31.72
+        }
+      }
+    }
+  ]
+}

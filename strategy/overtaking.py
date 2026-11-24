@@ -11,10 +11,13 @@ from core.track_geometry import (
     track_length,
     track_to_world,
 )
+from core.validation import require_nonnegative, require_positive
 from core.vehicle_geometry import rectangles_overlap
 from core.vehicle_state import VehicleState
 from strategy.observations import VehicleObservation
-from strategy.offset_path import LateralManeuver, lateral_offset_at_distance
+from strategy.offset_path import (
+    LateralManeuver, continue_lateral_maneuver, lateral_offset_at_distance,
+)
 from strategy.prediction import predict_vehicle_state
 
 
@@ -43,35 +46,9 @@ class OvertakingConfig:
     prediction_step: float = 0.25
 
     def __post_init__(self) -> None:
-        values = (
-            self.detection_range,
-            self.minimum_speed_advantage,
-            self.lateral_offset,
-            self.safety_margin,
-            self.pass_clearance,
-            self.return_tolerance,
-            self.transition_length,
-            self.prediction_horizon,
-            self.prediction_step,
-        )
-        if not all(math.isfinite(value) for value in values):
-            raise ValueError("overtaking configuration must be finite")
-        if self.detection_range <= 0.0:
-            raise ValueError("detection_range must be positive")
-        if self.minimum_speed_advantage < 0.0:
-            raise ValueError("minimum_speed_advantage must be non-negative")
-        if self.lateral_offset <= 0.0:
-            raise ValueError("lateral_offset must be positive")
-        if self.safety_margin < 0.0:
-            raise ValueError("safety_margin must be non-negative")
-        if self.pass_clearance <= 0.0:
-            raise ValueError("pass_clearance must be positive")
-        if self.return_tolerance < 0.0:
-            raise ValueError("return_tolerance must be non-negative")
-        if self.transition_length <= 0.0:
-            raise ValueError("transition_length must be positive")
-        if self.prediction_horizon <= 0.0 or self.prediction_step <= 0.0:
-            raise ValueError("prediction timing must be positive")
+        require_positive(self, "detection_range", "lateral_offset", "pass_clearance",
+                         "transition_length", "prediction_horizon", "prediction_step")
+        require_nonnegative(self, "minimum_speed_advantage", "safety_margin", "return_tolerance")
 
 
 @dataclass(frozen=True)
@@ -156,6 +133,11 @@ class RuleBasedOvertakingStrategy:
             raise ValueError("other vehicle IDs must be unique")
         if ego.vehicle_id in other_by_id:
             raise ValueError("ego must not also appear in others")
+        if self.maneuver is not None:
+            # 完成橫移後改為等偏移線，保持同側超過一圈時不會重播過渡。
+            self.maneuver = continue_lateral_maneuver(
+                self.maneuver, ego.track_position.s, track_length(track),
+            )
 
         if self.mode is OvertakingMode.FOLLOW:
             return self._update_follow(ego, others, track)

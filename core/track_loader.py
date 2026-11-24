@@ -20,6 +20,17 @@ def project_file(path: str | Path) -> Path:
     return resolved
 
 
+def available_maps(map_root: str | Path = DEFAULT_MAP_ROOT) -> list[str]:
+    """列出 map_root 下含有 *_centerline.csv 的地圖資料夾，供錯誤訊息提示可選名稱。"""
+    root = project_file(map_root)
+    if not root.is_dir():
+        return []
+    return sorted(
+        folder.name for folder in root.iterdir()
+        if folder.is_dir() and any(folder.glob("*_centerline.csv"))
+    )
+
+
 def find_centerline(name: str, map_root: str | Path = DEFAULT_MAP_ROOT) -> Path:
     # 資料夾名稱與檔名前綴不一定相同，例如 Mexico City / MexicoCity。
     if not name or Path(name).name != name or name in (".", ".."):

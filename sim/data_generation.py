@@ -15,16 +15,18 @@ from core.vehicle_model import KinematicBicycleModel, VehicleModelConfig
 from core.vehicle_state import ControlCommand, VehicleState
 from strategy.base import StrategyDecision
 from sim.simulated_vehicle import SimulatedVehicle, find_vehicle_collisions, validate_unique_vehicle_ids
-from strategy.assignment import StrategyAssignment, StrategyManager
+from strategy.assignment import (
+    StrategyAssignment, StrategyConfigs, StrategyManager, create_strategy_factories,
+)
 from strategy.bicycle_prediction import BicyclePredictionConfig
-from strategy.cost_overtaking import CostBasedOvertakingStrategy, CostOvertakingConfig
+from strategy.cost_overtaking import CostOvertakingConfig
 from strategy.defending import DefenseConfig
 from strategy.observations import VehicleObservation, create_vehicle_observation
 from strategy.offset_path import LateralManeuver, OffsetPathConfig, generate_offset_track
 from strategy.overtaking import OvertakingConfig
-from strategy.progress import ProgressConfig, ProgressStrategy
-from strategy.probe_following import ProbeFollowingConfig, ProbeFollowingStrategy
-from strategy.relative_overtaking import RelativeOvertakingConfig, RelativeOvertakingStrategy
+from strategy.progress import ProgressConfig
+from strategy.probe_following import ProbeFollowingConfig
+from strategy.relative_overtaking import RelativeOvertakingConfig
 from training_data.collector import TrainingDataCollector
 from training_data.schema import require_id, require_integer
 
@@ -78,6 +80,16 @@ class SimulationSettings:
     progress_config: ProgressConfig = field(default_factory=ProgressConfig)
     relative_overtaking_config: RelativeOvertakingConfig = field(default_factory=RelativeOvertakingConfig)
     probe_following_config: ProbeFollowingConfig = field(default_factory=ProbeFollowingConfig)
+
+    @property
+    def strategy_configs(self) -> StrategyConfigs:
+        """依策略名稱整理上方的各策略設定，供共用工廠與參考路徑長度規則使用。"""
+        return StrategyConfigs(
+            overtake=self.overtaking_config, defend=self.defense_config,
+            cost_overtake=self.cost_overtaking_config, progress=self.progress_config,
+            relative_overtake=self.relative_overtaking_config,
+            probe_follow=self.probe_following_config,
+        )
 
 
 @dataclass(frozen=True)
@@ -144,23 +156,6 @@ def _create_vehicles(scenario: EpisodeScenario, settings: SimulationSettings) ->
     return vehicles
 
 
-def _effective_offset_config(scenario: EpisodeScenario, settings: SimulationSettings) -> OffsetPathConfig:
-    transitions = {
-        "overtake": settings.overtaking_config.transition_length,
-        "defend": settings.defense_config.transition_length,
-        "cost_overtake": settings.cost_overtaking_config.transition_length,
-        "progress": settings.progress_config.transition_length,
-        "relative_overtake": settings.relative_overtaking_config.transition_length,
-        "probe_follow": settings.probe_following_config.transition_length,
-    }
-    # 資料入口也支援原本的 overtake；參考線必須涵蓋完整橫移。
-    length = max(
-        (settings.offset_path_config.path_length,
-         *(transitions.get(assignment.name, 0.0) for assignment in scenario.assignments.values()))
-    )
-    return replace(settings.offset_path_config, path_length=length)
-
-
 def _create_manager(
     scenario: EpisodeScenario, vehicles: list[SimulatedVehicle], settings: SimulationSettings,
     offset_config: OffsetPathConfig,
@@ -171,24 +166,12 @@ def _create_manager(
         )
         for vehicle in vehicles
     }
+    configs = settings.strategy_configs
     return StrategyManager(
         [vehicle.vehicle_id for vehicle in vehicles], scenario.assignments,
-        settings.overtaking_config, settings.defense_config,
+        configs.overtake, configs.defend,
         defense_enabled=settings.defense_enabled,
-        strategy_factories={
-            "probe_follow": lambda vehicle_id: ProbeFollowingStrategy(
-                settings.probe_following_config, prediction_configs[vehicle_id], prediction_configs,
-            ),
-            "cost_overtake": lambda vehicle_id: CostBasedOvertakingStrategy(
-                settings.cost_overtaking_config, prediction_configs[vehicle_id], prediction_configs,
-            ),
-            "progress": lambda vehicle_id: ProgressStrategy(
-                settings.progress_config, prediction_configs[vehicle_id],
-            ),
-            "relative_overtake": lambda vehicle_id: RelativeOvertakingStrategy(
-                settings.relative_overtaking_config, prediction_configs[vehicle_id], prediction_configs,
-            ),
-        },
+        strategy_factories=create_strategy_factories(configs, prediction_configs),
         prediction_configs=prediction_configs,
     )
 
@@ -216,7 +199,10 @@ def run_episode(
         raise ValueError("collector and vehicle model must use the same time_step")
     steps = simulation_step_count(seconds, time_step)
     vehicles = _create_vehicles(scenario, settings)
-    offset_config = _effective_offset_config(scenario, settings)
+    # 資料入口也支援原本的 overtake；參考線必須涵蓋完整橫移。
+    offset_config = settings.strategy_configs.path_config_for(
+        settings.offset_path_config, scenario.assignments.values(),
+    )
     manager = _create_manager(scenario, vehicles, settings, offset_config)
     observations = _observe(vehicles, settings.track, {})
     collector.record(scenario.episode_id, 0, 0.0, observations)

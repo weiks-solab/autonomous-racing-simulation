@@ -3,9 +3,9 @@
 輕量的 Python 2D 賽車模擬器。每輛車各自使用運動學自行車模型與 Pure
 Pursuit 控制器，車輛數量可自由增加。
 
-目前示範由 `vehicle-1` 使用相對進度進攻 `relative_overtake`，`vehicle-2` 使用純進度策略。
-進攻車預設載入本機 s→d GP，預測 `vehicle-2` 的路線後檢查同時間碰撞。
-車數與策略可在 `main.py` 自行調整，未指派策略的車持續跟隨中心線。
+車數、策略與各項參數集中在 `main.py` 開頭的參數區；目前示範的配置以該處為準
+（撰寫時為 `vehicle-1` 以 `relative_overtake` 進攻、`vehicle-2` 以 `defend` 防守）。
+未指派策略的車持續跟隨中心線。
 策略決定橫向目標、平滑路徑與可選的速度上限。
 方向盤角度及加減速度由 Pure Pursuit 控制器計算。
 
@@ -18,15 +18,23 @@ Pursuit 控制器，車輛數量可自由增加。
 
 基本模擬需要 Python 3.10 以上、NumPy 與 Matplotlib。
 GP 訓練與載入 GP 模型需要 scikit-learn，相依清單見 `requirements-gp.txt`。
-目前 GP 接入預設開啟；若只安裝基本套件或沒有模型，先將 `main.py` 的
-`GP_PREDICTION_ENABLED` 設為 `False`。
+`main.py` 的 `GP_PREDICTION_ENABLED` 預設為 `False`；只安裝基本套件即可執行模擬。
+要使用 GP 時，先準備模型並改為 `True`，見「在進攻策略使用 GP」。
 
 ```bash
 python3 -m pip install -r requirements.txt
 python3 main.py
 ```
 
-依 `main.py` 的選圖模擬 21 秒，再顯示賽道邊界、各車軌跡與車身。即時觀看：
+依 `main.py` 的選圖與 `SIMULATION_SECONDS` 模擬，再顯示賽道邊界、各車軌跡與車身。
+
+想看平順的動畫，用先算後播（見下一節）：
+
+```bash
+python3 main.py --replay
+```
+
+邊算邊畫、可逐步觀察每次決策（畫面會隨決策計算停頓）：
 
 ```bash
 python3 main.py --realtime
@@ -35,10 +43,25 @@ python3 main.py --realtime
 停用防守時，所有指派 `defend` 的車改為跟隨中心線，其他策略保持原設定：
 
 ```bash
-python3 main.py --realtime --no-defense
+python3 main.py --replay --no-defense
 ```
 
+只想暫時換圖或改時長，不必改檔：`--track Oschersleben`、`--seconds 10`。
 若環境使用 `python` 指令，將上述 `python3` 換成 `python` 即可。
+
+## 平順播放：`--replay`
+
+`--realtime` 在同一執行緒邊算邊畫。重新決策的那一步要算數十到上百毫秒，
+畫面因此「兩幀很快、停一下」反覆出現，整體也比實際時間慢。
+`--replay` 先不開視窗把整場算完（終端每 10% 印一次進度），再依模擬時間播放：
+
+- 預設以實際速度播放；`--speed 0.5` 為半速，`--speed 2` 為兩倍速。預設倍率在 `main.py` 參數區⑥的 `PLAYBACK_SPEED`。
+- 畫面跟不上時跳過中間幀，維持速度；最後一幀一定顯示，播完後視窗保留。
+- Windows 預設計時器刻度約 15.6 ms，播放期間會暫時改為 1 ms，讓幀間隔均勻。
+- 播放內容與一般執行最後的畫面相同，不影響模擬結果；需等計算完成才開始播放。
+- 不顯示候選路徑與 GP 預測時，不保存候選快照，以節省記憶體。
+
+量測與限制見 [播放與快取紀錄](reports/experiments/2026-11-24_replay_and_track_cache/README.md)。
 
 ## 策略速度要求與離散速度候選
 
@@ -225,10 +248,10 @@ JSON 保存模型路徑、SHA-256 與實際賽道。圖片左側是賽道路線�
 # 或使用 --model models/gp/你的資料夾/model.pkl
 ```
 
-即時模式已預設開啟 GP 預測顯示：
+`GP_PREDICTION_ENABLED=True` 時，`DISPLAY_OPTIONS.show_gp_predictions` 預設會畫出 GP 預測：
 
 ```powershell
-.\.venv\Scripts\python.exe main.py --realtime
+.\.venv\Scripts\python.exe main.py --replay
 ```
 
 - 紫色點虛線：進攻車碰撞檢查實際使用的對手 GP 預測；圓點是預測終點。
@@ -236,7 +259,7 @@ JSON 保存模型路徑、SHA-256 與實際賽道。圖片左側是賽道路線�
 - `@ 1.88s, +0.80s`：在模擬 1.88 秒評估，向前預測 0.80 秒。
 
 預測依策略決策週期更新，兩次決策間保持快照；顯示端不重新查 GP，也不修改路徑、成本或控制。
-在 `main.py` 的 `create_display_options()` 用 `show_gp_predictions` 開關曲線、
+在 `main.py` 參數區⑥的 `DISPLAY_OPTIONS` 用 `show_gp_predictions` 開關曲線、
 `show_gp_prediction_labels` 開關標籤；與候選路徑顯示各自獨立。
 圖片範例與驗證見 [GP 視覺化證據](reports/experiments/2026-11-16_gp_visualization/README.md)。
 
@@ -274,12 +297,17 @@ python3 train_gp.py --data data/training/生成的資料夾名稱
 
 ## 想調整參數，先看 main.py 開頭
 
-常用設定集中在 `main.py` 的「常用參數」區，每個防守參數都有簡短中文註解。
+常用設定集中在 `main.py` 開頭的參數區，依序分為①場景、②車輛與控制器、③避撞責任約束、
+④各策略參數、⑤GP、⑥畫面顯示、⑦probe 示範場景，開頭附目錄。
 歷次實驗的固定參數與重現方式，另存於 [實驗參數紀錄](reports/experiments/parameter_records/README.md)。
+
+設定值不合法時，錯誤訊息會寫出類別與欄位，例如
+`RelativeOvertakingConfig.decision_period must be positive and finite (got 0.0)`；
+策略名稱、車輛 ID、防守對象或地圖名稱打錯時，會列出可用的名稱。
 
 | 設定 | 用途 |
 | --- | --- |
-| `VEHICLE_SPECS` | 每輛車的 ID、起始位置、目標速度；新增一列就能增加車輛 |
+| `VEHICLE_SPECS` | 每輛車寫成 `VehicleSpec(ID, start_s=..., target_speed=...)`；新增一列就能增加車輛 |
 | `STRATEGY_ASSIGNMENTS` | 指定每台車使用什麼策略，以及防守誰 |
 | `DEFENSE_ENABLED` | 是否啟用防守 |
 | `SIMULATION_SECONDS` | 模擬多久 |
@@ -294,14 +322,15 @@ python3 train_gp.py --data data/training/生成的資料夾名稱
 | `RELATIVE_OVERTAKING_CONFIG` | `relative_overtake` 的候選目標、對象偵測距離、預測參數與速度候選開關 |
 | `DEFENSE_CONFIG` | 所有防守車使用的成本、觸發條件與路徑參數 |
 | `RESPONSIBILITY_ENABLED` / `RESPONSIBILITY_CONFIG` | 避撞責任約束開關與 r_col、a、b；`defend` 與 `relative_overtake` 共用，見「避撞責任約束」 |
-| `OFFSET_PATH_CONFIG` | 臨時路徑的取樣間距與長度 |
+| `OFFSET_PATH_CONFIG` | 臨時路徑的取樣間距與長度；短於被指派策略的 `transition_length` 時，執行時自動延長 |
+| `DISPLAY_OPTIONS` | 畫面要顯示哪些元素 |
 
 碰撞矩形在 `main.py` 設定，例如 `CollisionConfig(length=0.45, width=0.24)`。
 未指定碰撞尺寸時沿用實體車身尺寸（示範車身為 0.55 × 0.30 m）。縮小或放大時保持原車身中心。
 規劃器、終端與訓練資料的重疊紀錄仍使用碰撞矩形，訓練原始資料也會保存此尺寸。
 畫面另外區分：實體車身重疊顯示紅色 `COLLISION`，只有判定矩形重疊顯示橘色 `ENVELOPE OVERLAP`；
 實體碰撞優先顯示，離開後恢復原色。此標示不影響策略或車輛運動。
-在 `main.py` 的 `create_display_options()` 設 `show_envelope_overlap=False`，可隱藏橘色文字與車身變色，實體碰撞的紅色標示仍保留。
+在 `main.py` 的 `DISPLAY_OPTIONS` 設 `show_envelope_overlap=False`，可隱藏橘色文字與車身變色，實體碰撞的紅色標示仍保留。
 
 建議一次改一個防守參數，先從以下幾個開始：
 
@@ -324,7 +353,7 @@ python3 train_gp.py --data data/training/生成的資料夾名稱
 `|d| <= track.width / 2 - vehicle.width / 2 - safety_margin`，超出範圍的候選
 會在評分前排除。賽道窄到無法容納車寬與邊界留距時，會回報設定錯誤。
 
-`create_display_options()` 緊接在參數區下方，可以切換軌跡、車身、控制目標、
+參數區⑥的 `DISPLAY_OPTIONS` 可以切換軌跡、車身、控制目標、
 策略狀態、臨時路徑與候選快照的顯示。
 
 ## 切換賽道與調整直道、彎道
@@ -376,7 +405,7 @@ TRACK_NAME = "Oschersleben"  # 或 "oval"、"rounded_rectangle"、其他下載�
 重採樣，預設 0.4 m；不套用內建圖的 `TRACK_WIDTH` 或 `TRACK_POINT_COUNT`。
 下載資料本身已是 F1TENTH 尺度，不再次縮小。
 
-PNG 依 YAML 解析度、原點與 yaw 疊加；可在既有 `create_display_options()`
+PNG 依 YAML 解析度、原點與 yaw 疊加；可在 `DISPLAY_OPTIONS`
 設定 `show_map_background=False` 關閉。影像只用於顯示，邊界仍採 CSV 路寬。
 即時模式自動快取 PNG 與座標軸背景，縮放後重建；存圖仍完整繪製，不支援 blitting 的後端沿用原方式。
 量測與限制見 [背景快取紀錄](reports/experiments/2026-11-16_background_cache/README.md)。
@@ -397,7 +426,7 @@ TkAgg 快取分支已改用 canvas 事件迴圈，避免 `plt.pause()` 再次 sh
 .\.venv\Scripts\python.exe main.py --realtime
 ```
 
-在 `create_display_options()` 設定 `show_candidate_paths` 可開關候選顯示，
+在 `DISPLAY_OPTIONS` 設定 `show_candidate_paths` 可開關候選顯示，
 `show_candidate_labels` 可開關候選文字與評估時間；`show_temporary_paths`
 則控制目前交給 Pure Pursuit 追蹤的路徑。
 
@@ -448,7 +477,7 @@ STRATEGY_ASSIGNMENTS = {
 | `centerline` | 跟隨中心線，不主動進攻或防守 | `strategy/centerline.py` |
 | `overtake` | 找前方較慢的車，選擇左右超車路徑 | `strategy/overtaking.py` |
 | `cost_overtake` | 固定候選 bicycle 預測，以進度與超車獎勵選路徑 | `strategy/cost_overtaking.py` |
-| `progress` | 五候選 bicycle 預測，只選最大進度，不預測其他車或篩選碰撞 | `strategy/progress.py` |
+| `progress` | 固定候選 bicycle 預測，只選最大進度，不預測其他車或篩選碰撞 | `strategy/progress.py` |
 | `relative_overtake` | 最小化預測終點的對手 s 減自車 s，加上可選安全距離成本；保留碰撞篩選 | `strategy/relative_overtaking.py` |
 | `defend` | 依成本選擇橫向防守位置 | `strategy/defending.py` |
 
@@ -557,8 +586,8 @@ STRATEGY_ASSIGNMENTS = {
 候選目標仍受路寬、車寬與 `safety_margin` 限制；這只限制目標位置，不檢查整條軌跡出界。
 主迴圈的實際碰撞偵測仍會記錄重疊，不改變車輛運動。
 
-參數集中於 `PROGRESS_CONFIG`：預設候選 `(-0.6, -0.3, 0, 0.3, 0.6)` m、過渡長度
-3 m、決策週期 0.1 s、預測時長 1.5 s。預測步長沿用 `MODEL_CONFIG.time_step`。
+參數集中於 `PROGRESS_CONFIG`，現值見 `main.py` 參數區④。類別預設為候選 `(-0.6, -0.3, 0, 0.3, 0.6)` m、
+過渡長度 3 m、決策週期 0.1 s、預測時長 1.5 s。預測步長沿用 `MODEL_CONFIG.time_step`。
 相同目標沿用既有橫移動作；每台車保有獨立狀態。候選圖只列出 `progress` 成本。
 無視窗訓練資料入口也支援此策略，並保存其設定至 metadata。
 
@@ -583,14 +612,14 @@ safety = Σ_其他車 mean_k max(0, safety_distance - clear_k)²
 ```
 
 `d_k` 是自車 rollout 在各預測時間點（不含 t=0）相對中心線的 d；
-`deviation_weight` 單位 1/m，類別預設 0，main 目前設 1.0，尚未調參。
+`deviation_weight` 單位 1/m，類別預設 0；main 現值見參數區④，尚未調參。
 被碰撞剔除的候選不計任何成本。
 
 `Δs_k`、`Δd_k` 為各預測時間點兩車的縱向、橫向距離，`L̄`、`W̄` 為兩車碰撞矩形
 長、寬的半和。這是 Frenet 座標的矩形間隙近似，彎道會與實際 SAT 判定有差異；
 碰撞預設以原本的矩形檢查剔除；設定 `responsibility` 時改用避撞責任約束（見下方「避撞責任約束」）。
 `safety_weight=0`（類別預設）時恢復只比 `gap_T`。
-main 目前設定 `safety_weight=10.0`、`safety_distance=0.5`，尚未調參。
+main 的 `safety_weight`、`safety_distance` 現值見參數區④，尚未調參。
 
 `gap_now` 是當下對手相對自車的有號間距，兩個 `delta_s` 為同一預測時長內累積的
 縱向進度。用累積進度計算，避免跨起終點時跳變；不取絕對值或截斷負值。
@@ -608,7 +637,7 @@ main 目前設定 `safety_weight=10.0`、`safety_distance=0.5`，尚未調參。
 此時仍篩選碰撞，同分優先沿用
 原目標，原目標不可行時按候選順序選擇其他可行目標（中心線先列入）。
 
-參數集中於 `RELATIVE_OVERTAKING_CONFIG`：預設九條候選由 -0.6 到 +0.6 m、
+參數集中於 `RELATIVE_OVERTAKING_CONFIG`，現值見 `main.py` 參數區④。類別預設為九條候選由 -0.6 到 +0.6 m、
 間距 0.15 m、偵測距離 6 m、過渡長度 3 m、決策週期 0.1 s、預測時長 0.8 s。
 候選圖顯示 `relative_gap`，啟用時另顯示 `safety`、`deviation`，標籤的 J 為各項加總；
 超車後仍顯示並比較負成本，沒有比較對象時不顯示 `relative_gap`。
@@ -621,18 +650,26 @@ main 目前設定 `safety_weight=10.0`、`safety_distance=0.5`，尚未調參。
 左右規則式超車；改為 `centerline` 則只追蹤中心線。防守車配置可保持原設定。
 
 新增其他策略時，將實作放在 `strategy/` 的獨立檔案，回傳 `StrategyDecision`，
-並在 `main.py` 的 `strategy_factories` 註冊工廠：
+再到 `strategy/assignment.py` 註冊。模擬與資料生成入口共用這份註冊表：
 
-```python
-strategy_factories = {
-    "my_attack": lambda vehicle_id: MyAttackStrategy(...),
-}
-```
+1. 在 `StrategyConfigs` 加入與策略同名的設定欄位，例如
+   `my_attack: MyAttackConfig = field(default_factory=MyAttackConfig)`。
+2. 在 `create_strategy_factories()` 加一行工廠：
+
+   ```python
+   "my_attack": lambda vehicle_id: MyAttackStrategy(
+       configs.my_attack, prediction_configs[vehicle_id], prediction_configs,
+   ),
+   ```
+
+3. 在 `main.py` 參數區④新增 `MY_ATTACK_CONFIG`，並加進 `_strategy_configs()`。
+   無視窗資料生成也要使用時，在 `SimulationSettings` 加對應欄位與 `strategy_configs`。
 
 再將某台車指派為 `StrategyAssignment("my_attack")`。工廠每次都應建立新物件，
 各車才能保有獨立狀態；`vehicle_id` 可用於選擇該車的明確模型與控制參數。
-策略名稱會在建立 `StrategyManager` 時依註冊表檢查，未註冊名稱會在模擬前報錯。
-不需要修改模擬迴圈或策略管理器來新增自訂名稱。
+策略名稱會在建立 `StrategyManager` 時檢查，未註冊名稱會在模擬前報錯並列出可用名稱。
+設定有 `transition_length` 時，臨時參考路徑會自動延長到涵蓋完整橫移。
+不需要修改模擬迴圈或策略管理器。
 
 ## 未來新增自己的策略
 
@@ -647,9 +684,10 @@ def update(self, vehicle, others, track, time_seconds) -> StrategyDecision:
 及可選的 `LateralManeuver`，不包含方向盤或加速度命令。`maneuver=None` 代表
 使用共同中心線；要追蹤非零橫向目標，必須同時提供對應的平滑動作。
 
-新增策略時，把演算法放進 `strategy/` 的獨立檔案，透過 `strategy_factories`
+新增策略時，把演算法放進 `strategy/` 的獨立檔案，依上一節在 `strategy/assignment.py`
 註冊名稱與建構方式，再於對照表選用。模擬迴圈使用相同介面，
-不需要增加車輛 ID 的特殊判斷。
+不需要增加車輛 ID 的特殊判斷。多個策略共用的小工具（輸入檢查、決策時機、
+候選橫向目標、前車選擇、跨圈累積間距）放在 `strategy/common.py`，新策略可直接沿用。
 
 進攻與防守演算法的輸出格式不同，因此 `assignment.py` 用兩個簡單的包裝類別
 轉成共用格式。`sim/strategy_history.py` 負責記錄每台車的狀態
@@ -722,7 +760,7 @@ s_end = 沿候選路徑走滿 max(v, 0) × prediction_horizon 後的賽道位置
 ```
 
 `deviation_weight` 是偏離中心線成本（類別預設 0 關閉），與對齊項使用相同取樣點；
-main 目前設 1.0，約為 `q_block=15` 的 1/15，尚未調參。
+main 現值見參數區④，尚未調參。
 使用 bicycle 預測時，`estimated_progress` 與 `d_opponent[k]` 取自 rollout 插值。
 
 `k=1..N` 是未來的預測時間點，`d_opponent[0]` 為對手車目前位置。
@@ -770,9 +808,8 @@ RESPONSIBILITY_CONFIG = ResponsibilityConfig(collision_radius=0.6, slope=40.0, o
 - `-b/a` 是前車開始被放寬的位置：
   - 論文值 a=5、b=4.5 時，前車要領先約 0.55 m 才完全免責。
   - main 目前依使用者要求設 a=40，前車領先超過約 0.1 m 就免責，只有完全並排時要負責。
-- 守方的檢查時長沿用 `DEFENSE_CONFIG.collision_horizon`。
-  - main 目前設 0.2 s，避免守方因預測攻方會追上並排而提前讓路。
-  - 代價是碰撞變多，見實驗紀錄。
+- 守方的檢查時長沿用 `DEFENSE_CONFIG.collision_horizon`，現值見參數區④。
+  - 11/23 曾設 0.2 s，避免守方因預測攻方會追上並排而提前讓路；代價是碰撞變多，見實驗紀錄。
 - 類別預設仍是 a=5。
 
 - `RESPONSIBILITY_ENABLED=False`：攻方恢復矩形重疊剔除，守方恢復依 `collision_check_enabled`。
@@ -833,9 +870,9 @@ RESPONSIBILITY_CONFIG = ResponsibilityConfig(collision_radius=0.6, slope=40.0, o
 python3 -m unittest
 ```
 
-2026-11-11 完整測試仍有已知的防守整合初始化錯誤：規則式過渡長度 6 m，
-而示範參考路徑長度為 4 m。實際測試結果與限制見
-[研究紀錄](reports/research_log.md)。
+先前 `main.py` 指派規則式 `overtake` 時，過渡長度 6 m 超過參考路徑 4 m 會報錯；
+2026-11-24 起改為執行時自動延長參考路徑。實際測試結果與限制見
+[研究紀錄](reports/research_log.md) 與 [CHANGELOG](CHANGELOG.md)。
 
 沒有圖形介面的環境可在專案內存放 Matplotlib 快取並執行：
 

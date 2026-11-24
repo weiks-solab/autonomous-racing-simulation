@@ -2,12 +2,15 @@
 
 from collections import Counter
 import math
-from typing import Mapping
+from typing import Literal, Mapping
 
 import numpy as np
 
 from core.track import Track
-from core.track_geometry import signed_longitudinal_gap, track_length, track_to_world
+from core.track_geometry import (
+    signed_longitudinal_gap, track_length, track_tangent_angle, track_to_world,
+)
+from strategy.observations import VehicleObservation
 from training_data.schema import (
     DatasetSchema, FieldSpec, RecordedEpisode, SamplingConfig, TrainingDataset,
     TrainingSample, VehiclePair,
@@ -20,6 +23,27 @@ UNITS = ("m", "m", "m", "m/s", "m/s", "m/s", "1/m")
 DESCRIPTIONS = ("前車 s 減後車 s，短距有號車距", "後車當下 d", "前車當下 d",
                 "後車車身速度減前車車身速度", "前車車身速度",
                 "前車 d 的過去 0.1 s 差分速度", "前車所在中心線曲率，左彎為正")
+
+# 互動歷史版：雙車各自的 d、車頭角誤差、車速，加上過去兩段的橫移量。
+HISTORY_SEGMENT_SECONDS = 0.2
+HISTORY_BASE_FEATURES = ("gap", "rear_d", "rear_heading_error", "rear_speed",
+                         "front_d", "front_heading_error", "front_speed", "front_curvature")
+HISTORY_TERMS = ("rear_dd_early", "front_dd_early", "rear_dd_late", "front_dd_late")
+HISTORY_FEATURES = HISTORY_BASE_FEATURES + HISTORY_TERMS
+HISTORY_ACTION_FEATURES = HISTORY_FEATURES + ("d_target",)
+HISTORY_UNITS = ("m", "m", "rad", "m/s", "m", "rad", "m/s", "1/m", "m", "m", "m", "m")
+FeatureSet = Literal["basic", "history"]
+
+
+def history_descriptions(segment_seconds: float) -> tuple[str, ...]:
+    early = f"t-{2 * segment_seconds:g} 至 t-{segment_seconds:g} s"
+    late = f"t-{segment_seconds:g} 至 t s"
+    return ("前車 s 減後車 s，短距有號車距", "後車當下 d，左正",
+            "後車車頭角減中心線切線角，左轉為正", "後車車身速度",
+            "前車當下 d，左正", "前車車頭角減中心線切線角，左轉為正", "前車車身速度",
+            "前車所在中心線曲率，左彎為正",
+            f"後車 d 在 {early} 的變化", f"前車 d 在 {early} 的變化",
+            f"後車 d 在 {late} 的變化", f"前車 d 在 {late} 的變化")
 
 
 def curvature(track: Track, s: float, spacing: float = 0.5) -> float:
@@ -48,25 +72,68 @@ def features(episode: RecordedEpisode, index: int, pair: VehiclePair, track: Tra
             lateral_speed, curvature(track, front.track_position.s))
 
 
+def heading_error(observation: VehicleObservation, track: Track) -> float:
+    """車頭角減所在中心線線段的切線角，包裝到 [-π, π]，左轉為正。"""
+    tangent = track_tangent_angle(observation.track_position.s, track)
+    return math.remainder(observation.state.yaw - tangent, 2.0 * math.pi)
+
+
+def history_segment_steps(segment_seconds: float, time_step: float) -> int:
+    """歷史每段的步數；必須是模擬步長的正整數倍。"""
+    if not math.isfinite(segment_seconds) or segment_seconds <= 0.0:
+        raise ValueError("history segment must be positive and finite")
+    steps = round(segment_seconds / time_step)
+    if steps < 1 or not math.isclose(steps * time_step, segment_seconds, abs_tol=1e-9):
+        raise ValueError("history segment must be a whole number of time steps")
+    return steps
+
+
+def history_features(
+    episode: RecordedEpisode, index: int, pair: VehiclePair, track: Track, segment_steps: int,
+) -> tuple[float, ...]:
+    """只讀 t-2段、t-1段與 t 三幀；歷史四項依序為後車前段、前車前段、後車後段、前車後段。"""
+    if segment_steps < 1 or index < 2 * segment_steps:
+        raise ValueError("not enough history before this frame")
+    frames = (episode.frames[index - 2 * segment_steps], episode.frames[index - segment_steps],
+              episode.frames[index])
+    rear_d, front_d = ([frame.observations[key].track_position.d for frame in frames]
+                       for key in (pair.ego_id, pair.opponent_id))
+    rear, front = (frames[-1].observations[key] for key in (pair.ego_id, pair.opponent_id))
+    gap = signed_longitudinal_gap(rear.track_position, front.track_position, track_length(track))
+    return (gap, rear.track_position.d, heading_error(rear, track), rear.state.velocity,
+            front.track_position.d, heading_error(front, track), front.state.velocity,
+            curvature(track, front.track_position.s),
+            rear_d[1] - rear_d[0], front_d[1] - front_d[0],
+            rear_d[2] - rear_d[1], front_d[2] - front_d[1])
+
+
 def build_interaction_dataset(
     episodes: tuple[RecordedEpisode, ...], track: Track, pair: VehiclePair,
     sampling: SamplingConfig,
     action_targets: Mapping[tuple[str, int], float] | None = None,
+    feature_set: FeatureSet = "basic",
+    history_segment_seconds: float = HISTORY_SEGMENT_SECONDS,
 ) -> TrainingDataset:
-    """標籤窗不得跨 episode 或碰撞；第一筆沒有歷史速度，略過。"""
+    """標籤窗不得跨 episode 或碰撞；basic 第一筆沒有歷史速度，history 需完整歷史窗。"""
     if sampling.label_horizon_steps < 1:
         raise ValueError("interaction prediction requires a future horizon")
+    if feature_set not in ("basic", "history"):
+        raise ValueError("feature_set must be 'basic' or 'history'")
+    history_steps = 0
+    if feature_set == "history":
+        history_steps = history_segment_steps(history_segment_seconds, sampling.time_step)
     samples, skipped = [], Counter()
     for episode in episodes:
         for index in range(0, len(episode.frames), sampling.sample_stride_steps):
             end = index + sampling.label_horizon_steps
-            if index == 0:
-                skipped["no_history"] += 1
+            if index == 0 or index < 2 * history_steps:
+                skipped["no_history" if feature_set == "basic" else "insufficient_history"] += 1
                 continue
             if end >= len(episode.frames):
                 skipped["insufficient_future"] += 1
                 continue
-            interval = episode.frames[index:end + 1]
+            # history 的檢查範圍包含歷史窗，避免歷史橫移來自碰撞中的狀態。
+            interval = episode.frames[index - 2 * history_steps:end + 1]
             if any(not {pair.ego_id, pair.opponent_id} <= set(frame.observations) for frame in interval):
                 skipped["missing_vehicle"] += 1
                 continue
@@ -74,10 +141,11 @@ def build_interaction_dataset(
                    for frame in interval for collision in frame.collision_pairs):
                 skipped["collision"] += 1
                 continue
-            current, future = interval[0], interval[-1]
+            current, future = episode.frames[index], interval[-1]
             if not math.isclose(future.time_seconds - current.time_seconds, sampling.label_horizon_seconds):
                 raise ValueError("frame timing does not match label horizon")
-            x = features(episode, index, pair, track)
+            x = (features(episode, index, pair, track) if feature_set == "basic"
+                 else history_features(episode, index, pair, track, history_steps))
             if action_targets is not None:
                 # 使用此時真正執行的候選，不把未執行候選配上同一個未來答案。
                 key = (episode.episode_id, current.step_index)
@@ -89,8 +157,13 @@ def build_interaction_dataset(
                 skipped["non_finite"] += 1
                 continue
             samples.append(TrainingSample(episode.episode_id, current.step_index, current.time_seconds, pair, x, (y,)))
-    names = FEATURES if action_targets is None else ACTION_FEATURES
-    specs = tuple(FieldSpec(name, unit, description) for name, unit, description in zip(FEATURES, UNITS, DESCRIPTIONS))
+    if feature_set == "basic":
+        base, units, descriptions = FEATURES, UNITS, DESCRIPTIONS
+    else:
+        base, units = HISTORY_FEATURES, HISTORY_UNITS
+        descriptions = history_descriptions(history_steps * sampling.time_step)
+    names = base if action_targets is None else base + ("d_target",)
+    specs = tuple(FieldSpec(name, unit, description) for name, unit, description in zip(base, units, descriptions))
     if action_targets is not None:
         specs += (FieldSpec("d_target", "m", "後車當下實際採用的候選目標 d；後續決策仍可更新"),)
     return TrainingDataset(

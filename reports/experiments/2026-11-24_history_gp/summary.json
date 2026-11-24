@@ -1,0 +1,461 @@
+{
+  "a_basic8": {
+    "features": [
+      "gap",
+      "rear_d",
+      "rear_heading_error",
+      "rear_speed",
+      "front_d",
+      "front_heading_error",
+      "front_speed",
+      "front_curvature"
+    ],
+    "fit_count": 1704,
+    "fit_seconds": 17.070912599971052,
+    "fitted_kernel": "1.41**2 * RBF(length_scale=[0.424, 1.61, 4.79, 0.543, 1.23, 18.2, 0.465, 6.4]) + WhiteKernel(noise_level=0.0442)",
+    "warnings": [],
+    "validation": {
+      "count": 568,
+      "metrics": {
+        "gp": {
+          "mae": 0.054520704983704024,
+          "rmse": 0.08293558601198407
+        },
+        "zero": {
+          "mae": 0.07917342063805868,
+          "rmse": 0.12512649406834336
+        },
+        "training_mean": {
+          "mae": 0.07918813469340215,
+          "rmse": 0.12511982432026036
+        },
+        "constant_lateral_speed": {
+          "mae": 0.09465511739896779,
+          "rmse": 0.13954764276545395
+        }
+      },
+      "coverage_2std": 0.9507042253521126,
+      "subsets": {
+        "straight": {
+          "count": 351,
+          "gp": {
+            "mae": 0.05624112232514974,
+            "rmse": 0.08576434501597366
+          }
+        },
+        "curve": {
+          "count": 217,
+          "gp": {
+            "mae": 0.05173791011343932,
+            "rmse": 0.07814356282368919
+          }
+        },
+        "rear_moving": {
+          "count": 263,
+          "gp": {
+            "mae": 0.06828143926655571,
+            "rmse": 0.10122490143014509
+          }
+        },
+        "rear_holding": {
+          "count": 305,
+          "gp": {
+            "mae": 0.042654891487343395,
+            "rmse": 0.06303931831963197
+          }
+        },
+        "rear_left": {
+          "count": 86,
+          "gp": {
+            "mae": 0.07311450398224947,
+            "rmse": 0.09263928804584962
+          }
+        },
+        "rear_right": {
+          "count": 138,
+          "gp": {
+            "mae": 0.08379674964444286,
+            "rmse": 0.11917337370950158
+          }
+        }
+      }
+    },
+    "test": {
+      "count": 568,
+      "metrics": {
+        "gp": {
+          "mae": 0.10162558715093839,
+          "rmse": 0.13854597551601314
+        },
+        "zero": {
+          "mae": 0.11699331586001989,
+          "rmse": 0.17326844860004958
+        },
+        "training_mean": {
+          "mae": 0.11700763900448763,
+          "rmse": 0.17328674126622468
+        },
+        "constant_lateral_speed": {
+          "mae": 0.14903950014282286,
+          "rmse": 0.20108689768237673
+        }
+      },
+      "coverage_2std": 0.852112676056338,
+      "subsets": {
+        "straight": {
+          "count": 352,
+          "gp": {
+            "mae": 0.09546196899301193,
+            "rmse": 0.13437016710277022
+          }
+        },
+        "curve": {
+          "count": 216,
+          "gp": {
+            "mae": 0.11167000192681853,
+            "rmse": 0.14509371952505096
+          }
+        },
+        "rear_moving": {
+          "count": 297,
+          "gp": {
+            "mae": 0.1307003623577842,
+            "rmse": 0.16821720999157827
+          }
+        },
+        "rear_holding": {
+          "count": 271,
+          "gp": {
+            "mae": 0.06976135011612947,
+            "rmse": 0.09601919727341073
+          }
+        },
+        "rear_left": {
+          "count": 126,
+          "gp": {
+            "mae": 0.12246391190936581,
+            "rmse": 0.16241884469235776
+          }
+        },
+        "rear_right": {
+          "count": 175,
+          "gp": {
+            "mae": 0.12030158079360852,
+            "rmse": 0.15832486854867672
+          }
+        }
+      }
+    }
+  },
+  "b_history12": {
+    "features": [
+      "gap",
+      "rear_d",
+      "rear_heading_error",
+      "rear_speed",
+      "front_d",
+      "front_heading_error",
+      "front_speed",
+      "front_curvature",
+      "rear_dd_early",
+      "front_dd_early",
+      "rear_dd_late",
+      "front_dd_late"
+    ],
+    "fit_count": 1704,
+    "fit_seconds": 28.114446500025224,
+    "fitted_kernel": "1.6**2 * RBF(length_scale=[20, 1.81, 1.22, 20, 1.61, 12, 3.57, 15.5, 11.1, 3.05, 6.99, 15]) + WhiteKernel(noise_level=0.0722)",
+    "warnings": [
+      "The optimal value found for dimension 0 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value.",
+      "The optimal value found for dimension 3 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value."
+    ],
+    "validation": {
+      "count": 568,
+      "metrics": {
+        "gp": {
+          "mae": 0.019502701803380297,
+          "rmse": 0.03247806450758161
+        },
+        "zero": {
+          "mae": 0.07917342063805868,
+          "rmse": 0.12512649406834336
+        },
+        "training_mean": {
+          "mae": 0.07918813469340215,
+          "rmse": 0.12511982432026036
+        },
+        "constant_lateral_speed": {
+          "mae": 0.09465511739896779,
+          "rmse": 0.13954764276545395
+        }
+      },
+      "coverage_2std": 0.9700704225352113,
+      "subsets": {
+        "straight": {
+          "count": 351,
+          "gp": {
+            "mae": 0.016424608475926146,
+            "rmse": 0.028194230351484925
+          }
+        },
+        "curve": {
+          "count": 217,
+          "gp": {
+            "mae": 0.024481553222442068,
+            "rmse": 0.038408751253405815
+          }
+        },
+        "rear_moving": {
+          "count": 263,
+          "gp": {
+            "mae": 0.020106540894096574,
+            "rmse": 0.029954718510271944
+          }
+        },
+        "rear_holding": {
+          "count": 305,
+          "gp": {
+            "mae": 0.018982014325156095,
+            "rmse": 0.03450608962987955
+          }
+        },
+        "rear_left": {
+          "count": 86,
+          "gp": {
+            "mae": 0.026118832006994296,
+            "rmse": 0.0396291863953405
+          }
+        },
+        "rear_right": {
+          "count": 138,
+          "gp": {
+            "mae": 0.02214393843176434,
+            "rmse": 0.0361355099987159
+          }
+        }
+      }
+    },
+    "test": {
+      "count": 568,
+      "metrics": {
+        "gp": {
+          "mae": 0.03751040710818222,
+          "rmse": 0.05680788854589333
+        },
+        "zero": {
+          "mae": 0.11699331586001989,
+          "rmse": 0.17326844860004958
+        },
+        "training_mean": {
+          "mae": 0.11700763900448763,
+          "rmse": 0.17328674126622468
+        },
+        "constant_lateral_speed": {
+          "mae": 0.14903950014282286,
+          "rmse": 0.20108689768237673
+        }
+      },
+      "coverage_2std": 0.8873239436619719,
+      "subsets": {
+        "straight": {
+          "count": 352,
+          "gp": {
+            "mae": 0.03368899516814689,
+            "rmse": 0.04863979362304031
+          }
+        },
+        "curve": {
+          "count": 216,
+          "gp": {
+            "mae": 0.043737893232684254,
+            "rmse": 0.06804959281767353
+          }
+        },
+        "rear_moving": {
+          "count": 297,
+          "gp": {
+            "mae": 0.03531352668300882,
+            "rmse": 0.052768351080949266
+          }
+        },
+        "rear_holding": {
+          "count": 271,
+          "gp": {
+            "mae": 0.03991805834905491,
+            "rmse": 0.06092815913793072
+          }
+        },
+        "rear_left": {
+          "count": 126,
+          "gp": {
+            "mae": 0.05369554441550376,
+            "rmse": 0.07324680443858102
+          }
+        },
+        "rear_right": {
+          "count": 175,
+          "gp": {
+            "mae": 0.04571797610195088,
+            "rmse": 0.05956008165751342
+          }
+        }
+      }
+    }
+  },
+  "c_action13": {
+    "features": [
+      "gap",
+      "rear_d",
+      "rear_heading_error",
+      "rear_speed",
+      "front_d",
+      "front_heading_error",
+      "front_speed",
+      "front_curvature",
+      "rear_dd_early",
+      "front_dd_early",
+      "rear_dd_late",
+      "front_dd_late",
+      "d_target"
+    ],
+    "fit_count": 1704,
+    "fit_seconds": 25.788398000004236,
+    "fitted_kernel": "1.37**2 * RBF(length_scale=[8.18, 1.27, 7.71, 3.66, 1.3, 9.74, 2.57, 20, 20, 3.44, 10.5, 6.59, 0.49]) + WhiteKernel(noise_level=0.0173)",
+    "warnings": [
+      "The optimal value found for dimension 7 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value.",
+      "The optimal value found for dimension 8 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value."
+    ],
+    "validation": {
+      "count": 568,
+      "metrics": {
+        "gp": {
+          "mae": 0.014063230758384428,
+          "rmse": 0.023082468942568577
+        },
+        "zero": {
+          "mae": 0.07917342063805868,
+          "rmse": 0.12512649406834336
+        },
+        "training_mean": {
+          "mae": 0.07918813469340215,
+          "rmse": 0.12511982432026036
+        },
+        "constant_lateral_speed": {
+          "mae": 0.09465511739896779,
+          "rmse": 0.13954764276545395
+        }
+      },
+      "coverage_2std": 0.9665492957746479,
+      "subsets": {
+        "straight": {
+          "count": 351,
+          "gp": {
+            "mae": 0.012624159706547714,
+            "rmse": 0.021912496314680504
+          }
+        },
+        "curve": {
+          "count": 217,
+          "gp": {
+            "mae": 0.0163909447638899,
+            "rmse": 0.024858616890726954
+          }
+        },
+        "rear_moving": {
+          "count": 263,
+          "gp": {
+            "mae": 0.014379400693323845,
+            "rmse": 0.019877491427703592
+          }
+        },
+        "rear_holding": {
+          "count": 305,
+          "gp": {
+            "mae": 0.013790598978420278,
+            "rmse": 0.02552500892282949
+          }
+        },
+        "rear_left": {
+          "count": 86,
+          "gp": {
+            "mae": 0.018240102985325888,
+            "rmse": 0.03026941087619516
+          }
+        },
+        "rear_right": {
+          "count": 138,
+          "gp": {
+            "mae": 0.01890803073304513,
+            "rmse": 0.030571881018307375
+          }
+        }
+      }
+    },
+    "test": {
+      "count": 568,
+      "metrics": {
+        "gp": {
+          "mae": 0.029817703830382902,
+          "rmse": 0.04575739840966901
+        },
+        "zero": {
+          "mae": 0.11699331586001989,
+          "rmse": 0.17326844860004958
+        },
+        "training_mean": {
+          "mae": 0.11700763900448763,
+          "rmse": 0.17328674126622468
+        },
+        "constant_lateral_speed": {
+          "mae": 0.14903950014282286,
+          "rmse": 0.20108689768237673
+        }
+      },
+      "coverage_2std": 0.8327464788732394,
+      "subsets": {
+        "straight": {
+          "count": 352,
+          "gp": {
+            "mae": 0.02896689327399204,
+            "rmse": 0.04654304897732704
+          }
+        },
+        "curve": {
+          "count": 216,
+          "gp": {
+            "mae": 0.03120420992227912,
+            "rmse": 0.04444733346084414
+          }
+        },
+        "rear_moving": {
+          "count": 297,
+          "gp": {
+            "mae": 0.028338636767751293,
+            "rmse": 0.04380716105666902
+          }
+        },
+        "rear_holding": {
+          "count": 271,
+          "gp": {
+            "mae": 0.03143867400603452,
+            "rmse": 0.04780345042139442
+          }
+        },
+        "rear_left": {
+          "count": 126,
+          "gp": {
+            "mae": 0.04843365855846409,
+            "rmse": 0.06861243073708155
+          }
+        },
+        "rear_right": {
+          "count": 175,
+          "gp": {
+            "mae": 0.038938112101764996,
+            "rmse": 0.05002934308394701
+          }
+        }
+      }
+    }
+  }
+}

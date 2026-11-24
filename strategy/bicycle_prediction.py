@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, replace
 import math
+from typing import Mapping
 
 from core.pure_pursuit import PurePursuitConfig, PurePursuitController, validate_speed_limit
 from core.track import Track
@@ -75,3 +76,24 @@ def predict_bicycle_trajectory(
         states.append(state)
         times.append(min((step + 1) * config.model.time_step, horizon))
     return BicyclePrediction(tuple(states), tuple(progress), tuple(times), tuple(offsets))
+
+
+def prediction_config_for(
+    configs: Mapping[str, BicyclePredictionConfig], vehicle_id: str,
+) -> BicyclePredictionConfig:
+    """取出指定車輛的模型與控制參數；缺少時明確報錯。"""
+    config = configs.get(vehicle_id)
+    if config is None:
+        raise ValueError(f"missing prediction configuration for {vehicle_id}")
+    return config
+
+
+def constant_offset_maneuver(
+    other: VehicleObservation, config: BicyclePredictionConfig,
+) -> LateralManeuver:
+    """他車的等 d 假設：沿當下 d 的等偏移線，不讀取對方的路徑或決策。
+
+    搭配 predict_bicycle_trajectory(..., constant_speed=True) 預測定速、等 d 的他車。
+    """
+    position = other.track_position
+    return LateralManeuver(position.s, position.d, position.d, config.path.path_length)

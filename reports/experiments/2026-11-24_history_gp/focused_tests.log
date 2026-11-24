@@ -1,0 +1,44 @@
+test_feature_subset_trains_only_named_columns (tests.test_interaction_gp.HistoryFeatureTests) ... ok
+test_heading_error_wraps_across_pi (tests.test_interaction_gp.HistoryFeatureTests) ... ok
+test_history_dataset_skips_short_history_and_collisions_in_history_window (tests.test_interaction_gp.HistoryFeatureTests) ... ok
+test_history_terms_match_user_example_and_ignore_future (tests.test_interaction_gp.HistoryFeatureTests) ... ok
+test_random_probe_config_alternates_sides_and_is_repeatable (tests.test_interaction_gp.HistoryFeatureTests) ... ok
+test_select_features_rejects_unknown_or_duplicate_names (tests.test_interaction_gp.HistoryFeatureTests) ... ok
+test_curvature_is_signed_and_wraps (tests.test_interaction_gp.InteractionTests) ... ok
+test_episode_split_is_disjoint_and_repeatable (tests.test_interaction_gp.InteractionTests) ... ok
+test_features_use_only_current_and_past (tests.test_interaction_gp.InteractionTests) ... ok
+test_half_second_labels_and_collision_interval (tests.test_interaction_gp.InteractionTests) ... ok
+test_training_bundle_reload_and_train_only_scaler (tests.test_interaction_gp.InteractionTests) ... ok
+test_create_oval_is_true_ellipse (tests.test_track.TrackTests) ... ok
+test_forward_search_wraps_across_closed_path_end (tests.test_track.TrackTests) ... ok
+test_invalid_ellipse_is_rejected (tests.test_track.TrackTests) ... ok
+test_tangent_angle_follows_segments_and_wraps (tests.test_track.TrackTests) ... ok
+test_data_entry_registers_config_selects_pair_and_executes_predictions (tests.test_probe_following.ProbeFollowingIntegrationTests) ... ok
+test_general_assignments_register_probe_without_demo_flag (tests.test_probe_following.ProbeFollowingIntegrationTests) ... ok
+test_main_demo_registers_strategy_and_uses_rounded_track (tests.test_probe_following.ProbeFollowingIntegrationTests) ... ok
+test_selected_cruise_candidate_reaches_actual_episode_step (tests.test_probe_following.ProbeFollowingIntegrationTests) ... ok
+test_cost_terms_match_normalized_gap_and_terminal_progress_rate (tests.test_probe_following.ProbeFollowingTests) ... ok
+test_cruise_candidate_is_deduplicated_and_never_exceeds_cruise (tests.test_probe_following.ProbeFollowingTests) ... ok
+test_cruise_candidate_is_selected_for_a_far_front_vehicle (tests.test_probe_following.ProbeFollowingTests) ... ok
+test_cruise_candidate_still_rejects_predicted_passing (tests.test_probe_following.ProbeFollowingTests) ... ok
+test_custom_probe_sequence_sets_order_and_side (tests.test_probe_following.ProbeFollowingTests) ... ok
+test_default_sequence_is_unchanged_and_invalid_sequences_are_rejected (tests.test_probe_following.ProbeFollowingTests) ... ok
+test_entire_rollout_rejects_passing_even_with_lateral_separation (tests.test_probe_following.ProbeFollowingTests) ... ok
+test_far_gap_selects_catch_up_and_close_gap_selects_lower_speed (tests.test_probe_following.ProbeFollowingTests) ... ok
+test_gap_and_tracking_variation_do_not_interrupt_started_hold (tests.test_probe_following.ProbeFollowingTests) ... ok
+test_infeasible_probe_target_interrupts_hold_and_allows_other_path (tests.test_probe_following.ProbeFollowingTests) ... ok
+test_invalid_config_observations_and_time_are_rejected (tests.test_probe_following.ProbeFollowingTests) ... ok
+test_mid_horizon_clearance_violation_is_rejected_despite_positive_end_gap (tests.test_probe_following.ProbeFollowingTests) ... ok
+test_phase_waits_for_actual_arrival_and_hold_time (tests.test_probe_following.ProbeFollowingTests) ... ok
+test_probe_target_is_held_even_when_center_has_lower_cost (tests.test_probe_following.ProbeFollowingTests) ... ok
+test_same_maneuver_origin_is_preserved_when_replanning_speed (tests.test_probe_following.ProbeFollowingTests) ... ok
+test_target_gap_remains_continuous_across_finish (tests.test_probe_following.ProbeFollowingTests) ... ok
+test_target_is_locked_other_predictions_are_shared_and_instances_independent (tests.test_probe_following.ProbeFollowingTests) ... ok
+test_current_scene_collection_and_all_training_samples_use_12_4_4 (tests.test_action_gp.ActionGpTests) ... ok
+test_eighth_feature_is_current_executed_target_not_future_action (tests.test_action_gp.ActionGpTests) ... ok
+test_missing_action_is_an_error_and_legacy_features_remain_seven (tests.test_action_gp.ActionGpTests) ... ok
+
+----------------------------------------------------------------------
+Ran 39 tests in 1.918s
+
+OK

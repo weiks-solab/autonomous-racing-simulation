@@ -311,6 +311,17 @@ class SimulationVisualizer:
             else:
                 plt.pause(self.config.pause_seconds)
 
+    def wait(self, seconds: float) -> None:
+        """播放時等到下一幀；等待期間仍處理視窗事件，視窗不會沒有回應。"""
+        if not math.isfinite(seconds) or seconds <= 0.0:
+            # TkAgg 的 start_event_loop(0) 會一直等下去，所以不足一幀時直接返回。
+            return
+        if self._use_blit:
+            # 與 update_vehicles 相同，避開 plt.pause 觸發的完整重畫。
+            self.figure.canvas.start_event_loop(seconds)
+        else:
+            plt.pause(seconds)
+
     def _dynamic_artists(self) -> list[Artist]:
         return sorted(
             (artist for artist in self.axes.get_children() if artist not in self._static_artists),
