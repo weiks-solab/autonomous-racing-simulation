@@ -1,0 +1,35 @@
+v2 fit: 2416 close-range + 2584 v1-pool = 5000 samples
+  done in 231.9 s; warnings=0
+{
+  "source": "C:\\Users\\kevin\\OneDrive\\Desktop\\project\\racing_sim\\models\\gp\\close_range_20261124_v2\\model.pkl",
+  "source_sha256": "71f8779ff5f9ac0c082a9e6b007c674b16246ea53505aa62ddd99c2ed9f1a31f",
+  "compact": "C:\\Users\\kevin\\OneDrive\\Desktop\\project\\racing_sim\\models\\compact\\interaction_gp_v2_close.npz",
+  "compact_sha256": "f9d3dd89bc7f0f7c68ea737e5fefb5b4e7a93f03b6c0663d6da32d751db0add4",
+  "compact_bytes": 455327,
+  "checked_rows": 500,
+  "max_prediction_difference": 0.0,
+  "same_input_ranges": true
+}
+
+| 資料 | 分組 | n | 基準 MAE | v1 MAE | v2 MAE | v1 涵蓋 | v2 涵蓋 | v1 寬度 | v2 寬度 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| close_test | all | 2228 | 0.0601 | 0.0524 | 0.0231 | 95.5% | 96.5% | 0.630 | 0.491 |
+| close_test | gap[-2,0) | 137 | 0.0226 | 0.0420 | 0.0206 | 100.0% | 100.0% | 0.739 | 0.185 |
+| close_test | gap[0,0.8) | 153 | 0.1076 | 0.1461 | 0.0362 | 94.1% | 86.3% | 0.670 | 0.145 |
+| close_test | gap[0.8,1.6) | 589 | 0.1355 | 0.1009 | 0.0300 | 87.8% | 92.5% | 0.378 | 0.138 |
+| close_test | gap[1.6,3) | 88 | 0.1455 | 0.0902 | 0.0420 | 78.4% | 86.4% | 0.298 | 0.180 |
+| old_heldout | all | 1136 | 0.0981 | 0.0229 | 0.0238 | 92.4% | 93.8% | 0.138 | 0.150 |
+| speed06_test | all | 2336 | 0.1250 | 0.0269 | 0.0294 | 87.7% | 90.0% | 0.120 | 0.145 |
+
+輸入落在模型訓練範圍內的比例： {
+  "v1": {
+    "close_test": 0.018402154398563735,
+    "old_heldout": 0.9322183098591549,
+    "speed06_test": 0.8595890410958904
+  },
+  "v2": {
+    "close_test": 0.4263913824057451,
+    "old_heldout": 1.0,
+    "speed06_test": 0.8874143835616438
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "relative": {
+    "episodes_with_lead": 20,
+    "median_first_lead_s": 6.16,
+    "episodes_ahead_at_end": 20,
+    "collision_steps_total": 275,
+    "episodes_with_collision": 11,
+    "no_feasible_total": 55,
+    "target_switches_mean": 13.3,
+    "decisions_total": 6680,
+    "gp_active_total": 0,
+    "gp_off_reasons": {},
+    "online_gp": null,
+    "wall_seconds_mean": 31.070070439996197
+  },
+  "v1_candidate": {
+    "episodes_with_lead": 20,
+    "median_first_lead_s": 6.02,
+    "episodes_ahead_at_end": 20,
+    "collision_steps_total": 362,
+    "episodes_with_collision": 11,
+    "no_feasible_total": 49,
+    "target_switches_mean": 15.5,
+    "decisions_total": 6680,
+    "gp_active_total": 404,
+    "gp_off_reasons": {
+      "no_history": 140,
+      "out_of_range:gap": 6083,
+      "out_of_range:front_heading_error": 4
+    },
+    "online_gp": {
+      "n": 404,
+      "mae": 0.10149135855837434,
+      "coverage_2std": 0.6633663366336634,
+      "switch_decisions": 54,
+      "switch_mae": 0.09998692067525866
+    },
+    "wall_seconds_mean": 31.707423055003165
+  },
+  "v2_candidate": {
+    "episodes_with_lead": 1,
+    "median_first_lead_s": 14.88,
+    "episodes_ahead_at_end": 1,
+    "collision_steps_total": 136,
+    "episodes_with_collision": 5,
+    "no_feasible_total": 1,
+    "target_switches_mean": 87.65,
+    "decisions_total": 6680,
+    "gp_active_total": 6456,
+    "gp_off_reasons": {
+      "no_history": 140,
+      "out_of_range:front_heading_error": 9,
+      "out_of_range:front_d": 3,
+      "out_of_range:rear_d": 11,
+      "out_of_range:gap": 61
+    },
+    "online_gp": {
+      "n": 6305,
+      "mae": 0.08537023642664981,
+      "coverage_2std": 0.8115781126090404,
+      "switch_decisions": 1702,
+      "switch_mae": 0.08869115022508672
+    },
+    "wall_seconds_mean": 64.99103975500039
+  },
+  "v2_previous": {
+    "episodes_with_lead": 8,
+    "median_first_lead_s": 11.719999999999999,
+    "episodes_ahead_at_end": 9,
+    "collision_steps_total": 1162,
+    "episodes_with_collision": 20,
+    "no_feasible_total": 59,
+    "target_switches_mean": 94.85,
+    "decisions_total": 6680,
+    "gp_active_total": 5566,
+    "gp_off_reasons": {
+      "no_history": 140,
+      "out_of_range:relative_speed": 1,
+      "out_of_range:rear_heading_error": 1,
+      "out_of_range:gap": 950,
+      "out_of_range:rear_d": 5,
+      "out_of_range:front_heading_error": 16,
+      "out_of_range:front_d": 1
+    },
+    "online_gp": {
+      "n": 5462,
+      "mae": 0.1061556476792127,
+      "coverage_2std": 0.7123764188941779,
+      "switch_decisions": 1842,
+      "switch_mae": 0.12459368271445728
+    },
+    "wall_seconds_mean": 51.821486760000695
+  }
+}

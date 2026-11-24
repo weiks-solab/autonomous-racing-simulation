@@ -40,6 +40,16 @@ d 左正；歷史以 t−0.4、t−0.2、t 三幀切兩段。
 .\.venv\Scripts\python.exe interaction_gp.py collect --features history --randomize-probes --probe-amplitudes 0.6 --speed-strata 3 4 5 6 7 --episodes 16 --seconds 30 --seed 43 --episode-prefix speed06 --output data/training/my_speed06
 ```
 
+攻方實際超車收集（近距離、並排與超越），後車改用 `relative_overtake` 對 `defend`：
+
+- 攻方候選與橫移距離同 `interaction_overtake`：7 個訓練過的目標、3.0 m。
+- 每場輪流使用 `--deviation-weights`；前車速度依 `--speed-strata` 平衡；攻方比前車快 `--speed-advantage`；初始車距 `--initial-gap`。兩車都移動中起步。
+- 碰撞矩形重疊的樣本仍會被排除，所以真正接觸的時段不在資料中。
+
+```powershell
+.\.venv\Scripts\python.exe interaction_gp.py collect --features history --rear-strategy relative_overtake --speed-strata 3 4 5 6 7 --deviation-weights 0 1 3 --speed-advantage 0.5 1.5 --initial-gap 1.5 4 --episodes 36 --seconds 20 --seed 44 --episode-prefix close --output data/training/my_close
+```
+
 完整 model.pkl 很大（例如 M1-30 為 131 MB），只在本機。可轉成可放進 Git 的精簡檔，預測與原檔一致，版本紀錄見 [models/registry.md](models/registry.md)：
 
 ```powershell

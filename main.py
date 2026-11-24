@@ -211,9 +211,9 @@ GP_MODEL_PATHS = {
 # ===== ⑤-2 互動 GP 超車（interaction_overtake）=====
 # 以 0.4 s 互動歷史與自車目標 d，預測前車 0.5 s 後的橫移；只在 GP 訓練範圍內啟用，否則退回定速等 d。
 # 訓練範圍只有圓角矩形、前車約 1.4～6.9 m/s、車距約 1.6～6.8 m；預設 10／9 m/s 場景不在範圍內，示範用 --interaction-overtake。
-# v1（M1-30）精簡檔已進 Git，其他電腦也能直接執行；本機原檔 models/gp/speed06_20261124_c_m1_30/model.pkl 預測相同。
-# 各版本見 models/registry.md。
-INTERACTION_GP_MODEL_PATH = "models/compact/interaction_gp_v1_m1_30.npz"
+# 精簡檔已進 Git，其他電腦也能直接執行。v2＝加入近距離資料；v1＝models/compact/interaction_gp_v1_m1_30.npz。
+# 各版本、雜湊與評估見 models/registry.md。
+INTERACTION_GP_MODEL_PATH = "models/compact/interaction_gp_v2_close.npz"
 INTERACTION_OVERTAKING_CONFIG = InteractionOvertakingConfig(
     # 成本與避撞設定沿用 relative_overtake；候選只用 GP 訓練過的目標 d，橫移距離與訓練資料相同（3.0 m）。
     relative=replace(RELATIVE_OVERTAKING_CONFIG, candidate_offsets=TRAINED_OFFSETS, transition_length=3.0),

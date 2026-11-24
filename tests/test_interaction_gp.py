@@ -13,7 +13,7 @@ import math
 
 from core.track import Track
 from interaction_gp import (
-    PROBE_AMPLITUDES, PROBE_HOLD_RANGE, random_probe_config, select_features, speed_strata,
+    AttackerCollection, PROBE_AMPLITUDES, PROBE_HOLD_RANGE, random_probe_config, select_features, speed_strata,
     split_groups, stratified_design, train,
 )
 from strategy.probe_following import ProbeFollowingConfig
@@ -223,6 +223,14 @@ class HistoryFeatureTests(unittest.TestCase):
         for kwargs in ({"amplitudes": ()}, {"amplitudes": (0.0,)}, {"first_side": 0.5}):
             with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
                 random_probe_config(base, np.random.default_rng(1), **kwargs)
+
+    def test_attacker_collection_validates_ranges(self):
+        self.assertEqual(AttackerCollection().deviation_weights, (0.0, 1.0, 3.0))
+        for kwargs in ({"deviation_weights": ()}, {"deviation_weights": (-1.0,)},
+                       {"speed_advantage": (1.5, 0.5)}, {"initial_gap": (-1.0, 2.0)},
+                       {"initial_gap": (1.0, float("inf"))}):
+            with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
+                AttackerCollection(**kwargs)
 
     def test_stratified_design_balances_side_and_start_within_each_stratum(self):
         cells = {}

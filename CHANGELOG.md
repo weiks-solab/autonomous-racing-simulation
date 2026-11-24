@@ -2,6 +2,18 @@
 
 ## 2026-11-24
 
+### 攻方近距離資料收集與 GP v2（使用者已將 main 切換為 v2）
+
+- `interaction_gp.py collect` 新增 `--rear-strategy relative_overtake`：
+  - 攻方實際超車收集，攻方候選同 interaction_overtake。
+  - `--deviation-weights` 每場輪流，`--speed-advantage`、`--initial-gap` 設定範圍，兩車移動中起步。
+  - 預設 probe_follow 收集不變（回歸逐筆相同）。
+- 新增 v2 精簡檔 `models/compact/interaction_gp_v2_close.npz` 與登記表 v2 條目；新增 1 項測試，全套 440 項 2 項失敗（同名）。
+- 評估見 [近距離資料與 v2](reports/experiments/2026-11-24_close_range_gp/README.md)：
+  - 離線近距離誤差大幅下降。
+  - 閉迴路 v2 使攻方來回切換、超車變少。
+- 使用者之後自行把 main 的 `INTERACTION_GP_MODEL_PATH` 改為 v2 精簡檔；v1 仍可由 tag `interaction-gp-v1` 或改回路徑取得。
+
 ### 互動 GP 精簡檔與模型登記（tag `interaction-gp-v1`）
 
 - 使用者要求保存目前模型版本。M1-30 的 pkl 有 131 MB，超過 GitHub 單檔 100 MB。

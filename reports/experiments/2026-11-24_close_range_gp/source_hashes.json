@@ -1,0 +1,13 @@
+{
+  "interaction_gp.py": "a0ba2e940b356340ab27995ea620a1c58f55c1d2072fd51ff7d2253dd04cb05b",
+  "strategy/interaction_gp.py": "f53a26385179f2a3c2c44bccb9ad4512ad3578f2d6cde5ccc40e84bd16a86f29",
+  "strategy/interaction_overtaking.py": "4bf39939223f744a0ad0bbd07c5c932e2614cc25486909f1432ad952c45e394a",
+  "strategy/interaction_features.py": "763ceccc8cf4ab0e2d986cd99585f7ebad0906b826a32c5d2e039d4b28879ad9",
+  "main.py": "57a1bb3d86b4b9b8d7182a99754329bb5e6097e6584d4488f662857e764b070f",
+  "reports/experiments/2026-11-24_close_range_gp/train_compare.py": "73b4b2b5c45fd8525aeb742bf6b0901990dbefc7d60d6453d0432d8aaa322035",
+  "reports/experiments/2026-11-24_close_range_gp/evaluate.py": "9d18143cdce32fa4ed8ad4c7df723c3ba2eeddd5d5f6a24831de4cf6f09998db",
+  "data/training/close_range_20261124/samples.csv": "d3d8d0d90f1376c6df7f326433fd3e8ba9ecfa3680b032aabc547babbe5f2135",
+  "models/gp/close_range_20261124_v2/model.pkl": "71f8779ff5f9ac0c082a9e6b007c674b16246ea53505aa62ddd99c2ed9f1a31f",
+  "models/compact/interaction_gp_v1_m1_30.npz": "dbc983c1d9e946b84c330fcce09f6b5a3663c00131800de05d1cf5958f95aa7e",
+  "models/compact/interaction_gp_v2_close.npz": "f9d3dd89bc7f0f7c68ea737e5fefb5b4e7a93f03b6c0663d6da32d751db0add4"
+}

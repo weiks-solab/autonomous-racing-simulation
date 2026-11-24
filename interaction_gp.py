@@ -2,7 +2,7 @@
 
 import argparse
 import csv
-from dataclasses import asdict, replace
+from dataclasses import asdict, dataclass, replace
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -93,11 +93,29 @@ def stratified_design(number: int, strata_count: int) -> tuple[int, float, bool]
     return stratum, 1.0 if block % 2 == 0 else -1.0, (block // 2) % 2 == 1
 
 
+@dataclass(frozen=True)
+class AttackerCollection:
+    """攻方實際超車收集：relative_overtake 對 defend，涵蓋貼近、並排與超越。"""
+
+    deviation_weights: tuple[float, ...] = (0.0, 1.0, 3.0)   # 每場輪流使用，保守與積極的攻方都有
+    speed_advantage: tuple[float, float] = (0.5, 1.5)        # 攻方巡航＝前車＋U(範圍)，m/s
+    initial_gap: tuple[float, float] = (1.5, 4.0)            # 初始車距 U(範圍)，m
+
+    def __post_init__(self) -> None:
+        if not self.deviation_weights or any(not math.isfinite(w) or w < 0.0 for w in self.deviation_weights):
+            raise ValueError("deviation weights must be non-negative and finite")
+        for name in ("speed_advantage", "initial_gap"):
+            low, high = getattr(self, name)
+            if not (math.isfinite(low) and math.isfinite(high) and 0.0 <= low <= high):
+                raise ValueError(f"{name} must be a finite range with 0 <= low <= high")
+
+
 def collect(output: Path, episodes: int, seconds: float, seed: int,
             feature_set: str = "basic", randomize_probes: bool = False,
             strata: Sequence[tuple[float, float]] | None = None,
             probe_amplitudes: Sequence[float] = PROBE_AMPLITUDES,
-            episode_prefix: str = "interaction") -> None:
+            episode_prefix: str = "interaction",
+            attacker: AttackerCollection | None = None) -> None:
     import main
     if episodes < 5:
         raise ValueError("use at least five episodes for train/validation/test")
@@ -106,7 +124,12 @@ def collect(output: Path, episodes: int, seconds: float, seed: int,
     amplitudes = check_amplitudes(probe_amplitudes)
     if amplitudes != PROBE_AMPLITUDES and not randomize_probes:
         raise ValueError("probe amplitudes only apply with randomize_probes")
-    if strata is not None:
+    if attacker is not None:
+        if feature_set != "history" or randomize_probes:
+            raise ValueError("attacker collection needs history features and no probe randomization")
+        if strata is not None and episodes % (len(strata) * len(attacker.deviation_weights)):
+            raise ValueError("episodes must be a multiple of strata x deviation weights for a balanced design")
+    elif strata is not None:
         if not randomize_probes:
             raise ValueError("speed strata require randomize_probes")
         if episodes % (4 * len(strata)):
@@ -127,29 +150,46 @@ def collect(output: Path, episodes: int, seconds: float, seed: int,
         # 各場獨立初始狀態，固定防守配置；前半樣本涵蓋移動中起步。
         origin = float(rng.uniform(0, track_length(settings.track)))
         design = None
-        if strata is None:
-            gap, speed = float(rng.uniform(2, 5)), float(rng.uniform(3, 7))
-            initial, first_side = (speed if number % 2 else 0.0), None
+        extra = {}
+        if attacker is not None:
+            # 速度區間依場次輪流；每輪完所有區間換下一個偏離中心線權重。兩車移動中起步。
+            stratum = None if strata is None else strata[number % len(strata)]
+            weight = attacker.deviation_weights[(number // (1 if strata is None else len(strata)))
+                                                % len(attacker.deviation_weights)]
+            gap = float(rng.uniform(*attacker.initial_gap))
+            speed = float(rng.uniform(*(stratum or (3.0, 7.0))))
+            rear_speed = speed + float(rng.uniform(*attacker.speed_advantage))
+            rear_initial, front_initial, rear_strategy = rear_speed, speed, "relative_overtake"
+            # 攻方候選與橫移距離同 interaction_overtake（7 個訓練過的目標、3.0 m），只換 deviation_weight。
+            episode_settings = replace(settings, relative_overtaking_config=replace(
+                main.INTERACTION_OVERTAKING_CONFIG.relative, deviation_weight=weight))
+            design = {"speed_stratum": None if stratum is None else list(stratum),
+                      "deviation_weight": weight, "speed_advantage": rear_speed - speed}
         else:
-            # 平衡設計：速度區間、先行側與起步狀態依場次編號分配，避免彼此混在一起。
-            stratum, first_side, moving = stratified_design(number, len(strata))
-            gap, speed = float(rng.uniform(2, 5)), float(rng.uniform(*strata[stratum]))
-            initial = speed if moving else 0.0
-            design = {"speed_stratum": list(strata[stratum]),
-                      "first_side": "left" if first_side > 0 else "right", "moving_start": moving}
-        episode_settings = settings
-        if randomize_probes:
-            episode_settings = replace(settings, probe_following_config=random_probe_config(
-                settings.probe_following_config, probe_rng, amplitudes, first_side))
-        probe = episode_settings.probe_following_config
+            if strata is None:
+                gap, speed = float(rng.uniform(2, 5)), float(rng.uniform(3, 7))
+                initial, first_side = (speed if number % 2 else 0.0), None
+            else:
+                # 平衡設計：速度區間、先行側與起步狀態依場次編號分配，避免彼此混在一起。
+                stratum, first_side, moving = stratified_design(number, len(strata))
+                gap, speed = float(rng.uniform(2, 5)), float(rng.uniform(*strata[stratum]))
+                initial = speed if moving else 0.0
+                design = {"speed_stratum": list(strata[stratum]),
+                          "first_side": "left" if first_side > 0 else "right", "moving_start": moving}
+            episode_settings = settings
+            if randomize_probes:
+                episode_settings = replace(settings, probe_following_config=random_probe_config(
+                    settings.probe_following_config, probe_rng, amplitudes, first_side))
+            probe = episode_settings.probe_following_config
+            rear_speed, rear_initial, front_initial, rear_strategy = speed + 2, initial, initial, "probe_follow"
+            extra = {"probe_sequence": list(probe.sequence), "hold_seconds": probe.hold_seconds}
         scenario = EpisodeScenario(f"{episode_prefix}-{number:03d}", (
-            VehicleInitialCondition("rear", origin, 0.0, initial, speed + 2),
-            VehicleInitialCondition("front", origin + gap, 0.0, initial, speed),
-        ), {"rear": StrategyAssignment("probe_follow"),
+            VehicleInitialCondition("rear", origin, 0.0, rear_initial, rear_speed),
+            VehicleInitialCondition("front", origin + gap, 0.0, front_initial, speed),
+        ), {"rear": StrategyAssignment(rear_strategy),
             "front": StrategyAssignment("defend", target_vehicle_id="rear")})
         scenarios.append({"id": scenario.episode_id, "vehicles": [asdict(v) for v in scenario.vehicles],
-                          "probe_sequence": list(probe.sequence), "hold_seconds": probe.hold_seconds,
-                          **({} if design is None else {"design": design})})
+                          **extra, **({} if design is None else {"design": design})})
 
         def observe(step, observation, decision, command):
             if observation.vehicle_id != "rear":
@@ -157,7 +197,7 @@ def collect(output: Path, episodes: int, seconds: float, seed: int,
             actions.append({"episode_id": scenario.episode_id, "step_index": step, "time_s": step * dt,
                             "mode": decision.mode, "target_d": decision.target_d,
                             "speed_limit": decision.speed_limit,
-                            "effective_target_speed": min(speed + 2, decision.speed_limit) if decision.speed_limit is not None else speed + 2,
+                            "effective_target_speed": min(rear_speed, decision.speed_limit) if decision.speed_limit is not None else rear_speed,
                             "steering": command.steering_angle, "acceleration": command.acceleration})
 
         run_episode(scenario, episode_settings, collector, seconds, step_observer=observe)
@@ -172,7 +212,8 @@ def collect(output: Path, episodes: int, seconds: float, seed: int,
     metadata = {"seed": seed, "seconds": seconds, "scenarios": scenarios, "feature_set": feature_set,
                 "base_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
                 "worktree": "含未提交修改",
-                "probe_order": ("randomized per episode" if randomize_probes
+                "probe_order": ("not used (relative_overtake attacker)" if attacker is not None
+                                else "randomized per episode" if randomize_probes
                                 else "left, center, right, center"),
                 "configs": {name: asdict(getattr(settings, name)) for name in (
                     "model_config", "geometry", "controller_config", "probe_following_config", "defense_config", "offset_path_config")}}
@@ -184,9 +225,15 @@ def collect(output: Path, episodes: int, seconds: float, seed: int,
             "side_count": PROBE_SIDE_COUNT, "rng": "numpy default_rng([seed, 1])",
             "note": ("先行側依平衡設計，" if strata is not None else "每場隨機先左或先右，")
                     + "左右交替；每次側向幅度獨立抽樣；hold_seconds 整場相同。"}
+    if attacker is not None:
+        metadata["rear_strategy"] = "relative_overtake"
+        metadata["attacker"] = {**asdict(attacker),
+                                "base_config": asdict(main.INTERACTION_OVERTAKING_CONFIG.relative),
+                                "design_rule": "速度區間依場次輪流；每輪完所有區間換下一個 deviation_weight；兩車移動中起步"}
     if strata is not None:
         metadata["speed_strata"] = [list(stratum) for stratum in strata]
-        metadata["design_rule"] = "速度區間依場次輪流；同區間依序為（先左、靜止）（先右、靜止）（先左、移動）（先右、移動）"
+        if attacker is None:
+            metadata["design_rule"] = "速度區間依場次輪流；同區間依序為（先左、靜止）（先右、靜止）（先左、移動）（先右、移動）"
     if episode_prefix != "interaction":
         metadata["episode_prefix"] = episode_prefix
     export_dataset(dataset, collector.episodes, settings.track, output, metadata)
@@ -419,15 +466,25 @@ if __name__ == "__main__":
                         help="collect：側向試探幅度候選（m），需 --randomize-probes")
     parser.add_argument("--episode-prefix", default="interaction",
                         help="collect：場次 ID 前綴，合併不同資料集時避免重複")
+    parser.add_argument("--rear-strategy", choices=("probe_follow", "relative_overtake"), default="probe_follow",
+                        help="collect：後車策略；relative_overtake 為攻方實際超車收集（需 --features history）")
+    parser.add_argument("--deviation-weights", nargs="+", type=float, default=[0.0, 1.0, 3.0],
+                        help="collect（relative_overtake）：每場輪流使用的偏離中心線權重")
+    parser.add_argument("--speed-advantage", nargs=2, type=float, default=[0.5, 1.5], metavar=("LOW", "HIGH"),
+                        help="collect（relative_overtake）：攻方比前車快的範圍，m/s")
+    parser.add_argument("--initial-gap", nargs=2, type=float, default=[1.5, 4.0], metavar=("LOW", "HIGH"),
+                        help="collect（relative_overtake）：初始車距範圍，m")
     args = parser.parse_args()
     output = project_path(args.output)
     if output.exists():
         parser.error("output already exists")
     os.environ.setdefault("MPLCONFIGDIR", str(project_path(".cache/matplotlib")))
     if args.mode == "collect":
+        attacker = None if args.rear_strategy == "probe_follow" else AttackerCollection(
+            tuple(args.deviation_weights), tuple(args.speed_advantage), tuple(args.initial_gap))
         collect(output, args.episodes, args.seconds, args.seed, args.features, args.randomize_probes,
                 None if args.speed_strata is None else speed_strata(args.speed_strata),
-                tuple(args.probe_amplitudes), args.episode_prefix)
+                tuple(args.probe_amplitudes), args.episode_prefix, attacker)
     elif args.mode == "export":
         if args.model is None:
             parser.error("export requires --model")

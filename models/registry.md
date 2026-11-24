@@ -29,3 +29,18 @@
 | 紀錄 | [速度 × ±0.6 m 實驗](../reports/experiments/2026-11-24_speed_amplitude_probe/README.md)、[interaction_overtake 評估](../reports/experiments/2026-11-24_interaction_overtake/README.md) |
 
 限制：並排與超越（車距 <1.6 m）不在訓練範圍，interaction_overtake 會退回定速等 d 預測。
+
+## v2：加入近距離攻防資料（使用者已設為 main 預設；未打 tag）
+
+| 項目 | 內容 |
+| --- | --- |
+| 精簡檔 | `models/compact/interaction_gp_v2_close.npz`（455 KB，SHA-256 `f9d3dd89…0add4`） |
+| 原 pkl（本機） | `models/gp/close_range_20261124_v2/model.pkl`（201 MB，SHA-256 `71f8779f…31f`）；精簡檔預測差 0 |
+| 訓練資料 | `close_range_20261124` 訓練 24 場中車距 −2～3 m 的 2416 筆，加 v1 訓練樣本隨機 2584 筆；共 5000 筆 |
+| 適用範圍 | 車距約 −2～6.8 m（範圍由訓練輸入自動取得）；其餘同 v1 |
+| 離線指標 | 近距離測試 12 場 MAE：0～0.8 m 0.036、0.8～1.6 m 0.030 m（v1 為 0.146、0.101）；舊保留 8 場 0.0238（v1 0.0229） |
+| 閉迴路 | 20 組成對：v2 各候選只超車 1／20、平均換目標 87.7 次；v1 與無 GP 都 20／20（見紀錄） |
+| 重建 | 需本機三份資料；執行 [train_compare.py](../reports/experiments/2026-11-24_close_range_gp/train_compare.py) |
+| 紀錄 | [近距離資料與 v2](../reports/experiments/2026-11-24_close_range_gp/README.md) |
+
+main.py 目前用 v2；要改回 v1，把 `INTERACTION_GP_MODEL_PATH` 改成 `models/compact/interaction_gp_v1_m1_30.npz`。
