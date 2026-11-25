@@ -16,9 +16,9 @@ from strategy.defense_conditions import predict_rear
 from strategy.relative_overtaking import RelativeOvertakingConfig, RelativeOvertakingStrategy
 from core.vehicle_geometry import CollisionConfig
 from strategy.responsibility import (
-    PairPrediction, ResponsibilityConfig, ResponsibilityResult, body_centers, center_gap_now,
-    collision_length, evaluate_responsibility, first_responsibility_violation, leader_penalty,
-    responsibility_bound, responsibility_constraint,
+    PairPrediction, PositionUncertainty, ResponsibilityConfig, ResponsibilityResult, body_centers,
+    center_gap_now, collision_length, ellipse_clearance, evaluate_responsibility,
+    first_responsibility_violation, leader_penalty, responsibility_bound, responsibility_constraint,
 )
 from tests.test_bicycle_prediction import observation as bicycle_observation, prediction_config
 from tests.test_defending_strategy import observation as defense_observation
@@ -496,6 +496,71 @@ class DefenseResponsibilityTests(unittest.TestCase):
             DefenseConfig(responsibility="on")
         with self.assertRaises(ValueError):
             DefenseConfig(leader_penalty_weight=-1.0)
+
+
+class UncertaintyEllipseTests(unittest.TestCase):
+    """對方帶有位置不確定性時，圓 r_col 改成沿賽道 r_col+along、橫向 r_col+across 的橢圓。"""
+
+    times = (0.0, 0.1, 0.2)
+
+    def pair(self, x: float, y: float, uncertainty: PositionUncertainty | None, delta_s: float = 1.0):
+        return PairPrediction("other", GEOMETRY, straight_states(x, y, 3), np.full(3, delta_s), uncertainty)
+
+    @staticmethod
+    def ellipse(tangent: float, along: float, across: float) -> PositionUncertainty:
+        return PositionUncertainty(np.full(3, tangent), np.full(3, along), np.full(3, across))
+
+    def test_zero_increments_match_the_circle(self) -> None:
+        own = straight_states(0.0, 0.0, 3, step=0.1)
+        for x, y in ((0.5, 0.2), (-0.3, 0.7), (1.2, -0.4)):
+            for use_bound in (True, False):
+                with self.subTest(x=x, y=y, use_bound=use_bound):
+                    circle = responsibility_constraint(own, GEOMETRY, self.pair(x, y, None), CONFIG, use_bound)
+                    ellipse = responsibility_constraint(
+                        own, GEOMETRY, self.pair(x, y, self.ellipse(0.7, 0.0, 0.0)), CONFIG, use_bound)
+                    np.testing.assert_allclose(ellipse, circle, rtol=0.0, atol=1e-12)
+
+    def test_axes_follow_the_track_tangent(self) -> None:
+        behind = straight_states(-0.9, 0.0, 3)   # 對方在原點；自車沿 x 相距 0.9 m
+        beside = straight_states(0.0, 0.9, 3)    # 沿 y 相距 0.9 m
+        circle_values = [responsibility_constraint(own, GEOMETRY, self.pair(0.0, 0.0, None), OVERLAP, False)
+                         for own in (behind, beside)]
+        self.assertTrue(all(np.all(values > 0.0) for values in circle_values))   # 0.9 > r_col，圓形不違反
+        # 切線沿 +x：沿賽道半軸 1.1、橫向 0.6 → 後方 0.9 m 落在橢圓內，側邊 0.9 m 不受影響。
+        along_x = self.pair(0.0, 0.0, self.ellipse(0.0, 0.5, 0.0))
+        self.assertTrue(np.all(responsibility_constraint(behind, GEOMETRY, along_x, OVERLAP, False) < 0.0))
+        self.assertTrue(np.all(responsibility_constraint(beside, GEOMETRY, along_x, OVERLAP, False) > 0.0))
+        # 切線沿 +y：兩軸對調。
+        along_y = self.pair(0.0, 0.0, self.ellipse(math.pi / 2.0, 0.5, 0.0))
+        self.assertTrue(np.all(responsibility_constraint(behind, GEOMETRY, along_y, OVERLAP, False) > 0.0))
+        self.assertTrue(np.all(responsibility_constraint(beside, GEOMETRY, along_y, OVERLAP, False) < 0.0))
+        # 手算：Δt=−0.9、半軸 1.1 → r²·(0.9/1.1)² − r²。
+        expected = 0.36 * (0.9 / 1.1) ** 2 - 0.36
+        np.testing.assert_allclose(
+            ellipse_clearance(np.array(((-0.9, 0.0),)), PositionUncertainty([0.0], [0.5], [0.0]), 0.6),
+            [expected], atol=1e-12)
+
+    def test_responsibility_roles_are_unchanged(self) -> None:
+        # overlap_rule：自車在後須避開橢圓；自車完全在前不負責，懲罰仍用圓形距離。
+        stretched = self.ellipse(0.0, 0.5, 0.0)
+        follower = straight_states(-0.9, 0.0, 3)
+        result = evaluate_responsibility(self.times, follower, GEOMETRY,
+                                         (self.pair(0.0, 0.0, stretched, delta_s=0.9),), OVERLAP)
+        self.assertEqual(result.violation, PredictedCollision("other", 0.1, kind="responsibility"))
+        leader = straight_states(0.9, 0.0, 3)
+        result = evaluate_responsibility(self.times, leader, GEOMETRY,
+                                         (self.pair(0.0, 0.0, stretched, delta_s=-0.9),), OVERLAP)
+        self.assertIsNone(result.violation)
+        self.assertEqual(result.leader_penalty, 0.0)
+
+    def test_invalid_uncertainty_is_rejected(self) -> None:
+        for tangent, along, across in (([0.0, 0.0], [0.0], [0.0]), ([0.0], [-0.1], [0.0]),
+                                       ([math.nan], [0.0], [0.0]), (np.zeros((1, 1)), [0.0], [0.0])):
+            with self.subTest(tangent=tangent, along=along, across=across), self.assertRaises(ValueError):
+                PositionUncertainty(tangent, along, across)
+        short = PositionUncertainty([0.0, 0.0], [0.1, 0.1], [0.1, 0.1])
+        with self.assertRaises(ValueError):
+            responsibility_constraint(straight_states(0.0, 0.0, 3), GEOMETRY, self.pair(1.0, 0.0, short), CONFIG)
 
 
 if __name__ == "__main__":

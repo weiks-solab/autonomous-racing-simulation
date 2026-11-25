@@ -46,6 +46,8 @@ from strategy.gp_prediction import GpRoute, load_gp_routes
 from strategy.interaction_gp import InteractionGpModel
 from strategy.interaction_overtaking import InteractionOvertakingConfig, TRAINED_OFFSETS
 from strategy.rollout_overtaking import RolloutOvertakingConfig
+from strategy.paper_gp import PaperGpModel
+from strategy.paper_rollout_overtaking import PaperRolloutOvertakingConfig
 
 
 # =====================================================================
@@ -55,6 +57,7 @@ from strategy.rollout_overtaking import RolloutOvertakingConfig
 #   ③ 避撞責任約束：defend 與 relative_overtake 共用
 #   ④ 各策略參數：relative_overtake、defend、cost_overtake、progress、overtake
 #   ⑤ GP 對手預測；⑤-2 互動 GP 超車（interaction_overtake）；⑤-3 沿上一步軌跡推演（rollout_overtake）
+#   ⑤-4 論文方式：一步 GP 取樣推演＋不確定性橢圓（paper_rollout_overtake）
 #   ⑥ 畫面顯示
 #   ⑦ --probe-follow 示範場景
 #   ⑧ --interaction-overtake 示範場景
@@ -87,13 +90,14 @@ VEHICLE_SPECS = (
 # relative_overtake：比較預測終點的相對間距（可加安全距離與偏離中心線成本），保留碰撞篩選。
 # interaction_overtake：同 relative_overtake，但前車改用互動 GP 預測（設定見 ⑤-2；只在 GP 訓練範圍內啟用）。
 # rollout_overtake：沿自車上一步軌跡用互動 GP 逐步推演對手，再選候選（設定見 ⑤-3）。
+# paper_rollout_overtake：依論文方式，沿上一步軌跡用一步 GP 取樣推演對手，避撞半徑依 σ 放大成橢圓（設定見 ⑤-4）。
 # cost_overtake：固定候選的成本進攻（進度與超車獎勵）；overtake：原本的規則式進攻。
 # progress：固定候選只比較自車進度，不預測其他車或篩選碰撞。
 # probe_follow：追蹤目標車距，並輪流左右試探前車。
 # defend：防守指定對象，例如 StrategyAssignment("defend", target_vehicle_id="vehicle-2")。
 # centerline：跟隨中心線；未列出的車也會自動使用 centerline。
 STRATEGY_ASSIGNMENTS = {
-    "vehicle-1": StrategyAssignment("rollout_overtake"),
+    "vehicle-1": StrategyAssignment("paper_rollout_overtake"),
     "vehicle-2": StrategyAssignment("defend", target_vehicle_id="vehicle-1"),
  ##   "vehicle-3": StrategyAssignment("progress"),
 }
@@ -148,6 +152,7 @@ RELATIVE_OVERTAKING_CONFIG = RelativeOvertakingConfig(
     speed_candidates_enabled=True,
     speed_candidate_delta=1.0,       # 第二個速度要求為 max(前車速度 - 此差值, 0)，m/s。
     extra_speed_candidate_deltas=(4.0,),  # 再加前車 -4 m/s；可填 (2.0, 4.0)，最低為 0。
+    progress_weight=2.0,   # 進度權重：乘在預測終點間距 gap_T（前車 s − 自車 s）上；越大越重視進度，1 為原本的成本。
     safety_weight=10.0,    # 安全距離成本權重（1/m）；0 關閉，只比預測終點間距。
     safety_distance=0.5,   # 碰撞矩形間隙小於 0.5 m 時開始懲罰，越近越大。
     deviation_weight=0.0,  # 偏離中心線成本 w×mean(d²)（1/m）；0 關閉，尚未調參。
@@ -229,6 +234,22 @@ ROLLOUT_OVERTAKING_CONFIG = RolloutOvertakingConfig(
     relative=replace(RELATIVE_OVERTAKING_CONFIG, candidate_offsets=TRAINED_OFFSETS, transition_length=3.0),
     rollout_step=0.1,  # 推演步長 s；每步用 GP 的 0.5 s Δd 換算增量（Δd×step/0.5），不可超過 0.5
     band_sigma=2.0,    # 邊界軌跡＝平均 ± 2×累加 σ；0 表示只用平均
+)
+
+# ===== ⑤-4 論文方式：一步 GP 取樣推演＋不確定性橢圓（paper_rollout_overtake）=====
+# 沿上一步選中候選的軌跡，Q 個樣本每 0.1 s 查一次論文格式 GP（14 維 → 前車 [Δs, Δd, Δe_ψ, Δv]）並抽樣前進；
+# 樣本平均當作前車預測，避撞責任的 r_col 沿賽道、橫向各放大 k·σ。第 0 步超出 GP 訓練範圍時退回定速等 d。
+# 每次決策約 0.8 s（10 步 × 4 個 GP × 25 列），21 s 的場景約需 5 分鐘，建議用 --replay。
+# 精簡檔已進 Git；完整 pkl 只在本機（models/gp/paper_format_20261125/model.pkl）。版本見 models/registry.md。
+PAPER_GP_MODEL_PATH = "models/compact/paper_gp_v1.npz"
+PAPER_ROLLOUT_OVERTAKING_CONFIG = PaperRolloutOvertakingConfig(
+    # 候選、成本與避撞責任同 relative_overtake（沒有 d_target，不限訓練過的目標），另加換目標成本：
+    # 目標 d 與目前不同就加固定值 m。0.5 時預設場景停在前車後方，0.3 會超車但仍有連續換邊與碰撞
+    # （見 reports/experiments/2026-11-25_paper_switch_cost）；未調參。
+    relative=replace(RELATIVE_OVERTAKING_CONFIG, switch_weight=0.3),
+    samples=25,          # Q：每次決策的前車樣本數（論文 25）
+    ellipse_sigma=0.0,   # k：橢圓半軸＝r_col＋k·σ；0 表示只用平均軌跡，尚未調參
+    seed=0,              # 抽樣亂數種子，固定後結果可重現
 )
 
 # ===== ⑥ 畫面顯示：True 顯示、False 隱藏 =====
@@ -328,6 +349,7 @@ def _strategy_configs() -> StrategyConfigs:
         probe_follow=PROBE_FOLLOWING_CONFIG,
         interaction_overtake=INTERACTION_OVERTAKING_CONFIG,
         rollout_overtake=ROLLOUT_OVERTAKING_CONFIG,
+        paper_rollout_overtake=PAPER_ROLLOUT_OVERTAKING_CONFIG,
     )
 
 
@@ -407,6 +429,22 @@ def _load_interaction_model(
     return model
 
 
+def _load_paper_model(
+    assignments: dict[str, StrategyAssignment], imported_track: bool,
+) -> PaperGpModel | None:
+    """有車指派 paper_rollout_overtake 時才載入論文格式一步 GP。"""
+    if not any(assignment.name == "paper_rollout_overtake" for assignment in assignments.values()):
+        return None
+    if imported_track:
+        print("Paper-format GP was trained on the rounded rectangle only; inputs outside its range fall back.")
+    model = PaperGpModel.load(PAPER_GP_MODEL_PATH)
+    print(f"Paper-format GP: {PAPER_GP_MODEL_PATH}")
+    print(f"  paper_rollout_overtake: Q={PAPER_ROLLOUT_OVERTAKING_CONFIG.samples}, "
+          f"ellipse={PAPER_ROLLOUT_OVERTAKING_CONFIG.ellipse_sigma:g} sigma, "
+          f"seed={PAPER_ROLLOUT_OVERTAKING_CONFIG.seed}")
+    return model
+
+
 def _print_replay_progress(done_steps: int, total_steps: int) -> None:
     """--replay 計算期間每 10% 印一次進度。"""
     if done_steps == total_steps or done_steps % max(1, total_steps // 10) == 0:
@@ -479,6 +517,7 @@ def run_simulation(
     imported_track = not demo and TRACK_NAME not in BUILTIN_TRACKS
     gp_routes = _load_gp_routes(vehicles, assignments, imported_track)
     interaction_model = _load_interaction_model(assignments, imported_track)
+    paper_model = _load_paper_model(assignments, imported_track)
     configs = _strategy_configs()
     # 參考路徑不夠涵蓋被指派策略的橫移時自動延長，例如規則式 overtake 的 6 m。
     path_config = configs.path_config_for(OFFSET_PATH_CONFIG, assignments.values())
@@ -496,7 +535,7 @@ def run_simulation(
         configs.defend,
         defense_enabled=defense_enabled,
         strategy_factories=create_strategy_factories(configs, prediction_configs, gp_routes,
-                                                     interaction_model),
+                                                     interaction_model, paper_model),
         prediction_configs=prediction_configs,  # defend 以 bicycle model 預測自車候選
     )
     live = realtime and not replay

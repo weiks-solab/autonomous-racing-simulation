@@ -21,6 +21,11 @@ overlap_rule=True 時，依決策當下兩車中心的縱向差 Δs₀ᶜ 與碰
 - Δs₀ᶜ ≥ L̄（對方完全在前）：自車是後車，負責。
 - Δs₀ᶜ ≤ −L̄（自車完全在前，已脫離重疊）：自車不負責，只計 leader 懲罰（權重 0 即不限制）。
 負責時要求 ‖Δc_k‖ ≥ r_col，不套 ℓ，避免重疊期間因預測領先而被放寬。
+
+對方預測帶有位置不確定性（PositionUncertainty）時，圓改成橢圓（參照 Lee et al., RA-L 2024 依預測變異放大橢圓的作法）：
+以對方中心為圓心，沿賽道切線的半軸 r_col+along、法向的半軸 r_col+across；
+    g_k = r_col²·[(Δt_k/(r_col+along_k))² + (Δn_k/(r_col+across_k))²] − r_col² − ℓ(Δs_k)
+Δt、Δn 是兩車中心差在對方位置切線、法向的分量。增量為 0 時與圓形約束相同；責任分配規則不變。
 """
 
 from dataclasses import dataclass
@@ -55,13 +60,37 @@ class ResponsibilityConfig:
 
 
 @dataclass(frozen=True)
+class PositionUncertainty:
+    """對方各檢查時間點的不確定性橢圓：賽道切線角（rad），以及沿切線、法向的半軸增量（m，已乘 k）。"""
+
+    tangent: NDArray[np.float64]
+    along: NDArray[np.float64]
+    across: NDArray[np.float64]
+
+    def __post_init__(self) -> None:
+        arrays = [np.asarray(getattr(self, name), dtype=float) for name in ("tangent", "along", "across")]
+        if any(array.ndim != 1 for array in arrays) or len({len(array) for array in arrays}) != 1:
+            raise ValueError("uncertainty arrays must be one-dimensional with the same length")
+        if not all(np.all(np.isfinite(array)) for array in arrays):
+            raise ValueError("uncertainty arrays must be finite")
+        if np.any(arrays[1] < 0.0) or np.any(arrays[2] < 0.0):
+            raise ValueError("uncertainty axis increments must be non-negative")
+        for name, array in zip(("tangent", "along", "across"), arrays):
+            object.__setattr__(self, name, array)
+
+
+@dataclass(frozen=True)
 class PairPrediction:
-    """對方在自車檢查時間點上的預測狀態，與對應的 Δs（對方 s 減自車 s）。"""
+    """對方在自車檢查時間點上的預測狀態，與對應的 Δs（對方 s 減自車 s）。
+
+    uncertainty 為 None 時使用半徑 r_col 的圓；否則改用依不確定性放大的橢圓。
+    """
 
     vehicle_id: str
     geometry: VehicleGeometry
     states: tuple[VehicleState, ...]
     delta_s: NDArray[np.float64]
+    uncertainty: PositionUncertainty | None = None
 
 
 @dataclass(frozen=True)
@@ -109,9 +138,26 @@ def responsibility_constraint(
     if not len(own_states) == len(other.states) == len(delta_s):
         raise ValueError("responsibility check requires the same sample times for both vehicles")
     gaps = body_centers(own_states, own_geometry) - body_centers(other.states, other.geometry)
-    distance_squared = np.sum(gaps**2, axis=1)
-    values = distance_squared - config.collision_radius**2
+    if other.uncertainty is None:
+        distance_squared = np.sum(gaps**2, axis=1)
+        values = distance_squared - config.collision_radius**2
+    else:
+        values = ellipse_clearance(gaps, other.uncertainty, config.collision_radius)
     return values - responsibility_bound(delta_s, config) if use_bound else values
+
+
+def ellipse_clearance(
+    gaps: NDArray[np.float64], uncertainty: PositionUncertainty, radius: float,
+) -> NDArray[np.float64]:
+    """r²·[(Δt/(r+along))² + (Δn/(r+across))²] − r²；gaps 為自車中心減對方中心（世界座標）。"""
+    gaps = np.asarray(gaps, dtype=float).reshape(-1, 2)
+    if len(uncertainty.tangent) != len(gaps):
+        raise ValueError("uncertainty must give one ellipse per check time")
+    cos, sin = np.cos(uncertainty.tangent), np.sin(uncertainty.tangent)
+    along = gaps[:, 0] * cos + gaps[:, 1] * sin
+    across = -gaps[:, 0] * sin + gaps[:, 1] * cos
+    normalized = (along / (radius + uncertainty.along))**2 + (across / (radius + uncertainty.across))**2
+    return radius**2 * normalized - radius**2
 
 
 def first_responsibility_violation(

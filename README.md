@@ -270,6 +270,27 @@ GP_MODEL_PATHS = {
 
 模型載入與預測在 `strategy/gp_prediction.py`，選路與成本仍在 `strategy/relative_overtaking.py`。
 
+### 論文方式：paper_rollout_overtake
+
+在 `STRATEGY_ASSIGNMENTS` 指派 `StrategyAssignment("paper_rollout_overtake")`。
+它使用論文格式一步 GP（`PAPER_GP_MODEL_PATH`，精簡檔已進 Git），設定在 `main.py` ⑤-4 `PAPER_ROLLOUT_OVERTAKING_CONFIG`。
+做法參照 Lee et al.（RA-L 2024），規劃器沿用候選＋Pure Pursuit，不是論文的 MPCC。
+
+1. 取上一次決策選中候選的預測軌跡，對齊到現在（同 rollout_overtake）。
+2. Q=25 個樣本從前車目前狀態出發，每 0.1 s 用 14 維特徵查 4 個 GP。
+   - 每個樣本從 N(μ, σ²) 抽 [Δs, Δd, Δe_ψ, Δv]，更新自己的狀態。
+   - 自車狀態：第 0 步用實際觀測，之後取上一步軌跡。
+3. 樣本平均當作前車預測，用於成本與避撞檢查。避撞責任的圓 r_col 改成橢圓：沿賽道半軸 r_col＋kσ_s、橫向半軸 r_col＋kσ_d，k 預設 2。
+4. 候選與成本同 `relative_overtake`。因為沒有 d_target，候選不必限定訓練過的目標。
+   main 另加換目標成本 `switch_weight`，目前為 0.3（0.5 與 0.3 的差別見 [換目標成本實驗](reports/experiments/2026-11-25_paper_switch_cost/README.md)）。
+5. 退回：
+   - 第一次決策、歷史不足或第 0 步超出 GP 訓練範圍時，退回定速等 d，此時決策與 `relative_overtake` 相同。
+   - 後段超出範圍的樣本改為等速等 d 前進。
+6. 每次決策約 0.8 s；21 s 的場景要算數分鐘，建議用 `--replay`。
+
+模型載入在 `strategy/paper_gp.py`，策略在 `strategy/paper_rollout_overtaking.py`。
+單場示範見 [paper_rollout_overtake 示範](reports/experiments/2026-11-25_paper_rollout_overtake/README.md)。
+
 ### 顯示 GP 路線與即時預測
 
 離線產生涵蓋整圈賽道的 GP 平均路線，不需要執行模擬：
@@ -525,6 +546,7 @@ STRATEGY_ASSIGNMENTS = {
 | `relative_overtake` | 最小化預測終點的對手 s 減自車 s，加上可選安全距離成本；保留碰撞篩選 | `strategy/relative_overtaking.py` |
 | `interaction_overtake` | 同 `relative_overtake`，但前車改用互動歷史 GP 預測；超出 GP 訓練範圍時退回 | `strategy/interaction_overtaking.py` |
 | `rollout_overtake` | 沿自車上一步的預測軌跡，每 0.1 s 用互動 GP 推演前車軌跡，再選候選 | `strategy/rollout_overtaking.py` |
+| `paper_rollout_overtake` | 依論文方式，沿上一步軌跡用一步 GP 取樣推演前車，避撞半徑依 σ 放大成橢圓 | `strategy/paper_rollout_overtaking.py` |
 | `defend` | 依成本選擇橫向防守位置 | `strategy/defending.py` |
 
 例如想改成第二台車進攻，第三台車防守第二台，只需改成：
@@ -651,7 +673,7 @@ STRATEGY_ASSIGNMENTS = {
 成本為預測終點的有號縱向間距，加上可選的安全距離與偏離中心線成本，沒有額外自車進度項或超車成功獎勵：
 
 ```text
-J = gap_T + safety_weight * safety + deviation_weight * mean_k(d_k²)
+J = progress_weight * gap_T + safety_weight * safety + deviation_weight * mean_k(d_k²)
 gap_T = gap_now + delta_s_opponent - delta_s_self
 clear_k = max(|Δs_k| - L̄, |Δd_k| - W̄)
 safety = Σ_其他車 mean_k max(0, safety_distance - clear_k)²
@@ -660,6 +682,14 @@ safety = Σ_其他車 mean_k max(0, safety_distance - clear_k)²
 `d_k` 是自車 rollout 在各預測時間點（不含 t=0）相對中心線的 d；
 `deviation_weight` 單位 1/m，類別預設 0；main 現值見參數區④，尚未調參。
 被碰撞剔除的候選不計任何成本。
+
+`progress_weight`（無單位，類別預設 1）是進度權重：gap_T 等於「前車 s − 自車 s」，乘上它越大越重視自車進度。
+main 在參數區④設定，paper_rollout_overtake 沿用同一值；尚未調參。
+候選標籤的 relative_gap 顯示加權後的值；決策說明的 gap_T 仍是未加權的間距。
+
+可選的換目標成本 `switch_weight`（m，類別預設 0）：
+- 候選的目標 d 與目前決策不同時，J 加上這個固定值，不看換多遠。
+- main 只在 paper_rollout_overtake（⑤-4）設定（目前 0.3），relative_overtake 維持 0。
 
 `Δs_k`、`Δd_k` 為各預測時間點兩車的縱向、橫向距離，`L̄`、`W̄` 為兩車碰撞矩形
 長、寬的半和。這是 Frenet 座標的矩形間隙近似，彎道會與實際 SAT 判定有差異；

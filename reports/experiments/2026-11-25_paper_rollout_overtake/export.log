@@ -1,0 +1,15 @@
+{
+  "source": "C:\\Users\\kevin\\OneDrive\\Desktop\\project\\racing_sim\\models\\gp\\paper_format_20261125\\model.pkl",
+  "source_sha256": "60615c533ea7ffcd3a2e23be109041de29f62ff53912cb5a5572ee66f0dfcc39",
+  "compact": "C:\\Users\\kevin\\OneDrive\\Desktop\\project\\racing_sim\\models\\compact\\paper_gp_v1.npz",
+  "compact_sha256": "80b6c70c0bd9c4d77a9a5757dc2614f0d2207f833f39bb53dbd0fe803d743333",
+  "compact_bytes": 1890982,
+  "checked_rows": 500,
+  "max_prediction_difference": {
+    "front_delta_s": 0.0,
+    "front_delta_d": 0.0,
+    "front_delta_heading_error": 0.0,
+    "front_delta_speed": 0.0
+  },
+  "same_input_ranges": true
+}

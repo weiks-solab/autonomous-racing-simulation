@@ -1,0 +1,251 @@
+{
+  "commit": "534c18a28e63eb33855df32592c78c56e1d0a53f",
+  "executed_at_utc": "2026-11-25T13:04:47+00:00",
+  "scenarios": {
+    "cost_overtake_defend_3s": {
+      "background": null,
+      "display_options": "ef059b1897657873098596b2a5131fa04029986099015f714f6753ee4152c4c7",
+      "final_frame": "a4ffe823d775c3afd477e618288edbcdea45b55c0c3c153257958717a51606aa",
+      "seconds": 3.84,
+      "stdout_sha256": "d05c5edbe6346b6f2de3e23c1210f65c5bb839dafe49a664aa17d6009065b26f",
+      "stdout_tail": "Detected collision pairs: none",
+      "track": "3fbf486f44b98d1357931c0692d76a65455b993fdb375d91155ccd235fd4b72f",
+      "trajectories": {
+        "vehicle-1": {
+          "sha256": "fb66d481db3a0e64a10a827f6478c5841726b063f8147cc639da544f57bb883a",
+          "steps": 151
+        },
+        "vehicle-2": {
+          "sha256": "4dfa93501fefcd1ab7aa55c03c6c2e8b0633d39381482898ab42fcb26fdbcfab",
+          "steps": 151
+        }
+      }
+    },
+    "data_generation_2s": {
+      "decisions_and_commands": {
+        "count": 200,
+        "sha256": "4d9b122c181564f331b726a11aae292191bdb90928e4faccbd48fbb63e4ff1a7"
+      },
+      "frames": {
+        "count": 101,
+        "sha256": "7af53415e315e3b39c2ab09a84e36e6f227ced76bc319835e1b63a7ccab067c1"
+      },
+      "scenario": "8f785b4a7457b3c3a22fa046ecdaf32ce1b86c5b2a2a907b54c80240092eca0c",
+      "seconds": 2.74
+    },
+    "default_6s": {
+      "background": null,
+      "display_options": "ef059b1897657873098596b2a5131fa04029986099015f714f6753ee4152c4c7",
+      "final_frame": "d9b70a53cd1d8b1b3c704197b32c6c2cd14ee4455daa038386248fe875742b85",
+      "seconds": 31.88,
+      "stdout_sha256": "a94b820cb3621c83864f65ea5bc587625bad84487b05353f4bae261dbb70accd",
+      "stdout_tail": "Detected collision pairs: none",
+      "track": "3fbf486f44b98d1357931c0692d76a65455b993fdb375d91155ccd235fd4b72f",
+      "trajectories": {
+        "vehicle-1": {
+          "sha256": "d5d8896dd4d6dc1983b1a355895bded7574cc9a462d7777546b13bc4cc0f25bc",
+          "steps": 301
+        },
+        "vehicle-2": {
+          "sha256": "add4372ce2ac1c1e0fd2342c4252b826af0401756d8f2fe514cf73087e14fbb3",
+          "steps": 301
+        }
+      }
+    },
+    "default_no_defense_3s": {
+      "background": null,
+      "display_options": "ef059b1897657873098596b2a5131fa04029986099015f714f6753ee4152c4c7",
+      "final_frame": "8bf5c71f1361945074f55172b52f8f15e3d1b649a1163de57c1e3ffe31c1258b",
+      "seconds": 13.82,
+      "stdout_sha256": "8e8bdb04ff45173446611fc9e2a4ce485999d1d083a19ffe2d787cbab8789df1",
+      "stdout_tail": "Detected collision pairs: none",
+      "track": "3fbf486f44b98d1357931c0692d76a65455b993fdb375d91155ccd235fd4b72f",
+      "trajectories": {
+        "vehicle-1": {
+          "sha256": "1ce38313b58551b5550a6d4cf8ca5daec398700aaad13c8e1fce70494edb03d5",
+          "steps": 151
+        },
+        "vehicle-2": {
+          "sha256": "158efe169adf8be9cfe32f263de5f775991e533b0fe7c267b3e8d133899a515a",
+          "steps": 151
+        }
+      }
+    },
+    "gp_relative_3s": {
+      "background": null,
+      "display_options": "ef059b1897657873098596b2a5131fa04029986099015f714f6753ee4152c4c7",
+      "final_frame": "f297773bfd21896864fe6d02d68371207dfd07b53c203fe32e3678c60522986d",
+      "seconds": 15.48,
+      "stdout_sha256": "c4d9a276e1fa118c169c88063a0c82f86ccdcf83f12f1a9bb1b2e4f945bacffe",
+      "stdout_tail": "Detected collision pairs: none",
+      "track": "3fbf486f44b98d1357931c0692d76a65455b993fdb375d91155ccd235fd4b72f",
+      "trajectories": {
+        "vehicle-1": {
+          "sha256": "e7dd03454eba932109aa3c7b09e6cae64102abcfe767df51ee4a07e2b491407f",
+          "steps": 151
+        },
+        "vehicle-2": {
+          "sha256": "738d954229c711e575ffb16f60a733d0f4577ee7bca80650e02685180f3a7dbd",
+          "steps": 151
+        }
+      }
+    },
+    "imported_track_2s": {
+      "background": "Oschersleben_map.png",
+      "display_options": "12f4e972cf64195d390444535c4d9e84bb493e8b158c7dc14775315b553c12ab",
+      "final_frame": "22f75ced7f70340f5b721e51a0fcc6288e68dbcee112fd98d68670206f85ab49",
+      "seconds": 9.22,
+      "stdout_sha256": "3d46023e7af38756207dbd793f0c9d4b0a12d67662aeb98cb684381385a7116a",
+      "stdout_tail": "Detected collision pairs: none",
+      "track": "a50cb4729824450f7bc612453569a1f9ded55878d2b55ea63855b7eaaba1c27d",
+      "trajectories": {
+        "vehicle-1": {
+          "sha256": "2aa2e5c70307d270c28d96630fade2c77972bdb283ddb7df1d78b58bc9415502",
+          "steps": 101
+        },
+        "vehicle-2": {
+          "sha256": "3a6206c39c28638fe2df68e2eee1e26f264ce50733e0b9eea815fff59ec2ba48",
+          "steps": 101
+        }
+      }
+    },
+    "overtake_defend_auto_path_8s": {
+      "background": null,
+      "display_options": "ef059b1897657873098596b2a5131fa04029986099015f714f6753ee4152c4c7",
+      "final_frame": "d093f2a2319fd3ebf07ab78d74b472d6a8a5cd5581118dfecdd628e736a107ac",
+      "seconds": 6.23,
+      "stdout_sha256": "f3dbe9ad8dd39cc4e2df0aac088914486e46d9fe741150d8b862a41f4fae51f2",
+      "stdout_tail": "Detected collision pairs: vehicle-1/vehicle-2",
+      "track": "3fbf486f44b98d1357931c0692d76a65455b993fdb375d91155ccd235fd4b72f",
+      "trajectories": {
+        "vehicle-1": {
+          "sha256": "eb4ea85439f103b34d104593a7e81b6fc1ba6536dace7ede926326b674a8ed68",
+          "steps": 401
+        },
+        "vehicle-2": {
+          "sha256": "a8929593056551a39f5b900b089434e0d496f5fe33acbf9c3b062aeca04511f6",
+          "steps": 401
+        },
+        "vehicle-3": {
+          "sha256": "5cc439c37c8f5a1f8e527601a4fc1e31d4e0af35cb45e6520e038f60e21b611a",
+          "steps": 401
+        }
+      }
+    },
+    "overtake_defend_path6_8s": {
+      "background": null,
+      "display_options": "ef059b1897657873098596b2a5131fa04029986099015f714f6753ee4152c4c7",
+      "final_frame": "d093f2a2319fd3ebf07ab78d74b472d6a8a5cd5581118dfecdd628e736a107ac",
+      "seconds": 6.19,
+      "stdout_sha256": "f3dbe9ad8dd39cc4e2df0aac088914486e46d9fe741150d8b862a41f4fae51f2",
+      "stdout_tail": "Detected collision pairs: vehicle-1/vehicle-2",
+      "track": "3fbf486f44b98d1357931c0692d76a65455b993fdb375d91155ccd235fd4b72f",
+      "trajectories": {
+        "vehicle-1": {
+          "sha256": "eb4ea85439f103b34d104593a7e81b6fc1ba6536dace7ede926326b674a8ed68",
+          "steps": 401
+        },
+        "vehicle-2": {
+          "sha256": "a8929593056551a39f5b900b089434e0d496f5fe33acbf9c3b062aeca04511f6",
+          "steps": 401
+        },
+        "vehicle-3": {
+          "sha256": "5cc439c37c8f5a1f8e527601a4fc1e31d4e0af35cb45e6520e038f60e21b611a",
+          "steps": 401
+        }
+      }
+    },
+    "probe_follow_demo_3s": {
+      "background": null,
+      "display_options": "c68b16e48eb5d6a26265febb6a9b82f801e6cec3b9bee9d4105e24ae8119cb13",
+      "final_frame": "99728518139d5a8a0f4f6f5c1767b5b7d08bfc71eed12009071623ce35bbf157",
+      "seconds": 4.18,
+      "stdout_sha256": "b4c5279fd9cee1faa7c59ca1fb1e49054e6ea1b9b9e0a6565f559f90a0353662",
+      "stdout_tail": "Detected collision pairs: none",
+      "track": "3fbf486f44b98d1357931c0692d76a65455b993fdb375d91155ccd235fd4b72f",
+      "trajectories": {
+        "front": {
+          "sha256": "ff304d2e027829370da649c295d5ef4f2bd187bfa16f32f55af36a4271e757f1",
+          "steps": 151
+        },
+        "rear": {
+          "sha256": "e26b514203088b0ac54f9a29bfb7b11ce97bd4ba711bd4f3f43ce56c38e6d7a9",
+          "steps": 151
+        }
+      }
+    },
+    "progress_centerline_3s": {
+      "background": null,
+      "display_options": "ef059b1897657873098596b2a5131fa04029986099015f714f6753ee4152c4c7",
+      "final_frame": "978038587a2c428b34b33d0b91f76bd2c06f22ab2c99f6520e073dc85cd66707",
+      "seconds": 3.74,
+      "stdout_sha256": "d6a18d574a6b09dcf15d923e832fe6e3ed891b75ce5507773be496a99d9778f5",
+      "stdout_tail": "Detected collision pairs: none",
+      "track": "3fbf486f44b98d1357931c0692d76a65455b993fdb375d91155ccd235fd4b72f",
+      "trajectories": {
+        "vehicle-1": {
+          "sha256": "a0de31040b97923e6dc4893332394c76b94fb72520a759a5499caef6d8f237f5",
+          "steps": 151
+        },
+        "vehicle-2": {
+          "sha256": "2225c2e1107825d3410c55b9d3538f8d1dbe8b98bc3ab3baada099d902c23e87",
+          "steps": 151
+        },
+        "vehicle-3": {
+          "sha256": "c095f7fd5824315598cd8a9150a585f9b3b3bf2f60babafe4ca1c94aeceb6fd0",
+          "steps": 151
+        }
+      }
+    },
+    "rectangle_collision_checks_3s": {
+      "background": null,
+      "display_options": "ef059b1897657873098596b2a5131fa04029986099015f714f6753ee4152c4c7",
+      "final_frame": "f297773bfd21896864fe6d02d68371207dfd07b53c203fe32e3678c60522986d",
+      "seconds": 16.4,
+      "stdout_sha256": "c4d9a276e1fa118c169c88063a0c82f86ccdcf83f12f1a9bb1b2e4f945bacffe",
+      "stdout_tail": "Detected collision pairs: none",
+      "track": "3fbf486f44b98d1357931c0692d76a65455b993fdb375d91155ccd235fd4b72f",
+      "trajectories": {
+        "vehicle-1": {
+          "sha256": "e7dd03454eba932109aa3c7b09e6cae64102abcfe767df51ee4a07e2b491407f",
+          "steps": 151
+        },
+        "vehicle-2": {
+          "sha256": "738d954229c711e575ffb16f60a733d0f4577ee7bca80650e02685180f3a7dbd",
+          "steps": 151
+        }
+      }
+    }
+  },
+  "uncommitted_files": [
+    "M CHANGELOG.md",
+    " M GP_TRAINING.md",
+    " M README.md",
+    " M interaction_gp.py",
+    " M main.py",
+    " M models/registry.md",
+    " M reports/experiments/2026-11-25_paper_format_gp/README.md",
+    " M reports/research_log.md",
+    " M sim/data_generation.py",
+    " M strategy/assignment.py",
+    " M strategy/interaction_features.py",
+    " M strategy/interaction_gp.py",
+    " M strategy/relative_overtaking.py",
+    " M strategy/responsibility.py",
+    " M tests/test_interaction_features.py",
+    " M tests/test_relative_overtaking.py",
+    " M tests/test_responsibility.py",
+    "?? models/compact/paper_gp_v1.npz",
+    "?? reports/experiments/2026-11-25_paper_multistep_offline/",
+    "?? reports/experiments/2026-11-25_paper_rollout_overtake/",
+    "?? reports/experiments/2026-11-25_paper_switch_cost/",
+    "?? strategy/paper_gp.py",
+    "?? strategy/paper_rollout_overtaking.py",
+    "?? tests/test_paper_gp.py",
+    "?? tests/test_paper_rollout_overtaking.py"
+  ],
+  "versions": {
+    "numpy": "2.2.6",
+    "python": "3.10.20"
+  }
+}

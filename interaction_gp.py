@@ -424,6 +424,9 @@ def export(model: Path, output: Path) -> None:
         raise ValueError("compact model output must end with .npz")
     source = model.read_bytes()
     bundle = pickle.loads(source)   # 只處理自己訓練、可信任的模型
+    if bundle.get("model_kind") == "paper_format_one_step":
+        export_paper(model, output, bundle, source)
+        return
     output.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(output, **compact_arrays(bundle, hashlib.sha256(source).hexdigest()))
     original, compact = InteractionGpModel.load(model), InteractionGpModel.load(output)
@@ -440,6 +443,36 @@ def export(model: Path, output: Path) -> None:
               "max_prediction_difference": difference, "same_input_ranges": same_ranges}
     print(json.dumps(report, indent=2), flush=True)
     if difference > 1e-9 or not same_ranges:
+        output.unlink()
+        raise ValueError("compact model does not reproduce the original predictions; output removed")
+
+
+def export_paper(model: Path, output: Path, bundle: dict, source: bytes) -> None:
+    """論文格式一步 GP（4 個輸出）：同樣以 500 列訓練輸入比對 4 個輸出的平均與標準差。"""
+    from strategy.paper_gp import PaperGpModel, paper_compact_arrays, training_inputs
+    from strategy.interaction_features import PAPER_TARGETS
+    digest = hashlib.sha256(source).hexdigest()
+    output.parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(output, **paper_compact_arrays(bundle, digest))
+    original = PaperGpModel.from_training_inputs(
+        tuple(bundle["pipelines"][target] for target in PAPER_TARGETS),
+        training_inputs(bundle["pipelines"][PAPER_TARGETS[0]]), bundle["label_horizon_seconds"],
+        bundle["history_segment_seconds"], bundle["curvature_lookahead_m"])
+    compact = PaperGpModel.load(output)
+    inputs = training_inputs(bundle["pipelines"][PAPER_TARGETS[0]])
+    rows = inputs[np.linspace(0, len(inputs) - 1, min(500, len(inputs))).astype(int)]
+    (mean_a, std_a), (mean_b, std_b) = original.predict(rows), compact.predict(rows)
+    differences = {target: float(max(np.abs(mean_a[:, column] - mean_b[:, column]).max(),
+                                     np.abs(std_a[:, column] - std_b[:, column]).max()))
+                   for column, target in enumerate(PAPER_TARGETS)}
+    same_ranges = (np.array_equal(original.lower, compact.lower) and np.array_equal(original.upper, compact.upper)
+                   and original.relative_speed_range == compact.relative_speed_range)
+    report = {"source": str(model), "source_sha256": digest,
+              "compact": str(output), "compact_sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
+              "compact_bytes": output.stat().st_size, "checked_rows": len(rows),
+              "max_prediction_difference": differences, "same_input_ranges": same_ranges}
+    print(json.dumps(report, indent=2), flush=True)
+    if max(differences.values()) > 1e-9 or not same_ranges:
         output.unlink()
         raise ValueError("compact model does not reproduce the original predictions; output removed")
 

@@ -1,0 +1,1363 @@
+{
+  "why_demo_0.3": {
+    "first_lead_s": 11.94,
+    "switches": 36,
+    "final_gap_m": -12.449,
+    "collisions": [
+      "Detected collision pairs: vehicle-1/vehicle-2"
+    ],
+    "switch_times": [
+      2.1,
+      5.1,
+      5.22,
+      5.28,
+      5.34,
+      5.4,
+      5.46,
+      5.52,
+      5.58,
+      5.64,
+      5.7,
+      5.76,
+      5.82,
+      5.88,
+      5.94,
+      6.0,
+      7.5,
+      7.86,
+      7.92,
+      8.76,
+      9.36,
+      9.42,
+      9.48,
+      9.54,
+      9.6,
+      9.66,
+      9.72,
+      9.78,
+      9.84,
+      9.9,
+      9.96,
+      10.02,
+      10.08,
+      10.14,
+      10.2,
+      10.26
+    ]
+  },
+  "why_demo_0.3_progress2": {
+    "first_lead_s": 11.1,
+    "switches": 22,
+    "final_gap_m": -13.909,
+    "collisions": [
+      "Detected collision pairs: vehicle-1/vehicle-2"
+    ],
+    "switch_times": [
+      2.04,
+      5.16,
+      5.28,
+      5.34,
+      5.4,
+      5.46,
+      5.52,
+      5.58,
+      5.64,
+      5.7,
+      5.76,
+      5.82,
+      5.88,
+      5.94,
+      6.0,
+      6.06,
+      7.38,
+      7.44,
+      9.3,
+      9.36,
+      10.92,
+      10.98
+    ]
+  },
+  "why_main_0.15_progress1_safety5": {
+    "first_lead_s": 8.16,
+    "switches": 22,
+    "final_gap_m": -19.499,
+    "collisions": [
+      "Detected collision pairs: vehicle-1/vehicle-2"
+    ],
+    "switch_times": [
+      2.04,
+      3.36,
+      3.54,
+      3.6,
+      3.66,
+      3.72,
+      4.38,
+      4.44,
+      4.5,
+      4.56,
+      4.62,
+      4.68,
+      4.74,
+      4.8,
+      4.86,
+      4.92,
+      4.98,
+      5.04,
+      5.1,
+      5.16,
+      7.98,
+      8.04
+    ]
+  },
+  "why_main_0.3": {
+    "first_lead_s": 7.44,
+    "switches": 18,
+    "final_gap_m": -20.918,
+    "collisions": [
+      "Detected collision pairs: vehicle-1/vehicle-2"
+    ],
+    "switch_times": [
+      2.1,
+      3.36,
+      4.8,
+      4.86,
+      4.92,
+      4.98,
+      5.04,
+      5.1,
+      5.16,
+      5.22,
+      5.28,
+      5.34,
+      5.4,
+      5.46,
+      5.52,
+      5.58,
+      5.76,
+      5.82
+    ]
+  },
+  "why_main_0.3_progress2": {
+    "first_lead_s": 8.16,
+    "switches": 22,
+    "final_gap_m": -19.499,
+    "collisions": [
+      "Detected collision pairs: vehicle-1/vehicle-2"
+    ],
+    "switch_times": [
+      2.04,
+      3.36,
+      3.54,
+      3.6,
+      3.66,
+      3.72,
+      4.38,
+      4.44,
+      4.5,
+      4.56,
+      4.62,
+      4.68,
+      4.74,
+      4.8,
+      4.86,
+      4.92,
+      4.98,
+      5.04,
+      5.1,
+      5.16,
+      7.98,
+      8.04
+    ]
+  },
+  "why_main_0.5": {
+    "first_lead_s": null,
+    "switches": 1,
+    "final_gap_m": 1.118,
+    "collisions": [
+      "Detected collision pairs: none"
+    ],
+    "switch_times": [
+      2.22
+    ]
+  },
+  "why_main_0.5_progress2": {
+    "first_lead_s": 11.16,
+    "switches": 20,
+    "final_gap_m": -14.784,
+    "collisions": [
+      "Detected collision pairs: vehicle-1/vehicle-2"
+    ],
+    "switch_times": [
+      2.04,
+      3.36,
+      3.54,
+      3.6,
+      4.68,
+      4.74,
+      4.8,
+      4.86,
+      4.92,
+      4.98,
+      5.04,
+      5.1,
+      5.16,
+      5.22,
+      5.28,
+      5.34,
+      5.4,
+      9.42,
+      9.48,
+      11.1
+    ]
+  },
+  "why_main_0": {
+    "first_lead_s": 6.96,
+    "switches": 30,
+    "final_gap_m": -21.818,
+    "collisions": [
+      "Detected collision pairs: vehicle-1/vehicle-2"
+    ],
+    "switch_times": [
+      1.92,
+      1.98,
+      3.42,
+      3.6,
+      3.66,
+      3.72,
+      3.78,
+      3.9,
+      3.96,
+      4.02,
+      4.08,
+      4.14,
+      4.2,
+      4.26,
+      4.32,
+      4.38,
+      4.44,
+      4.5,
+      4.56,
+      4.62,
+      4.68,
+      4.74,
+      4.8,
+      4.86,
+      4.92,
+      6.54,
+      6.66,
+      6.72,
+      6.78,
+      6.84
+    ]
+  },
+  "why_main_0_vs_why_main_0.15_progress1_safety5": {
+    "first_difference_s": 1.92,
+    "why_main_0": {
+      "t": 1.92,
+      "gap": 3.294,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 2.131,
+          "safety": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 2.172,
+        "terms": {
+          "relative_gap": 2.172,
+          "safety": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "cost": 2.131,
+        "terms": {
+          "relative_gap": 2.131,
+          "safety": 0.0
+        }
+      },
+      "gain_of_switching": 0.041
+    },
+    "why_main_0.15_progress1_safety5": {
+      "t": 1.92,
+      "gap": 3.294,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.0,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 2.172,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 2.172,
+        "terms": {
+          "relative_gap": 2.172,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "cost": 2.131,
+        "terms": {
+          "relative_gap": 2.131,
+          "safety": 0.0,
+          "switch": 0.15
+        }
+      },
+      "gain_of_switching": 0.041
+    }
+  },
+  "why_main_0_vs_why_main_0.3": {
+    "first_difference_s": 1.92,
+    "why_main_0": {
+      "t": 1.92,
+      "gap": 3.294,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 2.131,
+          "safety": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 2.172,
+        "terms": {
+          "relative_gap": 2.172,
+          "safety": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "cost": 2.131,
+        "terms": {
+          "relative_gap": 2.131,
+          "safety": 0.0
+        }
+      },
+      "gain_of_switching": 0.041
+    },
+    "why_main_0.3": {
+      "t": 1.92,
+      "gap": 3.294,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.0,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 2.172,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 2.172,
+        "terms": {
+          "relative_gap": 2.172,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "cost": 2.131,
+        "terms": {
+          "relative_gap": 2.131,
+          "safety": 0.0,
+          "switch": 0.3
+        }
+      },
+      "gain_of_switching": 0.041
+    }
+  },
+  "why_main_0_vs_why_main_0.3_progress2": {
+    "first_difference_s": 1.92,
+    "why_main_0": {
+      "t": 1.92,
+      "gap": 3.294,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 2.131,
+          "safety": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 2.172,
+        "terms": {
+          "relative_gap": 2.172,
+          "safety": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "cost": 2.131,
+        "terms": {
+          "relative_gap": 2.131,
+          "safety": 0.0
+        }
+      },
+      "gain_of_switching": 0.041
+    },
+    "why_main_0.3_progress2": {
+      "t": 1.92,
+      "gap": 3.294,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.0,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 4.344,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 4.344,
+        "terms": {
+          "relative_gap": 4.344,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "cost": 4.262,
+        "terms": {
+          "relative_gap": 4.262,
+          "safety": 0.0,
+          "switch": 0.3
+        }
+      },
+      "gain_of_switching": 0.082
+    }
+  },
+  "why_main_0_vs_why_main_0.5": {
+    "first_difference_s": 1.92,
+    "why_main_0": {
+      "t": 1.92,
+      "gap": 3.294,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 2.131,
+          "safety": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 2.172,
+        "terms": {
+          "relative_gap": 2.172,
+          "safety": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "cost": 2.131,
+        "terms": {
+          "relative_gap": 2.131,
+          "safety": 0.0
+        }
+      },
+      "gain_of_switching": 0.041
+    },
+    "why_main_0.5": {
+      "t": 1.92,
+      "gap": 3.294,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.0,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 2.172,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 2.172,
+        "terms": {
+          "relative_gap": 2.172,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "cost": 2.131,
+        "terms": {
+          "relative_gap": 2.131,
+          "safety": 0.0,
+          "switch": 0.5
+        }
+      },
+      "gain_of_switching": 0.041
+    }
+  },
+  "why_main_0_vs_why_main_0.5_progress2": {
+    "first_difference_s": 1.92,
+    "why_main_0": {
+      "t": 1.92,
+      "gap": 3.294,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 2.131,
+          "safety": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 2.172,
+        "terms": {
+          "relative_gap": 2.172,
+          "safety": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "cost": 2.131,
+        "terms": {
+          "relative_gap": 2.131,
+          "safety": 0.0
+        }
+      },
+      "gain_of_switching": 0.041
+    },
+    "why_main_0.5_progress2": {
+      "t": 1.92,
+      "gap": 3.294,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.0,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 4.344,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 4.344,
+        "terms": {
+          "relative_gap": 4.344,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "cost": 4.262,
+        "terms": {
+          "relative_gap": 4.262,
+          "safety": 0.0,
+          "switch": 0.5
+        }
+      },
+      "gain_of_switching": 0.082
+    }
+  },
+  "why_main_0.15_progress1_safety5_vs_why_main_0.3": {
+    "first_difference_s": 2.04,
+    "why_main_0.15_progress1_safety5": {
+      "t": 2.04,
+      "gap": 3.19,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 1.825,
+          "safety": 0.0,
+          "switch": 0.15
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 2.076,
+        "terms": {
+          "relative_gap": 2.076,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "cost": 1.825,
+        "terms": {
+          "relative_gap": 1.825,
+          "safety": 0.0,
+          "switch": 0.15
+        }
+      },
+      "gain_of_switching": 0.251
+    },
+    "why_main_0.3": {
+      "t": 2.04,
+      "gap": 3.19,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.0,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 2.076,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 2.076,
+        "terms": {
+          "relative_gap": 2.076,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "cost": 1.825,
+        "terms": {
+          "relative_gap": 1.825,
+          "safety": 0.0,
+          "switch": 0.3
+        }
+      },
+      "gain_of_switching": 0.251
+    }
+  },
+  "why_main_0.15_progress1_safety5_vs_why_main_0.5": {
+    "first_difference_s": 2.04,
+    "why_main_0.15_progress1_safety5": {
+      "t": 2.04,
+      "gap": 3.19,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 1.825,
+          "safety": 0.0,
+          "switch": 0.15
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 2.076,
+        "terms": {
+          "relative_gap": 2.076,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "cost": 1.825,
+        "terms": {
+          "relative_gap": 1.825,
+          "safety": 0.0,
+          "switch": 0.15
+        }
+      },
+      "gain_of_switching": 0.251
+    },
+    "why_main_0.5": {
+      "t": 2.04,
+      "gap": 3.19,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.0,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 2.076,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 2.076,
+        "terms": {
+          "relative_gap": 2.076,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "cost": 1.825,
+        "terms": {
+          "relative_gap": 1.825,
+          "safety": 0.0,
+          "switch": 0.5
+        }
+      },
+      "gain_of_switching": 0.251
+    }
+  },
+  "why_main_0.15_progress1_safety5_vs_why_main_0.5_progress2": {
+    "first_difference_s": 3.66,
+    "why_main_0.15_progress1_safety5": {
+      "t": 3.66,
+      "gap": 1.494,
+      "rear_d": 0.428,
+      "front_d": 0.392,
+      "previous_target": 0.6,
+      "chosen": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 0.669,
+          "safety": 0.157,
+          "switch": 0.15
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": 5.97149608689327,
+        "cost": 1.02,
+        "terms": {
+          "relative_gap": 1.019,
+          "safety": 0.001,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "cost": 0.827,
+        "terms": {
+          "relative_gap": 0.669,
+          "safety": 0.157,
+          "switch": 0.15
+        }
+      },
+      "gain_of_switching": 0.193
+    },
+    "why_main_0.5_progress2": {
+      "t": 3.66,
+      "gap": 1.494,
+      "rear_d": 0.428,
+      "front_d": 0.392,
+      "previous_target": 0.6,
+      "chosen": {
+        "target_d": 0.6,
+        "speed_limit": 5.97149608689327,
+        "terms": {
+          "relative_gap": 2.038,
+          "safety": 0.003,
+          "switch": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": 5.97149608689327,
+        "cost": 2.04,
+        "terms": {
+          "relative_gap": 2.038,
+          "safety": 0.003,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "cost": 1.653,
+        "terms": {
+          "relative_gap": 1.339,
+          "safety": 0.315,
+          "switch": 0.5
+        }
+      },
+      "gain_of_switching": 0.387
+    }
+  },
+  "why_main_0.3_vs_why_main_0.3_progress2": {
+    "first_difference_s": 2.04,
+    "why_main_0.3": {
+      "t": 2.04,
+      "gap": 3.19,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.0,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 2.076,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 2.076,
+        "terms": {
+          "relative_gap": 2.076,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "cost": 1.825,
+        "terms": {
+          "relative_gap": 1.825,
+          "safety": 0.0,
+          "switch": 0.3
+        }
+      },
+      "gain_of_switching": 0.251
+    },
+    "why_main_0.3_progress2": {
+      "t": 2.04,
+      "gap": 3.19,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 3.65,
+          "safety": 0.0,
+          "switch": 0.3
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 4.152,
+        "terms": {
+          "relative_gap": 4.152,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "cost": 3.65,
+        "terms": {
+          "relative_gap": 3.65,
+          "safety": 0.0,
+          "switch": 0.3
+        }
+      },
+      "gain_of_switching": 0.501
+    }
+  },
+  "why_main_0.3_vs_why_main_0.5": {
+    "first_difference_s": 2.1,
+    "why_main_0.3": {
+      "t": 2.1,
+      "gap": 3.137,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 1.679,
+          "safety": 0.0,
+          "switch": 0.3
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 2.025,
+        "terms": {
+          "relative_gap": 2.025,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "cost": 1.679,
+        "terms": {
+          "relative_gap": 1.679,
+          "safety": 0.0,
+          "switch": 0.3
+        }
+      },
+      "gain_of_switching": 0.345
+    },
+    "why_main_0.5": {
+      "t": 2.1,
+      "gap": 3.137,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.0,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 2.025,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 2.025,
+        "terms": {
+          "relative_gap": 2.025,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "cost": 1.679,
+        "terms": {
+          "relative_gap": 1.679,
+          "safety": 0.0,
+          "switch": 0.5
+        }
+      },
+      "gain_of_switching": 0.345
+    }
+  },
+  "why_main_0.3_vs_why_main_0.5_progress2": {
+    "first_difference_s": 2.04,
+    "why_main_0.3": {
+      "t": 2.04,
+      "gap": 3.19,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.0,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 2.076,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 2.076,
+        "terms": {
+          "relative_gap": 2.076,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "cost": 1.825,
+        "terms": {
+          "relative_gap": 1.825,
+          "safety": 0.0,
+          "switch": 0.3
+        }
+      },
+      "gain_of_switching": 0.251
+    },
+    "why_main_0.5_progress2": {
+      "t": 2.04,
+      "gap": 3.19,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 3.65,
+          "safety": 0.0,
+          "switch": 0.5
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 4.152,
+        "terms": {
+          "relative_gap": 4.152,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "cost": 3.65,
+        "terms": {
+          "relative_gap": 3.65,
+          "safety": 0.0,
+          "switch": 0.5
+        }
+      },
+      "gain_of_switching": 0.501
+    }
+  },
+  "why_main_0.3_progress2_vs_why_main_0.5": {
+    "first_difference_s": 2.04,
+    "why_main_0.3_progress2": {
+      "t": 2.04,
+      "gap": 3.19,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 3.65,
+          "safety": 0.0,
+          "switch": 0.3
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 4.152,
+        "terms": {
+          "relative_gap": 4.152,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "cost": 3.65,
+        "terms": {
+          "relative_gap": 3.65,
+          "safety": 0.0,
+          "switch": 0.3
+        }
+      },
+      "gain_of_switching": 0.501
+    },
+    "why_main_0.5": {
+      "t": 2.04,
+      "gap": 3.19,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.0,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 2.076,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 2.076,
+        "terms": {
+          "relative_gap": 2.076,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "cost": 1.825,
+        "terms": {
+          "relative_gap": 1.825,
+          "safety": 0.0,
+          "switch": 0.5
+        }
+      },
+      "gain_of_switching": 0.251
+    }
+  },
+  "why_main_0.3_progress2_vs_why_main_0.5_progress2": {
+    "first_difference_s": 3.66,
+    "why_main_0.3_progress2": {
+      "t": 3.66,
+      "gap": 1.494,
+      "rear_d": 0.428,
+      "front_d": 0.392,
+      "previous_target": 0.6,
+      "chosen": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 1.339,
+          "safety": 0.315,
+          "switch": 0.3
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": 5.97149608689327,
+        "cost": 2.04,
+        "terms": {
+          "relative_gap": 2.038,
+          "safety": 0.003,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "cost": 1.653,
+        "terms": {
+          "relative_gap": 1.339,
+          "safety": 0.315,
+          "switch": 0.3
+        }
+      },
+      "gain_of_switching": 0.387
+    },
+    "why_main_0.5_progress2": {
+      "t": 3.66,
+      "gap": 1.494,
+      "rear_d": 0.428,
+      "front_d": 0.392,
+      "previous_target": 0.6,
+      "chosen": {
+        "target_d": 0.6,
+        "speed_limit": 5.97149608689327,
+        "terms": {
+          "relative_gap": 2.038,
+          "safety": 0.003,
+          "switch": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": 5.97149608689327,
+        "cost": 2.04,
+        "terms": {
+          "relative_gap": 2.038,
+          "safety": 0.003,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.4,
+        "speed_limit": null,
+        "cost": 1.653,
+        "terms": {
+          "relative_gap": 1.339,
+          "safety": 0.315,
+          "switch": 0.5
+        }
+      },
+      "gain_of_switching": 0.387
+    }
+  },
+  "why_main_0.5_vs_why_main_0.5_progress2": {
+    "first_difference_s": 2.04,
+    "why_main_0.5": {
+      "t": 2.04,
+      "gap": 3.19,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.0,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 2.076,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 2.076,
+        "terms": {
+          "relative_gap": 2.076,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "cost": 1.825,
+        "terms": {
+          "relative_gap": 1.825,
+          "safety": 0.0,
+          "switch": 0.5
+        }
+      },
+      "gain_of_switching": 0.251
+    },
+    "why_main_0.5_progress2": {
+      "t": 2.04,
+      "gap": 3.19,
+      "rear_d": 0.0,
+      "front_d": 0.0,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 3.65,
+          "safety": 0.0,
+          "switch": 0.5
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 4.152,
+        "terms": {
+          "relative_gap": 4.152,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "cost": 3.65,
+        "terms": {
+          "relative_gap": 3.65,
+          "safety": 0.0,
+          "switch": 0.5
+        }
+      },
+      "gain_of_switching": 0.501
+    }
+  },
+  "why_demo_0.3_vs_why_demo_0.3_progress2": {
+    "first_difference_s": 2.04,
+    "why_demo_0.3": {
+      "t": 2.04,
+      "gap": 5.19,
+      "rear_d": 0.0,
+      "front_d": 0.005,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.0,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 4.071,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 4.071,
+        "terms": {
+          "relative_gap": 4.071,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "cost": 3.82,
+        "terms": {
+          "relative_gap": 3.82,
+          "safety": 0.0,
+          "switch": 0.3
+        }
+      },
+      "gain_of_switching": 0.251
+    },
+    "why_demo_0.3_progress2": {
+      "t": 2.04,
+      "gap": 5.19,
+      "rear_d": 0.0,
+      "front_d": 0.005,
+      "previous_target": 0.0,
+      "chosen": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "terms": {
+          "relative_gap": 7.641,
+          "safety": 0.0,
+          "switch": 0.3
+        }
+      },
+      "best_kept_without_switch_cost": {
+        "speed_limit": null,
+        "cost": 8.142,
+        "terms": {
+          "relative_gap": 8.142,
+          "safety": 0.0,
+          "switch": 0.0
+        }
+      },
+      "best_other_without_switch_cost": {
+        "target_d": 0.6,
+        "speed_limit": null,
+        "cost": 7.641,
+        "terms": {
+          "relative_gap": 7.641,
+          "safety": 0.0,
+          "switch": 0.3
+        }
+      },
+      "gain_of_switching": 0.501
+    }
+  }
+}

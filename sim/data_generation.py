@@ -24,6 +24,8 @@ from strategy.defending import DefenseConfig
 from strategy.interaction_gp import InteractionGpModel
 from strategy.interaction_overtaking import InteractionOvertakingConfig
 from strategy.rollout_overtaking import RolloutOvertakingConfig
+from strategy.paper_gp import PaperGpModel
+from strategy.paper_rollout_overtaking import PaperRolloutOvertakingConfig
 from strategy.observations import VehicleObservation, create_vehicle_observation
 from strategy.offset_path import LateralManeuver, OffsetPathConfig, generate_offset_track
 from strategy.overtaking import OvertakingConfig
@@ -88,6 +90,10 @@ class SimulationSettings:
     rollout_overtaking_config: RolloutOvertakingConfig = field(default_factory=RolloutOvertakingConfig)
     # interaction_overtake 使用的互動 GP；None 時該策略退回定速等 d 預測。
     interaction_model: InteractionGpModel | None = None
+    paper_rollout_overtaking_config: PaperRolloutOvertakingConfig = field(
+        default_factory=PaperRolloutOvertakingConfig)
+    # paper_rollout_overtake 使用的論文格式一步 GP；None 時該策略退回定速等 d 預測。
+    paper_model: PaperGpModel | None = None
 
     @property
     def strategy_configs(self) -> StrategyConfigs:
@@ -99,6 +105,7 @@ class SimulationSettings:
             probe_follow=self.probe_following_config,
             interaction_overtake=self.interaction_overtaking_config,
             rollout_overtake=self.rollout_overtaking_config,
+            paper_rollout_overtake=self.paper_rollout_overtaking_config,
         )
 
 
@@ -182,7 +189,8 @@ def _create_manager(
         configs.overtake, configs.defend,
         defense_enabled=settings.defense_enabled,
         strategy_factories=create_strategy_factories(
-            configs, prediction_configs, interaction_model=settings.interaction_model),
+            configs, prediction_configs, interaction_model=settings.interaction_model,
+            paper_model=settings.paper_model),
         prediction_configs=prediction_configs,
     )
 

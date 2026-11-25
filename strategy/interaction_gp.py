@@ -5,7 +5,7 @@ import json
 import math
 from pathlib import Path
 import pickle
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 import numpy as np
 from numpy.typing import NDArray
@@ -112,17 +112,21 @@ def compact_arrays(bundle: dict, source_sha256: str = "") -> dict[str, NDArray]:
     重建時用相同的訓練輸入、已標準化答案與 kernel 數值重新計算分解，預測與原模型一致。
     """
     pipeline = bundle["pipeline"]
-    scaler, gp = pipeline.named_steps["scaler"], pipeline.named_steps["gp"]
-    kernel = gp.kernel_
     metadata = {
         "format": COMPACT_FORMAT, "feature_names": list(bundle["feature_names"]), "target": bundle["target"],
         "label_horizon_seconds": bundle["label_horizon_seconds"],
         "history_segment_seconds": bundle["history_segment_seconds"],
-        "kernel": str(kernel), "source_sha256": source_sha256,
+        "kernel": str(pipeline.named_steps["gp"].kernel_), "source_sha256": source_sha256,
         "versions": bundle.get("versions", {}),
     }
+    return {"metadata": np.array(json.dumps(metadata, ensure_ascii=False)), **pipeline_arrays(pipeline)}
+
+
+def pipeline_arrays(pipeline: Any) -> dict[str, NDArray]:
+    """StandardScaler＋GP（Constant×RBF＋White）重建所需的數字；不存 n×n 分解矩陣。"""
+    scaler, gp = pipeline.named_steps["scaler"], pipeline.named_steps["gp"]
+    kernel = gp.kernel_
     return {
-        "metadata": np.array(json.dumps(metadata, ensure_ascii=False)),
         "scaler_mean": scaler.mean_, "scaler_scale": scaler.scale_, "scaler_var": scaler.var_,
         "scaler_samples": np.asarray(scaler.n_samples_seen_),
         "x_train": gp.X_train_, "y_train": gp.y_train_,
@@ -132,18 +136,13 @@ def compact_arrays(bundle: dict, source_sha256: str = "") -> dict[str, NDArray]:
     }
 
 
-def load_compact(path: Path) -> dict:
-    """讀精簡檔（不經 pickle），以固定超參數重建 StandardScaler＋GP Pipeline。"""
+def rebuild_pipeline(arrays: Mapping[str, NDArray]) -> Any:
+    """由 pipeline_arrays 的內容，以固定超參數重建 StandardScaler＋GP Pipeline。"""
     from sklearn.gaussian_process import GaussianProcessRegressor
     from sklearn.gaussian_process.kernels import ConstantKernel, RBF, WhiteKernel
     from sklearn.pipeline import Pipeline
     from sklearn.preprocessing import StandardScaler
 
-    with np.load(path, allow_pickle=False) as data:
-        arrays = {key: data[key] for key in data.files}
-    metadata = json.loads(str(arrays["metadata"]))
-    if metadata.get("format") != COMPACT_FORMAT:
-        raise ValueError(f"unsupported compact model format: {metadata.get('format')!r}")
     scaler = StandardScaler()
     scaler.mean_, scaler.scale_, scaler.var_ = arrays["scaler_mean"], arrays["scaler_scale"], arrays["scaler_var"]
     scaler.n_samples_seen_ = arrays["scaler_samples"]
@@ -154,7 +153,17 @@ def load_compact(path: Path) -> dict:
     gp = GaussianProcessRegressor(kernel=kernel, alpha=float(arrays["alpha"]), optimizer=None, normalize_y=False)
     gp.fit(arrays["x_train"], arrays["y_train"])
     gp._y_train_mean, gp._y_train_std = arrays["y_mean"], arrays["y_std"]
-    return {"pipeline": Pipeline([("scaler", scaler), ("gp", gp)]),
+    return Pipeline([("scaler", scaler), ("gp", gp)])
+
+
+def load_compact(path: Path) -> dict:
+    """讀精簡檔（不經 pickle），以固定超參數重建 StandardScaler＋GP Pipeline。"""
+    with np.load(path, allow_pickle=False) as data:
+        arrays = {key: data[key] for key in data.files}
+    metadata = json.loads(str(arrays["metadata"]))
+    if metadata.get("format") != COMPACT_FORMAT:
+        raise ValueError(f"unsupported compact model format: {metadata.get('format')!r}")
+    return {"pipeline": rebuild_pipeline(arrays),
             "feature_names": tuple(metadata["feature_names"]), "target": metadata["target"],
             "label_horizon_seconds": metadata["label_horizon_seconds"],
             "history_segment_seconds": metadata["history_segment_seconds"], "compact_metadata": metadata}
@@ -168,8 +177,12 @@ def lateral_profile(times: NDArray[np.float64], d0: float, delta: float, horizon
 def predict_profile_trajectory(
     vehicle: VehicleObservation, track: Track, offsets: NDArray[np.float64],
     speed: float, horizon: float, time_step: float,
+    progress: NDArray[np.float64] | None = None,
 ) -> BicyclePrediction:
-    """s(t)=s0+speed·t，d(t) 由 offsets 給定（與時間格點同長）；時間格點與自行車預測相同。"""
+    """s(t)=s0+speed·t，d(t) 由 offsets 給定（與時間格點同長）；時間格點與自行車預測相同。
+
+    progress 給定時（與時間格點同長，例如取樣推演的平均縱向進度）改用 s(t)=s0+progress(t)。
+    """
     if not track.closed:
         raise ValueError("profile prediction requires a closed track")
     if any(not math.isfinite(value) or value <= 0.0 for value in (horizon, time_step)):
@@ -180,16 +193,28 @@ def predict_profile_trajectory(
     d = np.asarray(offsets, dtype=float)
     if d.shape != times.shape or not np.all(np.isfinite(d)):
         raise ValueError("offsets must give one finite d per prediction time")
-    progress = speed * times
+    given = progress is not None
+    if given:
+        progress = np.asarray(progress, dtype=float)
+        if progress.shape != times.shape or not np.all(np.isfinite(progress)):
+            raise ValueError("progress must give one finite value per prediction time")
+    else:
+        progress = speed * times
     s = (vehicle.track_position.s + progress) % track_length(track)
     points = track_to_world_points(s, d, track)
-    if speed == 0.0:
+    if not given and speed == 0.0:
         yaws = np.full(len(times), vehicle.state.yaw)
     else:
         # 航向取往下一點的方向；最後一點沿用前一段。
         directions = np.diff(points, axis=0)
         yaws = np.arctan2(directions[:, 1], directions[:, 0])
         yaws = np.append(yaws, yaws[-1])
+        if given:
+            # 推演進度可能有停住的段落：方向無法定義時沿用前一點（第一點用觀測航向）。
+            still = np.append(np.hypot(directions[:, 0], directions[:, 1]) < 1e-9, False)
+            still[-1] = still[-2] if len(still) > 1 else False
+            for index in np.flatnonzero(still):
+                yaws[index] = yaws[index - 1] if index > 0 else vehicle.state.yaw
     # t=0 保留觀測狀態，不讓預測隱藏目前已存在的重疊。
     states = [vehicle.state, *(VehicleState(float(x), float(y), float(yaw), vehicle.state.velocity)
                                for (x, y), yaw in zip(points[1:], yaws[1:]))]

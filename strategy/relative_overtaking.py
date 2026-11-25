@@ -28,7 +28,7 @@ from strategy.gp_prediction import GpRoute, predict_gp_trajectory
 from strategy.observations import VehicleObservation
 from strategy.offset_path import LateralManeuver, start_or_continue_maneuver
 from strategy.responsibility import (
-    PairPrediction, ResponsibilityConfig, ResponsibilityResult, evaluate_responsibility,
+    PairPrediction, PositionUncertainty, ResponsibilityConfig, ResponsibilityResult, evaluate_responsibility,
 )
 
 
@@ -52,6 +52,10 @@ class RelativeOvertakingConfig:
     responsibility: ResponsibilityConfig | None = None
     # 1/m；responsibility.leader_soft=True 時，自車在前的懲罰權重；0 表示前車不避讓。
     leader_penalty_weight: float = 0.0
+    # m；候選的目標 d 與目前目標不同時，加上的固定成本；0 表示不加。
+    switch_weight: float = 0.0
+    # 無單位；乘在終點間距 gap_T（＝前車 s − 自車 s，即自車進度）上。越大越重視進度，1 為原本的成本。
+    progress_weight: float = 1.0
 
     def __post_init__(self) -> None:
         if self.responsibility is not None and not isinstance(
@@ -60,7 +64,8 @@ class RelativeOvertakingConfig:
         require_positive(self, "detection_range", "transition_length",
                          "decision_period", "prediction_horizon")
         require_nonnegative(self, "safety_margin", "speed_candidate_delta", "safety_weight",
-                            "safety_distance", "deviation_weight", "leader_penalty_weight")
+                            "safety_distance", "deviation_weight", "leader_penalty_weight",
+                            "switch_weight", "progress_weight")
         require_finite_values(self, "candidate_offsets")
         require_nonnegative_values(self, "extra_speed_candidate_deltas")
 
@@ -75,6 +80,8 @@ class RelativeCandidate:
     safety_cost: float = 0.0  # 已乘上 safety_weight
     deviation_cost: float = 0.0  # 已乘上 deviation_weight
     leader_cost: float = 0.0  # 已乘上 leader_penalty_weight；自車在前時的避碰懲罰
+    switch_cost: float = 0.0  # 換目標 d 時為 switch_weight，否則 0
+    progress_weight: float = 1.0  # 乘在 gap_T 上的權重
 
     def __post_init__(self) -> None:
         validate_speed_limit(self.speed_limit)
@@ -92,7 +99,13 @@ class RelativeCandidate:
     def total_cost(self) -> float:
         if not self.feasible:
             raise ValueError("collision-rejected candidates do not have a cost")
-        return self.relative_cost + self.safety_cost + self.deviation_cost + self.leader_cost
+        return (self.weighted_gap + self.safety_cost + self.deviation_cost + self.leader_cost
+                + self.switch_cost)
+
+    @property
+    def weighted_gap(self) -> float:
+        """progress_weight × gap_T；權重 1 時與 relative_cost 相同。"""
+        return self.progress_weight * self.relative_cost
 
 
 class RelativeOvertakingStrategy:
@@ -302,12 +315,19 @@ class RelativeOvertakingStrategy:
                 other.vehicle_id, other.geometry,
                 states_at_times(self.last_other_predictions[other.vehicle_id], prediction.times),
                 self._relative_progress(vehicle, other, prediction, length),
+                self._pair_uncertainty(other.vehicle_id, prediction.times),
             )
             for other in others
         )
         return evaluate_responsibility(
             prediction.times, prediction.states, vehicle.geometry, pairs, config,
         )
+
+    def _pair_uncertainty(
+        self, vehicle_id: str, times: Sequence[float],
+    ) -> PositionUncertainty | None:
+        """對方位置的不確定性橢圓；預設沒有，維持圓形約束。子類別可依自己的預測提供。"""
+        return None
 
     def _deviation_cost(self, prediction: BicyclePrediction) -> float:
         """偏離中心線成本：預測各點 d 的平方取平均；t=0 各候選相同，不列入。"""
@@ -345,9 +365,13 @@ class RelativeOvertakingStrategy:
         predicted_gap = None if opponent is None else gap + opponent.progress[-1] - prediction.progress[-1]
         return RelativeCandidate(
             maneuver, prediction, predicted_gap, speed_limit=speed_limit,
+            progress_weight=self.config.progress_weight,
             safety_cost=self._safety_penalty(vehicle, prediction, others, track),
             deviation_cost=self._deviation_cost(prediction),
             leader_cost=self.config.leader_penalty_weight * leader_penalty,
+            # 最單純的換目標成本：目標 d 與目前決策不同就加固定值，不看換多遠。
+            switch_cost=(self.config.switch_weight
+                         if maneuver.target_d != self.decision.target_d else 0.0),
         )
 
     def _speed_limits(
@@ -373,6 +397,8 @@ class RelativeOvertakingStrategy:
             extra += (f"dev={best.deviation_cost:.2f}",)
         if self._leader_cost_active():
             extra += (f"leader={best.leader_cost:.2f}",)
+        if self.config.switch_weight > 0.0:
+            extra += (f"switch={best.switch_cost:.2f}",)
         if no_target:
             if not extra:
                 return ("no target vehicle; collision filtering only",)
@@ -385,13 +411,16 @@ class RelativeOvertakingStrategy:
             return ()
         terms: tuple[tuple[str, float], ...] = ()
         if candidate.predicted_gap is not None:
-            terms += (("relative_gap", candidate.relative_cost),)
+            # 顯示加權後的值，候選標籤各項加總才等於 J。
+            terms += (("relative_gap", candidate.weighted_gap),)
         if self.config.safety_weight > 0.0:
             terms += (("safety", candidate.safety_cost),)
         if self.config.deviation_weight > 0.0:
             terms += (("deviation", candidate.deviation_cost),)
         if self._leader_cost_active():
             terms += (("leader", candidate.leader_cost),)
+        if self.config.switch_weight > 0.0:
+            terms += (("switch", candidate.switch_cost),)
         # 不另放 total：候選標籤會把各項加總成 J。
         return terms
 

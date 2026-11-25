@@ -1,0 +1,16 @@
+C:\Users\kevin\OneDrive\Desktop\project\racing_sim\sim\visualizer.py:563: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  plt.show()
+Paper-format GP: models/compact/paper_gp_v1.npz
+  paper_rollout_overtake: Q=25, ellipse=2 sigma, seed=0
+vehicle-1 strategy: paper_rollout_overtake
+Strategy transitions: 0.00s ATTACK
+Lateral targets: 0.00s +0.00m -> 1.92s +0.40m -> 1.98s +0.60m
+Final strategy reason: lowest predicted relative gap
+Final vehicle-1 d: +0.020 m
+vehicle-2 strategy: defend
+Strategy transitions: 0.00s DEFEND
+Lateral targets: 0.00s +0.00m
+Final strategy reason: lowest cost
+Final vehicle-2 d: +0.000 m
+Detected collision pairs: none
+main smoke test (2 s, paper_rollout_overtake, single BLAS thread): 44.6 s

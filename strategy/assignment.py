@@ -18,6 +18,8 @@ from strategy.gp_prediction import GpRoute
 from strategy.interaction_gp import InteractionGpModel
 from strategy.interaction_overtaking import InteractionOvertakingConfig, InteractionOvertakingStrategy
 from strategy.rollout_overtaking import RolloutOvertakingConfig, RolloutOvertakingStrategy
+from strategy.paper_gp import PaperGpModel
+from strategy.paper_rollout_overtaking import PaperRolloutOvertakingConfig, PaperRolloutOvertakingStrategy
 from strategy.observations import VehicleObservation
 from strategy.offset_path import LateralManeuver, OffsetPathConfig
 from strategy.overtaking import OvertakingConfig, OvertakingMode, RuleBasedOvertakingStrategy
@@ -185,6 +187,7 @@ class StrategyConfigs:
     probe_follow: ProbeFollowingConfig = field(default_factory=ProbeFollowingConfig)
     interaction_overtake: InteractionOvertakingConfig = field(default_factory=InteractionOvertakingConfig)
     rollout_overtake: RolloutOvertakingConfig = field(default_factory=RolloutOvertakingConfig)
+    paper_rollout_overtake: PaperRolloutOvertakingConfig = field(default_factory=PaperRolloutOvertakingConfig)
 
     def path_config_for(
         self, base: OffsetPathConfig, assignments: Iterable[StrategyAssignment],
@@ -203,13 +206,18 @@ def create_strategy_factories(
     prediction_configs: Mapping[str, BicyclePredictionConfig],
     gp_routes: Mapping[str, GpRoute] | None = None,
     interaction_model: InteractionGpModel | None = None,
+    paper_model: PaperGpModel | None = None,
 ) -> dict[str, Callable[[str], VehicleStrategy]]:
     """以 bicycle 模型預測的策略。每次呼叫工廠都建立新物件，各車狀態互相獨立。
 
-    interaction_model 為 None 時，interaction_overtake 與 rollout_overtake 一律退回定速等 d，
-    行為與 relative_overtake 相同。
+    interaction_model 為 None 時，interaction_overtake 與 rollout_overtake 一律退回定速等 d；
+    paper_model 為 None 時，paper_rollout_overtake 也是如此。退回時行為與 relative_overtake 相同。
     """
     return {
+        "paper_rollout_overtake": lambda vehicle_id: PaperRolloutOvertakingStrategy(
+            configs.paper_rollout_overtake, prediction_configs[vehicle_id], prediction_configs,
+            paper_model,
+        ),
         "rollout_overtake": lambda vehicle_id: RolloutOvertakingStrategy(
             configs.rollout_overtake, prediction_configs[vehicle_id], prediction_configs,
             interaction_model,

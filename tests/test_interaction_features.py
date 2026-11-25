@@ -9,7 +9,8 @@ import numpy as np
 from core.track import Track
 from strategy.interaction_features import (
     INTERACTION_FEATURES, PAPER_FEATURES, PAPER_TARGET_UNITS, PAPER_TARGETS, LateralHistory,
-    centerline_curvature, front_state_delta, history_state_features, paper_state_features,
+    centerline_curvature, front_state_delta, heading_error, history_state_features, paper_feature_rows,
+    paper_state_features,
 )
 from tests.test_bicycle_prediction import observation
 from tests.test_interaction_gp import ramp
@@ -118,6 +119,33 @@ class PaperFeatureTests(unittest.TestCase):
                                        self.track, self.pair, sampling)
         self.assertEqual([sample.step_index for sample in rejected.samples], [45, 50])
         self.assertEqual(rejected.skipped["collision"], 5)
+
+    def test_batch_rows_equal_single_features_for_the_same_states(self):
+        # 線上推演一次算 Q 列；同一組狀態必須與訓練用的 paper_state_features 逐欄相同。
+        rear = observation(self.track, "rear", 1.0, 0.2, 4.0)
+        rear = replace(rear, state=replace(rear.state, yaw=rear.state.yaw - 0.05))
+        rear_past = (0.05, 0.12)
+        fronts = []
+        for s, d, turn, speed in ((3.0, -0.3, 0.0, 3.5), (98.6, 0.4, 0.08, 2.0),
+                                  (399.7, 0.1, -0.12, 5.0), (250.0, -0.5, 0.02, 0.0)):
+            front = observation(self.track, "front", s, d, speed)   # 第 3 列在後車之後（跨圈，gap 為負）
+            fronts.append(replace(front, state=replace(front.state, yaw=front.state.yaw + turn)))
+        past = np.array(((0.0, -0.1), (0.3, 0.35), (0.2, 0.15), (-0.4, -0.45)))
+        rows = paper_feature_rows(
+            rear, rear_past, [front.track_position.s for front in fronts],
+            [front.track_position.d for front in fronts], [heading_error(front, self.track) for front in fronts],
+            [front.state.velocity for front in fronts], past, self.track)
+        self.assertEqual(rows.shape, (4, len(PAPER_FEATURES)))
+        for index, front in enumerate(fronts):
+            with self.subTest(sample=index):
+                expected = paper_state_features(rear, front, rear_past, tuple(past[index]), self.track)
+                np.testing.assert_allclose(rows[index], expected, rtol=0.0, atol=1e-12)
+        self.assertLess(rows[2, 0], 0.0)
+        self.assertGreater(rows[1, 8], 0.0)   # s+ζ 落在轉角
+        with self.assertRaises(ValueError):
+            paper_feature_rows(rear, rear_past, [1.0, 2.0], [0.0], [0.0], [1.0], np.zeros((1, 2)), self.track)
+        with self.assertRaises(ValueError):
+            paper_feature_rows(rear, rear_past, [1.0], [0.0], [0.0], [1.0], np.zeros((1, 2)), self.track, 0.0)
 
 
 class LateralHistoryTests(unittest.TestCase):

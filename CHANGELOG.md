@@ -2,6 +2,51 @@
 
 ## 2026-11-25
 
+### 進度權重 progress_weight（類別預設 1，既有策略行為不變）
+
+- `RelativeOvertakingConfig.progress_weight`：乘在終點間距 gap_T（＝前車 s − 自車 s）上，越大越重視自車進度。
+  - 候選成本項 relative_gap 顯示加權後的值。
+- `main.py` ④ `RELATIVE_OVERTAKING_CONFIG` 新增 `progress_weight`（先為 1.0，之後改為 2.0）；paper_rollout_overtake 沿用同一值。
+  - 改為 2.0 後，relative_overtake、interaction_overtake、rollout_overtake 被指派時的行為也會改變。
+  - 2.0 與換目標成本 0.3 的單場結果見 [換目標成本](reports/experiments/2026-11-25_paper_switch_cost/README.md)。
+- 新增 1 項測試；全套 472 項，2 項失敗與基線同名。
+- 11 個等價場景相同（vehicle-1 指派在記憶體中改回後比對；[紀錄](reports/experiments/2026-11-25_progress_weight/equivalence.log)）。
+
+### 換目標成本 switch_weight（類別預設 0，既有策略行為不變）
+
+- `RelativeOvertakingConfig.switch_weight`（m）：候選的目標 d 與目前決策不同時，成本加上固定值；說明與候選成本項會顯示 switch。
+- `main.py` 只在 `PAPER_ROLLOUT_OVERTAKING_CONFIG` 設定（先設 0.5，之後改為 0.3），relative_overtake 維持 0。0.3 與 0.5 的差別見實驗紀錄。
+- 新增 1 項測試；全套 471 項，2 項失敗與基線同名；11 個等價場景相同（vehicle-1 指派在記憶體中改回後比對）。
+- 單場示範見 [換目標成本](reports/experiments/2026-11-25_paper_switch_cost/README.md)：
+  - k=2 換目標 184→8 次、碰撞 122→0 步，前車 d 的 ±2σ 涵蓋（+1 s）57→79%。
+  - k=2 與 k=0 都停在前車後方約 1 m，不再超車。
+
+### 新增進攻策略 paper_rollout_overtake：論文方式接入超車決策（既有策略行為不變）
+
+- `strategy/paper_rollout_overtaking.py`：
+  - 沿上一步選中候選的軌跡，25 個樣本每 0.1 s 查論文格式一步 GP，並從 N(μ, σ²) 抽樣推演前車。
+  - 樣本平均當作前車預測；避撞責任的 r_col 沿賽道、橫向各放大 kσ，成為橢圓（k=2）。
+  - 候選與成本同 relative_overtake。
+  - 第 0 步不可用時退回定速等 d；之後超出範圍的樣本改為等速。
+- `strategy/paper_gp.py`：
+  - 載入 4 個輸出的模型（pkl 或 npz），核對欄位、時域、歷史段與 ζ，並由訓練輸入取得適用範圍。
+  - 新的精簡格式 `paper_gp_compact_v1`。
+- 共用程式的擴充，原呼叫方式都不變：
+  - `strategy/interaction_features.py` 新增 `paper_feature_rows`，一次算 Q 列。
+  - `strategy/responsibility.py` 的 `PairPrediction` 新增可選的 `PositionUncertainty`，有值時圓改成橢圓。
+  - `strategy/relative_overtaking.py` 新增 `_pair_uncertainty` hook，預設回傳 None。
+  - `strategy/interaction_gp.py`：`predict_profile_trajectory` 新增可選參數 `progress`；精簡檔的讀寫抽成 `pipeline_arrays`、`rebuild_pipeline`。
+- `interaction_gp.py export` 依 `model_kind` 匯出論文格式模型。新增 `models/compact/paper_gp_v1.npz`（1.9 MB，4 個輸出的預測差 0），並登記到登記表。
+- 組裝：
+  - 工廠與 `SimulationSettings` 註冊 `paper_rollout_overtake`。
+  - `main.py` 新增 ⑤-4；有車指派這個策略時才載入模型。
+  - 場景與預設指派未改。
+- 新增 17 項測試；全套 470 項，2 項失敗與基線同名。11 個等價場景全部相同。
+- 單場示範見 [paper_rollout_overtake 示範](reports/experiments/2026-11-25_paper_rollout_overtake/README.md)：
+  - k=2 未超車，換目標 184 次，碰撞重疊 122 步。
+  - 只用平均（k=0）在 7.54 s 超車，與 relative_overtake 相近。
+  - 每次決策平均 0.79 s。
+
 ### 論文格式一步 GP 第一版（只有離線，既有策略行為不變）
 
 - `strategy/interaction_features.py`：

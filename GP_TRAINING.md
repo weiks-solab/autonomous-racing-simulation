@@ -1,6 +1,6 @@
 # GP 模型訓練
 
-## 論文格式一步 GP（第一版，尚未接入策略）
+## 論文格式一步 GP（第一版）
 
 參考 Lee et al.（RA-L 2024，KM-DKL）的 GP 輸入與輸出，但沒有 CNN encoder，也沒有 kernel metric learning。
 - 輸入：論文 z_k 的 10 維，加上 v2 的 4 個歷史 d 變化，取代論文 M=10 步的序列。
@@ -34,6 +34,23 @@
 - 場次切分、訓練樣本選取（近距離最多 3000 筆＋試探資料補到 5000 筆）與 kernel 都同 v2。
 - 模型存 `models/gp/paper_format_20261125/model.pkl`（只在本機），內含 4 個 pipeline 與欄位資訊。
 - 結果見 [論文格式 GP 第一版](reports/experiments/2026-11-25_paper_format_gp/README.md)。
+
+### 線上使用：paper_rollout_overtake
+
+- 由 pkl 匯出精簡檔，用同一個命令；程式依 `model_kind` 判斷格式，並自動比對 4 個輸出的預測：
+
+  ```powershell
+  .\.venv\Scripts\python.exe interaction_gp.py export --model models/gp/paper_format_20261125/model.pkl --output models/compact/paper_gp_v1.npz
+  ```
+
+- `strategy/paper_gp.py` 的 `PaperGpModel` 負責載入，可讀 pkl 或 npz。載入時核對：
+  - 欄位順序、答案、時域 0.1 s、歷史段 0.2 s。
+  - 曲率前看 ζ 與取點間距要和線上特徵相同。
+- 適用範圍：
+  - 取自訓練輸入：14 欄的最小～最大值，加上後車−前車速度範圍。
+  - 第 0 步超出時整段退回定速等 d；之後超出的樣本改為等速等 d 前進。
+- 線上特徵由 `paper_feature_rows` 一次算 Q 列，與訓練用的 `paper_state_features` 逐欄相同（有測試核對）。
+- 策略與設定：`main.py` ⑤-4，`PAPER_GP_MODEL_PATH`、`PAPER_ROLLOUT_OVERTAKING_CONFIG`。版本與雜湊見 [模型登記表](models/registry.md)。
 
 ## 互動歷史 GP：試探反應預測
 

@@ -11,7 +11,7 @@
 - 不含 `d_target`。
 - 沒有 DKL 與 kernel metric learning，只有一種防守策略，也沒有多步推演或接入規劃器。
 
-欄位定義見 [GP_TRAINING.md](../../../GP_TRAINING.md#論文格式一步-gp第一版尚未接入策略)；計算在 `strategy/interaction_features.py`，資料建構在 `training_data/interaction.py` 的 `build_paper_dataset`。
+欄位定義見 [GP_TRAINING.md](../../../GP_TRAINING.md#論文格式一步-gp第一版)；計算在 `strategy/interaction_features.py`，資料建構在 `training_data/interaction.py` 的 `build_paper_dataset`。
 
 ## 設定
 

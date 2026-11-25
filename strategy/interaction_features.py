@@ -5,6 +5,7 @@ import math
 from typing import Iterable
 
 import numpy as np
+from numpy.typing import ArrayLike, NDArray
 
 from core.track import Track
 from core.track_geometry import (
@@ -85,6 +86,44 @@ def paper_state_features(
             *(centerline_curvature(track, s + k * zeta) for k in range(3)),
             rear_d[1] - rear_d[0], front_d[1] - front_d[0],
             rear_d[2] - rear_d[1], front_d[2] - front_d[1])
+
+
+def paper_feature_rows(
+    rear: VehicleObservation, rear_past_d: tuple[float, float],
+    front_s: ArrayLike, front_d: ArrayLike, front_heading_error: ArrayLike, front_speed: ArrayLike,
+    front_past_d: ArrayLike, track: Track, zeta: float = CURVATURE_LOOKAHEAD,
+) -> NDArray[np.float64]:
+    """推演用：一次產生 Q 列 PAPER_FEATURES，前車以 (s, d, 航向誤差, 車速) 給定，不經投影。
+
+    front_past_d 為 (Q, 2)，依序是 t−2 段與 t−1 段的 d。其餘算法與 paper_state_features 相同，
+    同一組狀態兩者逐欄一致（見測試）。
+    """
+    if not math.isfinite(zeta) or zeta <= 0.0:
+        raise ValueError("curvature lookahead must be positive and finite")
+    s, d, psi, speed = (np.asarray(values, dtype=float).reshape(-1)
+                        for values in (front_s, front_d, front_heading_error, front_speed))
+    past = np.asarray(front_past_d, dtype=float).reshape(-1, 2)
+    count = len(s)
+    if not len(d) == len(psi) == len(speed) == len(past) == count:
+        raise ValueError("front sample arrays must have the same length")
+    length = track_length(track)
+    half = length / 2.0
+    # 與 signed_longitudinal_gap 同式：結果落在 [-L/2, L/2)。
+    gap = (s - rear.track_position.s + half) % length - half
+    curvature = np.array([[centerline_curvature(track, float(value) + k * zeta) for k in range(3)]
+                          for value in s], dtype=float).reshape(count, 3)
+    rear_d = (*rear_past_d, rear.track_position.d)
+
+    def column(value: float) -> NDArray[np.float64]:
+        return np.full(count, float(value))
+
+    return np.column_stack((
+        gap, d, psi, speed,
+        column(rear.track_position.d), column(heading_error(rear, track)), column(rear.state.velocity),
+        curvature,
+        column(rear_d[1] - rear_d[0]), past[:, 1] - past[:, 0],
+        column(rear_d[2] - rear_d[1]), d - past[:, 1],
+    ))
 
 
 def front_state_delta(

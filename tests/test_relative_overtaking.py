@@ -55,6 +55,40 @@ class RelativeOvertakingTests(unittest.TestCase):
                 self.assertEqual(candidate.cost_terms, ())
                 self.assertIsNone(evaluation.predicted_gap)
 
+    def test_switch_weight_adds_a_fixed_cost_to_other_targets(self) -> None:
+        plain = self.strategy()
+        plain.update(self.ego, (self.front,), self.track, 0.0)
+        weighted = self.strategy(replace(self.config, switch_weight=0.5))
+        decision = weighted.update(self.ego, (self.front,), self.track, 0.0)
+        # 目前目標是 0（預設決策）：其他目標固定多 0.5，同目標不變；不看換多遠。
+        for before, after in zip(plain.last_candidates, weighted.last_candidates):
+            if not after.feasible:
+                continue
+            extra = 0.0 if after.maneuver.target_d == 0.0 else 0.5
+            self.assertAlmostEqual(after.total_cost - before.total_cost, extra)
+            self.assertEqual(after.switch_cost, extra)
+        terms = [c.cost_terms for c in decision.candidate_snapshot.candidates if c.feasible]
+        self.assertTrue(all(term[-1][0] == "switch" for term in terms))
+        self.assertTrue(any(text.startswith("switch=") for text in decision.details))
+        # 預設 0：成本項與說明都和原本相同。
+        self.assertFalse(any(text.startswith("switch=") for text in plain.decision.details))
+        with self.assertRaises(ValueError):
+            RelativeOvertakingConfig(switch_weight=-0.1)
+
+    def test_progress_weight_scales_only_the_gap_term(self) -> None:
+        plain = self.strategy()
+        plain.update(self.ego, (self.front,), self.track, 0.0)
+        weighted = self.strategy(replace(self.config, progress_weight=2.0))
+        decision = weighted.update(self.ego, (self.front,), self.track, 0.0)
+        for before, after in zip(plain.last_candidates, weighted.last_candidates):
+            if after.feasible:
+                self.assertAlmostEqual(after.relative_cost, before.relative_cost)   # gap_T 本身不變
+                self.assertAlmostEqual(after.total_cost, 2.0 * before.total_cost)  # 這裡只有間距項
+        shown = [c.cost_terms for c in decision.candidate_snapshot.candidates if c.feasible]
+        self.assertAlmostEqual(shown[0][0][1], 2.0 * plain.last_candidates[0].relative_cost)
+        with self.assertRaises(ValueError):
+            RelativeOvertakingConfig(progress_weight=-1.0)
+
     def test_gap_changes_continuously_before_and_after_passing_without_a_bonus(self) -> None:
         costs = []
         for front_s in (22.0, 23.0, 24.0):

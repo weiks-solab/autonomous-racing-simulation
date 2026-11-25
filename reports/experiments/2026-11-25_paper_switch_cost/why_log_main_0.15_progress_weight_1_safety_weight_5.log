@@ -1,0 +1,1 @@
+main weight=0.15 {'progress_weight': 1.0, 'safety_weight': 5.0} progress=1: first lead 8.16, switches 22, collision steps 15, ['Detected collision pairs: vehicle-1/vehicle-2']
