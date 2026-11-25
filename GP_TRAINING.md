@@ -1,5 +1,40 @@
 # GP 模型訓練
 
+## 論文格式一步 GP（第一版，尚未接入策略）
+
+參考 Lee et al.（RA-L 2024，KM-DKL）的 GP 輸入與輸出，但沒有 CNN encoder，也沒有 kernel metric learning。
+- 輸入：論文 z_k 的 10 維，加上 v2 的 4 個歷史 d 變化，取代論文 M=10 步的序列。
+- 答案：前車 0.1 s 後的 4 個變化量，每個答案各擬合一個獨立 GP。
+- 不含 `d_target`。
+
+欄位與計算在 `strategy/interaction_features.py`（`PAPER_FEATURES`、`paper_state_features`、`front_state_delta`），資料建構在 `training_data/interaction.py`（`build_paper_dataset`），訓練與線上共用。
+
+| # | 輸入 | 定義 | 單位 |
+| --- | --- | --- | --- |
+| 1 | gap | 前車 s − 後車 s | m |
+| 2～4 | front_d／front_heading_error／front_speed | 前車 d、車頭角誤差、車速 | m、rad、m/s |
+| 5～7 | rear_d／rear_heading_error／rear_speed | 後車 d、車頭角誤差、車速 | m、rad、m/s |
+| 8～10 | front_curvature_0／_1／_2 | 前車位置 s、s+ζ、s+2ζ 的中心線曲率，ζ=1.0 m（論文未給值，未調參） | 1/m |
+| 11～14 | rear_dd_early、front_dd_early、rear_dd_late、front_dd_late | 同互動歷史 GP | m |
+
+| 答案 | 定義 | 單位 |
+| --- | --- | --- |
+| front_delta_s | 前車 s(t+0.1) − s(t)，最短有號距離 | m |
+| front_delta_d | 前車 d(t+0.1) − d(t) | m |
+| front_delta_heading_error | 車頭角誤差的變化，包裝到 ±π | rad |
+| front_delta_speed | 車速變化 | m/s |
+
+取樣間距 0.1 s；歷史不足 0.4 s、缺車、歷史窗到標籤窗內有碰撞的樣本略過。
+第一版不重新模擬，由三份既有原始紀錄（`raw_states.csv`，同一組 defend 設定）重建：
+
+```powershell
+.\.venv\Scripts\python.exe reports/experiments/2026-11-25_paper_format_gp/train_eval.py
+```
+
+- 場次切分、訓練樣本選取（近距離最多 3000 筆＋試探資料補到 5000 筆）與 kernel 都同 v2。
+- 模型存 `models/gp/paper_format_20261125/model.pkl`（只在本機），內含 4 個 pipeline 與欄位資訊。
+- 結果見 [論文格式 GP 第一版](reports/experiments/2026-11-25_paper_format_gp/README.md)。
+
 ## 互動歷史 GP：試探反應預測
 
 `interaction_gp.py collect --features history` 收集 13 欄，答案仍為前車 `d(t+0.5)−d(t)`（使用時加回 front_d 即絕對位置）。

@@ -8,7 +8,9 @@ from core.track import Track
 from core.track_geometry import signed_longitudinal_gap, track_length
 # 特徵計算與線上策略共用，確保訓練與使用時算法一致。
 from strategy.interaction_features import (
-    centerline_curvature as curvature, heading_error, history_state_features,
+    CURVATURE_LOOKAHEAD, PAPER_FEATURE_UNITS, PAPER_FEATURES, PAPER_TARGET_UNITS, PAPER_TARGETS,
+    centerline_curvature as curvature, front_state_delta, heading_error, history_state_features,
+    paper_state_features,
 )
 from training_data.schema import (
     DatasetSchema, FieldSpec, RecordedEpisode, SamplingConfig, TrainingDataset,
@@ -86,6 +88,16 @@ def history_features(
                                   rear_past, front_past, track)
 
 
+def _window_skip_reason(interval, pair: VehiclePair) -> str | None:
+    """歷史窗到標籤窗內缺車或兩車任一方有碰撞時，回傳略過原因。"""
+    if any(not {pair.ego_id, pair.opponent_id} <= set(frame.observations) for frame in interval):
+        return "missing_vehicle"
+    if any({pair.ego_id, pair.opponent_id}.intersection(collision)
+           for frame in interval for collision in frame.collision_pairs):
+        return "collision"
+    return None
+
+
 def build_interaction_dataset(
     episodes: tuple[RecordedEpisode, ...], track: Track, pair: VehiclePair,
     sampling: SamplingConfig,
@@ -113,12 +125,9 @@ def build_interaction_dataset(
                 continue
             # history 的檢查範圍包含歷史窗，避免歷史橫移來自碰撞中的狀態。
             interval = episode.frames[index - 2 * history_steps:end + 1]
-            if any(not {pair.ego_id, pair.opponent_id} <= set(frame.observations) for frame in interval):
-                skipped["missing_vehicle"] += 1
-                continue
-            if any({pair.ego_id, pair.opponent_id}.intersection(collision)
-                   for frame in interval for collision in frame.collision_pairs):
-                skipped["collision"] += 1
+            reason = _window_skip_reason(interval, pair)
+            if reason is not None:
+                skipped[reason] += 1
                 continue
             current, future = episode.frames[index], interval[-1]
             if not math.isclose(future.time_seconds - current.time_seconds, sampling.label_horizon_seconds):
@@ -149,3 +158,64 @@ def build_interaction_dataset(
         DatasetSchema(names, ("opponent_delta_d",)), sampling, tuple(samples), specs,
         (FieldSpec("opponent_delta_d", "m", "前車未來 d 減當下 d"),), skipped,
     )
+
+
+def paper_descriptions(segment_seconds: float, zeta: float) -> tuple[str, ...]:
+    early = f"t-{2 * segment_seconds:g} 至 t-{segment_seconds:g} s"
+    late = f"t-{segment_seconds:g} 至 t s"
+    return ("前車 s 減後車 s，短距有號車距", "前車當下 d，左正", "前車車頭角減中心線切線角，左轉為正",
+            "前車車身速度", "後車當下 d，左正", "後車車頭角減中心線切線角，左轉為正", "後車車身速度",
+            "前車所在位置的中心線曲率，左彎為正", f"前車前方 {zeta:g} m 的中心線曲率",
+            f"前車前方 {2 * zeta:g} m 的中心線曲率",
+            f"後車 d 在 {early} 的變化", f"前車 d 在 {early} 的變化",
+            f"後車 d 在 {late} 的變化", f"前車 d 在 {late} 的變化")
+
+
+def build_paper_dataset(
+    episodes: tuple[RecordedEpisode, ...], track: Track, pair: VehiclePair, sampling: SamplingConfig,
+    history_segment_seconds: float = HISTORY_SEGMENT_SECONDS, zeta: float = CURVATURE_LOOKAHEAD,
+) -> TrainingDataset:
+    """論文格式：輸入 PAPER_FEATURES（14 欄），答案為前車在標籤時域後的 PAPER_TARGETS（4 欄）。
+
+    略過規則同 history 版：歷史不足、歷史窗到標籤窗內缺車或有碰撞、非有限值。
+    """
+    if sampling.label_horizon_steps < 1:
+        raise ValueError("interaction prediction requires a future horizon")
+    history_steps = history_segment_steps(history_segment_seconds, sampling.time_step)
+    samples, skipped = [], Counter()
+    for episode in episodes:
+        for index in range(0, len(episode.frames), sampling.sample_stride_steps):
+            end = index + sampling.label_horizon_steps
+            if index < 2 * history_steps:
+                skipped["insufficient_history"] += 1
+                continue
+            if end >= len(episode.frames):
+                skipped["insufficient_future"] += 1
+                continue
+            interval = episode.frames[index - 2 * history_steps:end + 1]
+            reason = _window_skip_reason(interval, pair)
+            if reason is not None:
+                skipped[reason] += 1
+                continue
+            current, future = episode.frames[index], interval[-1]
+            if not math.isclose(future.time_seconds - current.time_seconds, sampling.label_horizon_seconds):
+                raise ValueError("frame timing does not match label horizon")
+            past = (episode.frames[index - 2 * history_steps], episode.frames[index - history_steps])
+            rear_past, front_past = (tuple(frame.observations[key].track_position.d for frame in past)
+                                     for key in (pair.ego_id, pair.opponent_id))
+            rear, front = (current.observations[key] for key in (pair.ego_id, pair.opponent_id))
+            x = paper_state_features(rear, front, rear_past, front_past, track, zeta)
+            y = front_state_delta(front, future.observations[pair.opponent_id], track)
+            if not all(math.isfinite(value) for value in (*x, *y)):
+                skipped["non_finite"] += 1
+                continue
+            samples.append(TrainingSample(episode.episode_id, current.step_index, current.time_seconds, pair, x, y))
+    horizon = f"{sampling.label_horizon_seconds:g} s"
+    feature_specs = tuple(FieldSpec(name, unit, description) for name, unit, description in zip(
+        PAPER_FEATURES, PAPER_FEATURE_UNITS, paper_descriptions(history_steps * sampling.time_step, zeta)))
+    target_specs = tuple(FieldSpec(name, unit, description) for name, unit, description in zip(
+        PAPER_TARGETS, PAPER_TARGET_UNITS,
+        (f"前車 {horizon} 後的 s 減當下 s（最短有號距離）", f"前車 {horizon} 後的 d 減當下 d",
+         f"前車 {horizon} 後的車頭角誤差減當下值，包裝到 ±π", f"前車 {horizon} 後的車速減當下車速")))
+    return TrainingDataset(DatasetSchema(PAPER_FEATURES, PAPER_TARGETS), sampling, tuple(samples),
+                           feature_specs, target_specs, skipped)

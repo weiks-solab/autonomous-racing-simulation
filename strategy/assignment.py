@@ -17,6 +17,7 @@ from strategy.defending import CostBasedDefenseStrategy, DefenseConfig, DefenseM
 from strategy.gp_prediction import GpRoute
 from strategy.interaction_gp import InteractionGpModel
 from strategy.interaction_overtaking import InteractionOvertakingConfig, InteractionOvertakingStrategy
+from strategy.rollout_overtaking import RolloutOvertakingConfig, RolloutOvertakingStrategy
 from strategy.observations import VehicleObservation
 from strategy.offset_path import LateralManeuver, OffsetPathConfig
 from strategy.overtaking import OvertakingConfig, OvertakingMode, RuleBasedOvertakingStrategy
@@ -183,6 +184,7 @@ class StrategyConfigs:
     relative_overtake: RelativeOvertakingConfig = field(default_factory=RelativeOvertakingConfig)
     probe_follow: ProbeFollowingConfig = field(default_factory=ProbeFollowingConfig)
     interaction_overtake: InteractionOvertakingConfig = field(default_factory=InteractionOvertakingConfig)
+    rollout_overtake: RolloutOvertakingConfig = field(default_factory=RolloutOvertakingConfig)
 
     def path_config_for(
         self, base: OffsetPathConfig, assignments: Iterable[StrategyAssignment],
@@ -204,9 +206,14 @@ def create_strategy_factories(
 ) -> dict[str, Callable[[str], VehicleStrategy]]:
     """以 bicycle 模型預測的策略。每次呼叫工廠都建立新物件，各車狀態互相獨立。
 
-    interaction_model 為 None 時，interaction_overtake 一律退回定速等 d，行為與 relative_overtake 相同。
+    interaction_model 為 None 時，interaction_overtake 與 rollout_overtake 一律退回定速等 d，
+    行為與 relative_overtake 相同。
     """
     return {
+        "rollout_overtake": lambda vehicle_id: RolloutOvertakingStrategy(
+            configs.rollout_overtake, prediction_configs[vehicle_id], prediction_configs,
+            interaction_model,
+        ),
         "interaction_overtake": lambda vehicle_id: InteractionOvertakingStrategy(
             configs.interaction_overtake, prediction_configs[vehicle_id], prediction_configs,
             interaction_model,

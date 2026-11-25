@@ -253,6 +253,21 @@ GP_MODEL_PATHS = {
 並排超越（車距 <1.6 m）一定退回；候選只能用訓練過的 0、±0.3、±0.45、±0.6 m。
 評估見 [互動 GP 超車評估](reports/experiments/2026-11-24_interaction_overtake/README.md)。
 
+### 沿上一步軌跡推演對手：rollout_overtake
+
+在 `STRATEGY_ASSIGNMENTS`（或 `INTERACTION_STRATEGY_ASSIGNMENTS`）指派 `StrategyAssignment("rollout_overtake")`。
+它與 interaction_overtake 共用 `INTERACTION_GP_MODEL_PATH`，設定在 `main.py` ⑤-3 `ROLLOUT_OVERTAKING_CONFIG`。
+
+1. 取上一次決策選中候選的預測軌跡（不從目前狀態重算），對齊到現在。
+2. 沿這條軌跡每 `rollout_step` 秒查一次 GP，推出前車軌跡。
+   - 自車位置用上一步軌跡，前車用推演值；每步增量＝0.5 s Δd × step／0.5。
+3. 所有候選依這條前車軌跡選擇，不做選後複查。
+4. 退回與維持：
+   - 第一次決策、歷史不足或第一個節點超出範圍時退回定速等 d。
+   - 後段超出範圍時維持最後的 d。
+
+單場示範見 [rollout_overtake 示範](reports/experiments/2026-11-25_rollout_overtake/README.md)。
+
 模型載入與預測在 `strategy/gp_prediction.py`，選路與成本仍在 `strategy/relative_overtaking.py`。
 
 ### 顯示 GP 路線與即時預測
@@ -509,6 +524,7 @@ STRATEGY_ASSIGNMENTS = {
 | `progress` | 固定候選 bicycle 預測，只選最大進度，不預測其他車或篩選碰撞 | `strategy/progress.py` |
 | `relative_overtake` | 最小化預測終點的對手 s 減自車 s，加上可選安全距離成本；保留碰撞篩選 | `strategy/relative_overtaking.py` |
 | `interaction_overtake` | 同 `relative_overtake`，但前車改用互動歷史 GP 預測；超出 GP 訓練範圍時退回 | `strategy/interaction_overtaking.py` |
+| `rollout_overtake` | 沿自車上一步的預測軌跡，每 0.1 s 用互動 GP 推演前車軌跡，再選候選 | `strategy/rollout_overtaking.py` |
 | `defend` | 依成本選擇橫向防守位置 | `strategy/defending.py` |
 
 例如想改成第二台車進攻，第三台車防守第二台，只需改成：

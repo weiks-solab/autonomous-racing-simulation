@@ -1,0 +1,17 @@
+SAME  cost_overtake_defend_3s
+SAME  data_generation_2s
+DIFF  default_6s
+DIFF  default_no_defense_3s
+DIFF  gp_relative_3s
+DIFF  imported_track_2s
+SAME  overtake_defend_auto_path_8s
+SAME  overtake_defend_path6_8s
+SAME  probe_follow_demo_3s
+SAME  progress_centerline_3s
+DIFF  rectangle_collision_checks_3s
+6 same, 5 different
+
+[exited with code 0]
+
+# 欄位比對：5 個 DIFF 場景只有 stdout_sha256 不同（載入互動 GP 時印出的訊息改成分行列出策略設定），
+# 各車軌跡與最終畫面雜湊全部相同。

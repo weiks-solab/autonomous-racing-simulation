@@ -19,6 +19,21 @@ INTERACTION_FEATURES = (
     "rear_dd_early", "front_dd_early", "rear_dd_late", "front_dd_late", "d_target",
 )
 
+# 論文格式（Lee et al., RA-L 2024）：前 10 欄依論文 z_k 的順序（前車在前、後車在後、前車位置與前方 ζ、2ζ 的曲率）；
+# 後 4 欄沿用 v2 的歷史 d 變化，取代論文的 M=10 序列。不含 d_target。
+PAPER_STATE_FEATURES = (
+    "gap", "front_d", "front_heading_error", "front_speed",
+    "rear_d", "rear_heading_error", "rear_speed",
+    "front_curvature_0", "front_curvature_1", "front_curvature_2",
+)
+HISTORY_DELTA_FEATURES = ("rear_dd_early", "front_dd_early", "rear_dd_late", "front_dd_late")
+PAPER_FEATURES = PAPER_STATE_FEATURES + HISTORY_DELTA_FEATURES
+PAPER_FEATURE_UNITS = ("m", "m", "rad", "m/s", "m", "rad", "m/s", "1/m", "1/m", "1/m", "m", "m", "m", "m")
+# 前車一步的狀態變化，依論文 y_k 的順序。
+PAPER_TARGETS = ("front_delta_s", "front_delta_d", "front_delta_heading_error", "front_delta_speed")
+PAPER_TARGET_UNITS = ("m", "m", "rad", "m/s")
+CURVATURE_LOOKAHEAD = 1.0  # 論文的 ζ，m；論文未給數值，尚未調參
+
 
 def centerline_curvature(track: Track, s: float, spacing: float = 0.5) -> float:
     """用中心線前後各 0.5 m 的三點估計有號曲率，左彎為正。"""
@@ -51,6 +66,35 @@ def history_state_features(
             centerline_curvature(track, front.track_position.s),
             rear_d[1] - rear_d[0], front_d[1] - front_d[0],
             rear_d[2] - rear_d[1], front_d[2] - front_d[1])
+
+
+def paper_state_features(
+    rear: VehicleObservation, front: VehicleObservation,
+    rear_past_d: tuple[float, float], front_past_d: tuple[float, float], track: Track,
+    zeta: float = CURVATURE_LOOKAHEAD,
+) -> tuple[float, ...]:
+    """PAPER_FEATURES 的 14 欄。past_d 依序為 t−2 段與 t−1 段的 d，歷史 4 欄算法與 history_state_features 相同。"""
+    if not math.isfinite(zeta) or zeta <= 0.0:
+        raise ValueError("curvature lookahead must be positive and finite")
+    gap = signed_longitudinal_gap(rear.track_position, front.track_position, track_length(track))
+    s = front.track_position.s
+    rear_d = (*rear_past_d, rear.track_position.d)
+    front_d = (*front_past_d, front.track_position.d)
+    return (gap, front.track_position.d, heading_error(front, track), front.state.velocity,
+            rear.track_position.d, heading_error(rear, track), rear.state.velocity,
+            *(centerline_curvature(track, s + k * zeta) for k in range(3)),
+            rear_d[1] - rear_d[0], front_d[1] - front_d[0],
+            rear_d[2] - rear_d[1], front_d[2] - front_d[1])
+
+
+def front_state_delta(
+    now: VehicleObservation, later: VehicleObservation, track: Track,
+) -> tuple[float, float, float, float]:
+    """同一台車 now→later 的 PAPER_TARGETS：Δs 取最短有號距離（跨圈正確），航向誤差差值包裝到 [-π, π]。"""
+    return (signed_longitudinal_gap(now.track_position, later.track_position, track_length(track)),
+            later.track_position.d - now.track_position.d,
+            math.remainder(heading_error(later, track) - heading_error(now, track), 2.0 * math.pi),
+            later.state.velocity - now.state.velocity)
 
 
 class LateralHistory:

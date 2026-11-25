@@ -1,5 +1,32 @@
 # 變更紀錄
 
+## 2026-11-25
+
+### 論文格式一步 GP 第一版（只有離線，既有策略行為不變）
+
+- `strategy/interaction_features.py`：
+  - 新增 `PAPER_FEATURES`（論文 z_k 10 維＋v2 歷史 4 欄）與 `PAPER_TARGETS`（前車 Δs、Δd、Δe_ψ、Δv）。
+  - 新增 `paper_state_features`、`front_state_delta`，訓練與之後的線上推演共用。
+- `training_data/interaction.py`：
+  - 新增 `build_paper_dataset`，標籤時域依 `SamplingConfig`，第一版使用 0.1 s。
+  - 窗內缺車與碰撞的檢查抽成共用函式，既有 basic／history 結果不變。
+- 新增 4 項測試。
+- 新增實驗 [論文格式 GP 第一版](reports/experiments/2026-11-25_paper_format_gp/README.md)：
+  - 由三份既有原始紀錄重建資料，4 個獨立 GP。
+  - 近距離 0≤gap≤2 m 的 Δd MAE 0.0050 m（等速 0.0250）。
+  - Δv 比「車速不變」差；gap<−2 m 在訓練範圍外。
+- 尚未接入策略。模型只在本機，未匯出精簡檔。
+
+### 新增進攻策略 rollout_overtake（既有策略行為不變）
+
+- `strategy/rollout_overtaking.py`：取上一步選中候選的預測軌跡，沿它每 0.1 s 用互動 GP 推演前車軌跡，所有候選依這條軌跡選擇。
+  - 候選、成本、避撞責任與 ±2σ 邊界檢查沿用 interaction_overtake。
+  - 第一節點不可用時退回定速等 d；後段超出範圍時維持。
+- 工廠與 `SimulationSettings` 註冊 `rollout_overtake`。
+- `main.py` 新增 ⑤-3 `ROLLOUT_OVERTAKING_CONFIG`；有車指派 interaction_overtake 或 rollout_overtake 時才載入 GP。場景與指派未改。
+- 新增 9 項測試；全套 449 項，2 項失敗與基線同名。
+- 單場示範見 [rollout_overtake 示範](reports/experiments/2026-11-25_rollout_overtake/README.md)：未超車、換目標 146 次、無碰撞。
+
 ## 2026-11-24
 
 ### 攻方近距離資料收集與 GP v2（使用者已將 main 切換為 v2）

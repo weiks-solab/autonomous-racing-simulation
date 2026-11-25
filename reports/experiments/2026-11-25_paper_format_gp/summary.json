@@ -1,0 +1,2020 @@
+{
+  "model": "models\\gp\\paper_format_20261125\\model.pkl",
+  "model_sha256": "60615c533ea7ffcd3a2e23be109041de29f62ff53912cb5a5572ee66f0dfcc39",
+  "base_commit": "015134b73de046cb166cc5034a1266d0d6b928a7",
+  "worktree": "含未提交修改",
+  "features": [
+    "gap",
+    "front_d",
+    "front_heading_error",
+    "front_speed",
+    "rear_d",
+    "rear_heading_error",
+    "rear_speed",
+    "front_curvature_0",
+    "front_curvature_1",
+    "front_curvature_2",
+    "rear_dd_early",
+    "front_dd_early",
+    "rear_dd_late",
+    "front_dd_late"
+  ],
+  "feature_units": [
+    "m",
+    "m",
+    "rad",
+    "m/s",
+    "m",
+    "rad",
+    "m/s",
+    "1/m",
+    "1/m",
+    "1/m",
+    "m",
+    "m",
+    "m",
+    "m"
+  ],
+  "targets": [
+    "front_delta_s",
+    "front_delta_d",
+    "front_delta_heading_error",
+    "front_delta_speed"
+  ],
+  "target_units": [
+    "m",
+    "m",
+    "rad",
+    "m/s"
+  ],
+  "label_horizon_seconds": 0.1,
+  "sample_interval_seconds": 0.1,
+  "history_segment_seconds": 0.2,
+  "curvature_lookahead_m": 1.0,
+  "kernel_setup": "StandardScaler + Constant x ARD RBF + White, normalize_y, no optimizer restart (same as v2)",
+  "baselines": {
+    "zero": "all four deltas 0",
+    "constant_velocity": "ds=front_speed*0.1, dd=front_dd_late*0.1/0.2, dheading=0, dv=0"
+  },
+  "sources": {
+    "old": {
+      "path": "data\\training\\history_gp_20261124",
+      "raw_states_sha256": "6022587acd94d214c84bfb6e444c2fae4dc53b5b6c90f7729d7c284fdae75dab",
+      "episodes": 20,
+      "samples": 2920,
+      "skipped": {
+        "insufficient_history": 80,
+        "insufficient_future": 20
+      }
+    },
+    "speed06": {
+      "path": "data\\training\\history_speed06_20261124",
+      "raw_states_sha256": "5a8ba8db702325185f0832599872078071db7b07b6f92c061429dfe9f75cda41",
+      "episodes": 16,
+      "samples": 4736,
+      "skipped": {
+        "insufficient_history": 64,
+        "insufficient_future": 16
+      }
+    },
+    "close": {
+      "path": "data\\training\\close_range_20261124",
+      "raw_states_sha256": "23a5552b6b145eb7c732ea050696081d5d3cefeeaed5e32ef5ebd0c226a16f8a",
+      "episodes": 36,
+      "samples": 6816,
+      "skipped": {
+        "insufficient_history": 144,
+        "collision": 240,
+        "insufficient_future": 36
+      }
+    }
+  },
+  "defense_config": {
+    "q_block": 15.0,
+    "progress_weight": 2.0,
+    "smooth_weight": 1.0,
+    "detection_range": 6.0,
+    "return_tolerance": 0.08,
+    "transition_length": 2.0,
+    "decision_period": 0.05,
+    "candidate_offsets": [
+      -0.6,
+      -0.4,
+      -0.2,
+      0.0,
+      0.2,
+      0.4,
+      0.6
+    ],
+    "prediction_horizon": 1.0,
+    "prediction_step": 0.1,
+    "path_sample_spacing": 0.2,
+    "safety_margin": 0.1,
+    "collision_check_enabled": false,
+    "collision_horizon": 1.0,
+    "deviation_weight": 3.0,
+    "responsibility": {
+      "collision_radius": 0.6,
+      "slope": 40.0,
+      "offset": 4.5,
+      "leader_soft": false,
+      "overlap_rule": true
+    },
+    "leader_penalty_weight": 0.0
+  },
+  "training": {
+    "old_train": [
+      "interaction-000",
+      "interaction-001",
+      "interaction-002",
+      "interaction-003",
+      "interaction-004",
+      "interaction-005",
+      "interaction-008",
+      "interaction-011",
+      "interaction-013",
+      "interaction-016",
+      "interaction-017",
+      "interaction-018"
+    ],
+    "speed06_train": [
+      "speed06-000",
+      "speed06-001",
+      "speed06-002",
+      "speed06-003",
+      "speed06-012",
+      "speed06-013",
+      "speed06-014",
+      "speed06-015"
+    ],
+    "close_train": [
+      "close-000",
+      "close-012",
+      "close-001",
+      "close-013",
+      "close-002",
+      "close-014",
+      "close-003",
+      "close-015",
+      "close-004",
+      "close-016",
+      "close-005",
+      "close-017",
+      "close-006",
+      "close-018",
+      "close-007",
+      "close-019",
+      "close-008",
+      "close-020",
+      "close-009",
+      "close-021",
+      "close-010",
+      "close-022",
+      "close-011",
+      "close-023"
+    ],
+    "gap_range": [
+      -2.0,
+      3.0
+    ],
+    "cap_close": 3000,
+    "cap_total": 5000,
+    "seed": 42
+  },
+  "selection": {
+    "close_samples": 2540,
+    "pool_samples": 2460,
+    "fit_count": 5000
+  },
+  "fits": {
+    "front_delta_s": {
+      "fit_seconds": 330.49580000003334,
+      "fitted_kernel": "0.806**2 * RBF(length_scale=[15.8, 0.57, 1.62, 1.58, 20, 17.8, 3.59, 0.639, 2.61, 2.88, 20, 20, 20, 7.82]) + WhiteKernel(noise_level=1e-06)",
+      "warnings": [
+        "The optimal value found for dimension 4 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value.",
+        "The optimal value found for dimension 10 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value.",
+        "The optimal value found for dimension 11 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value.",
+        "The optimal value found for dimension 12 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value.",
+        "The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-06. Decreasing the bound and calling fit again may find a better value."
+      ]
+    },
+    "front_delta_d": {
+      "fit_seconds": 346.2216445999802,
+      "fitted_kernel": "0.935**2 * RBF(length_scale=[2.66, 0.61, 0.994, 2.49, 0.406, 4.8, 4.68, 1.4, 2.79, 9.96, 13.6, 1.88, 4.81, 1.7]) + WhiteKernel(noise_level=0.000138)",
+      "warnings": []
+    },
+    "front_delta_heading_error": {
+      "fit_seconds": 472.472019799985,
+      "fitted_kernel": "1.55**2 * RBF(length_scale=[4.68, 0.408, 0.878, 2.63, 0.314, 2.51, 20, 1.91, 1.39, 6.44, 11.4, 8.61, 1.64, 2.04]) + WhiteKernel(noise_level=0.0303)",
+      "warnings": [
+        "The optimal value found for dimension 6 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value."
+      ]
+    },
+    "front_delta_speed": {
+      "fit_seconds": 212.3121157999849,
+      "fitted_kernel": "1.38**2 * RBF(length_scale=[1.29, 20, 20, 0.05, 20, 20, 0.447, 20, 20, 20, 20, 20, 20, 20]) + WhiteKernel(noise_level=1e-06)",
+      "warnings": [
+        "The optimal value found for dimension 1 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value.",
+        "The optimal value found for dimension 2 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value.",
+        "The optimal value found for dimension 3 of parameter k1__k2__length_scale is close to the specified lower bound 0.05. Decreasing the bound and calling fit again may find a better value.",
+        "The optimal value found for dimension 4 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value.",
+        "The optimal value found for dimension 5 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value.",
+        "The optimal value found for dimension 7 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value.",
+        "The optimal value found for dimension 8 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value.",
+        "The optimal value found for dimension 9 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value.",
+        "The optimal value found for dimension 10 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value.",
+        "The optimal value found for dimension 11 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value.",
+        "The optimal value found for dimension 12 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value.",
+        "The optimal value found for dimension 13 of parameter k1__k2__length_scale is close to the specified upper bound 20.0. Increasing the bound and calling fit again may find a better value.",
+        "The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-06. Decreasing the bound and calling fit again may find a better value."
+      ]
+    }
+  },
+  "versions": {
+    "python": "3.10.20",
+    "numpy": "2.2.6",
+    "sklearn": "1.7.2"
+  },
+  "predict_timing": {
+    "rows_1_ms": 18.666099989786744,
+    "rows_25_ms": 80.19559999229386
+  },
+  "test_sets": {
+    "close_test": {
+      "episodes": [
+        "close-024",
+        "close-025",
+        "close-026",
+        "close-027",
+        "close-028",
+        "close-029",
+        "close-030",
+        "close-031",
+        "close-032",
+        "close-033",
+        "close-034",
+        "close-035"
+      ],
+      "groups": {
+        "all": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.02394859444186049,
+              "rmse": 0.04712501389306446,
+              "n": 2304,
+              "coverage_2std": 0.6358506944444444,
+              "mean_interval_width": 0.03903433755264683
+            },
+            "zero": {
+              "mae": 0.49879147032265536,
+              "rmse": 0.5132653757867041,
+              "n": 2304
+            },
+            "constant_velocity": {
+              "mae": 0.004832544071665787,
+              "rmse": 0.01646023266901177,
+              "n": 2304
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.006431676537043861,
+              "rmse": 0.011715696530171143,
+              "n": 2304,
+              "coverage_2std": 0.9583333333333334,
+              "mean_interval_width": 0.08838697040189532
+            },
+            "zero": {
+              "mae": 0.016856867024581255,
+              "rmse": 0.0353857759186166,
+              "n": 2304
+            },
+            "constant_velocity": {
+              "mae": 0.013239404894429718,
+              "rmse": 0.027530138527069717,
+              "n": 2304
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.016787750807727653,
+              "rmse": 0.027557590733967574,
+              "n": 2304,
+              "coverage_2std": 0.9435763888888888,
+              "mean_interval_width": 0.15974458782264594
+            },
+            "zero": {
+              "mae": 0.021299361408189155,
+              "rmse": 0.039969421439244424,
+              "n": 2304
+            },
+            "constant_velocity": {
+              "mae": 0.021299361408189155,
+              "rmse": 0.039969421439244424,
+              "n": 2304
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.004782481678911944,
+              "rmse": 0.010961267829891505,
+              "n": 2304,
+              "coverage_2std": 0.9900173611111112,
+              "mean_interval_width": 0.1199805259237221
+            },
+            "zero": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 2304
+            },
+            "constant_velocity": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 2304
+            }
+          }
+        },
+        "straight": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.03052019901891147,
+              "rmse": 0.05703498865529025,
+              "n": 1445,
+              "coverage_2std": 0.5128027681660899,
+              "mean_interval_width": 0.03177183720094244
+            },
+            "zero": {
+              "mae": 0.49727865371083324,
+              "rmse": 0.5111918009536592,
+              "n": 1445
+            },
+            "constant_velocity": {
+              "mae": 0.0012348479250570768,
+              "rmse": 0.004354819176591904,
+              "n": 1445
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.006171122052453867,
+              "rmse": 0.011212037511438686,
+              "n": 1445,
+              "coverage_2std": 0.9508650519031142,
+              "mean_interval_width": 0.08749868385257131
+            },
+            "zero": {
+              "mae": 0.014942398193575821,
+              "rmse": 0.036011940347242914,
+              "n": 1445
+            },
+            "constant_velocity": {
+              "mae": 0.01194486015179195,
+              "rmse": 0.028422554961281647,
+              "n": 1445
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.015606541433458871,
+              "rmse": 0.02924202359724222,
+              "n": 1445,
+              "coverage_2std": 0.9397923875432526,
+              "mean_interval_width": 0.15712263113106523
+            },
+            "zero": {
+              "mae": 0.016338131171108713,
+              "rmse": 0.038678224118388047,
+              "n": 1445
+            },
+            "constant_velocity": {
+              "mae": 0.016338131171108713,
+              "rmse": 0.038678224118388047,
+              "n": 1445
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.0044512747285983855,
+              "rmse": 0.009842973457758716,
+              "n": 1445,
+              "coverage_2std": 0.9916955017301038,
+              "mean_interval_width": 0.12085098863865468
+            },
+            "zero": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 1445
+            },
+            "constant_velocity": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 1445
+            }
+          }
+        },
+        "curve": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.0128939161952497,
+              "rmse": 0.02200847986491909,
+              "n": 859,
+              "coverage_2std": 0.8428405122235157,
+              "mean_interval_width": 0.051251232789215936
+            },
+            "zero": {
+              "mae": 0.501336313167921,
+              "rmse": 0.5167347482621327,
+              "n": 859
+            },
+            "constant_velocity": {
+              "mae": 0.01088454748476193,
+              "rmse": 0.026359218677786712,
+              "n": 859
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.006869978318455433,
+              "rmse": 0.01251731022880578,
+              "n": 859,
+              "coverage_2std": 0.9708963911525029,
+              "mean_interval_width": 0.08988123590104923
+            },
+            "zero": {
+              "mae": 0.020077364650661407,
+              "rmse": 0.034306676019216845,
+              "n": 859
+            },
+            "constant_velocity": {
+              "mae": 0.015417073291532829,
+              "rmse": 0.02595980798795798,
+              "n": 859
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.018774767741160003,
+              "rmse": 0.024463793310091037,
+              "n": 859,
+              "coverage_2std": 0.9499417927823051,
+              "mean_interval_width": 0.16415521345632947
+            },
+            "zero": {
+              "mae": 0.029645086312241827,
+              "rmse": 0.04205211383447445,
+              "n": 859
+            },
+            "constant_velocity": {
+              "mae": 0.029645086312241827,
+              "rmse": 0.04205211383447445,
+              "n": 859
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.005339634232116939,
+              "rmse": 0.0126208540674821,
+              "n": 859,
+              "coverage_2std": 0.9871944121071012,
+              "mean_interval_width": 0.11851624347543628
+            },
+            "zero": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 859
+            },
+            "constant_velocity": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 859
+            }
+          }
+        },
+        "gap<-2": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.041167123781456594,
+              "rmse": 0.06290113495274394,
+              "n": 1284,
+              "coverage_2std": 0.40809968847352024,
+              "mean_interval_width": 0.06017716320758575
+            },
+            "zero": {
+              "mae": 0.4994037316465216,
+              "rmse": 0.513687595961075,
+              "n": 1284
+            },
+            "constant_velocity": {
+              "mae": 0.0009960351253330958,
+              "rmse": 0.0018982936465025708,
+              "n": 1284
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.007691438592074293,
+              "rmse": 0.011364258076752246,
+              "n": 1284,
+              "coverage_2std": 0.985981308411215,
+              "mean_interval_width": 0.13982652156492814
+            },
+            "zero": {
+              "mae": 0.004976370853023027,
+              "rmse": 0.007871705038444303,
+              "n": 1284
+            },
+            "constant_velocity": {
+              "mae": 0.005610073715951553,
+              "rmse": 0.009024446031873102,
+              "n": 1284
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.019684772988344715,
+              "rmse": 0.0290307044293408,
+              "n": 1284,
+              "coverage_2std": 0.9595015576323987,
+              "mean_interval_width": 0.23029961342470534
+            },
+            "zero": {
+              "mae": 0.011353262666053712,
+              "rmse": 0.018743851985710356,
+              "n": 1284
+            },
+            "constant_velocity": {
+              "mae": 0.011353262666053712,
+              "rmse": 0.018743851985710356,
+              "n": 1284
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.0032107999527275217,
+              "rmse": 0.0032946488804394083,
+              "n": 1284,
+              "coverage_2std": 1.0,
+              "mean_interval_width": 0.1498836172124033
+            },
+            "zero": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 1284
+            },
+            "constant_velocity": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 1284
+            }
+          }
+        },
+        "gap[-2,3)": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.0021499758365856104,
+              "rmse": 0.005641249612202859,
+              "n": 1003,
+              "coverage_2std": 0.9242273180458624,
+              "mean_interval_width": 0.011870970847729216
+            },
+            "zero": {
+              "mae": 0.4985048978186768,
+              "rmse": 0.5131768349558556,
+              "n": 1003
+            },
+            "constant_velocity": {
+              "mae": 0.009416103002664976,
+              "rmse": 0.024158539104301147,
+              "n": 1003
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.00481286574060802,
+              "rmse": 0.01218077863092569,
+              "n": 1003,
+              "coverage_2std": 0.9232303090727817,
+              "mean_interval_width": 0.023255672142244076
+            },
+            "zero": {
+              "mae": 0.031619808591381894,
+              "rmse": 0.05224042798258693,
+              "n": 1003
+            },
+            "constant_velocity": {
+              "mae": 0.02297579898263777,
+              "rmse": 0.04035774340854647,
+              "n": 1003
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.013125427319753668,
+              "rmse": 0.025680745233320035,
+              "n": 1003,
+              "coverage_2std": 0.9262213359920239,
+              "mean_interval_width": 0.07042014864860315
+            },
+            "zero": {
+              "mae": 0.033936999396570806,
+              "rmse": 0.05653232290062484,
+              "n": 1003
+            },
+            "constant_velocity": {
+              "mae": 0.033936999396570806,
+              "rmse": 0.05653232290062484,
+              "n": 1003
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.006661576168475711,
+              "rmse": 0.015958713401596512,
+              "n": 1003,
+              "coverage_2std": 0.9780658025922233,
+              "mean_interval_width": 0.08198847541926167
+            },
+            "zero": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 1003
+            },
+            "constant_velocity": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 1003
+            }
+          }
+        },
+        "gap>=3": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.009561699680055246,
+              "rmse": 0.016295219861401047,
+              "n": 17,
+              "coverage_2std": 0.8235294117647058,
+              "mean_interval_width": 0.044767788381517806
+            },
+            "zero": {
+              "mae": 0.46945551041951045,
+              "rmse": 0.4858536959973255,
+              "n": 17
+            },
+            "constant_velocity": {
+              "mae": 0.02417183108925341,
+              "rmse": 0.04487316710456639,
+              "n": 17
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.006792426546812868,
+              "rmse": 0.009704376246998332,
+              "n": 17,
+              "coverage_2std": 0.9411764705882353,
+              "mean_interval_width": 0.045934526936957154
+            },
+            "zero": {
+              "mae": 0.04317020189397692,
+              "rmse": 0.06331521669137577,
+              "n": 17
+            },
+            "constant_velocity": {
+              "mae": 0.015031049758740766,
+              "rmse": 0.0217171490076813,
+              "n": 17
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.014054455426880766,
+              "rmse": 0.018934144280906895,
+              "n": 17,
+              "coverage_2std": 0.7647058823529411,
+              "mean_interval_width": 0.10090691832386281
+            },
+            "zero": {
+              "mae": 0.026901707440843633,
+              "rmse": 0.03770192634349373,
+              "n": 17
+            },
+            "constant_velocity": {
+              "mae": 0.026901707440843633,
+              "rmse": 0.03770192634349373,
+              "n": 17
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.012624103054696585,
+              "rmse": 0.020923074660035176,
+              "n": 17,
+              "coverage_2std": 0.9411764705882353,
+              "mean_interval_width": 0.10294861070649854
+            },
+            "zero": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 17
+            },
+            "constant_velocity": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 17
+            }
+          }
+        },
+        "gap[-2,0)": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.000860918221791519,
+              "rmse": 0.0015894160501259567,
+              "n": 147,
+              "coverage_2std": 0.9115646258503401,
+              "mean_interval_width": 0.005048695297538254
+            },
+            "zero": {
+              "mae": 0.5011828536061717,
+              "rmse": 0.5108514967346539,
+              "n": 147
+            },
+            "constant_velocity": {
+              "mae": 0.0013763599609530927,
+              "rmse": 0.002531268463755997,
+              "n": 147
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.0031557223340516532,
+              "rmse": 0.0053477141277225694,
+              "n": 147,
+              "coverage_2std": 0.9115646258503401,
+              "mean_interval_width": 0.02242948952540251
+            },
+            "zero": {
+              "mae": 0.009780635550069465,
+              "rmse": 0.015264499574534157,
+              "n": 147
+            },
+            "constant_velocity": {
+              "mae": 0.00993151837506017,
+              "rmse": 0.014827044043131173,
+              "n": 147
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.01160548268229303,
+              "rmse": 0.016702551000530155,
+              "n": 147,
+              "coverage_2std": 0.9387755102040817,
+              "mean_interval_width": 0.07290269655046323
+            },
+            "zero": {
+              "mae": 0.017156724229169706,
+              "rmse": 0.024368209003246648,
+              "n": 147
+            },
+            "constant_velocity": {
+              "mae": 0.017156724229169706,
+              "rmse": 0.024368209003246648,
+              "n": 147
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.001328386669143259,
+              "rmse": 0.0016341604675218229,
+              "n": 147,
+              "coverage_2std": 1.0,
+              "mean_interval_width": 0.09018953467373421
+            },
+            "zero": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 147
+            },
+            "constant_velocity": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 147
+            }
+          }
+        },
+        "gap[0,0.8)": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.0016134268471731082,
+              "rmse": 0.004085582253546242,
+              "n": 162,
+              "coverage_2std": 0.9567901234567902,
+              "mean_interval_width": 0.011722055688135153
+            },
+            "zero": {
+              "mae": 0.5083358043816869,
+              "rmse": 0.5161103387071236,
+              "n": 162
+            },
+            "constant_velocity": {
+              "mae": 0.005093861322411939,
+              "rmse": 0.013928870417482739,
+              "n": 162
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.007698109614685316,
+              "rmse": 0.01623034116034695,
+              "n": 162,
+              "coverage_2std": 0.8395061728395061,
+              "mean_interval_width": 0.03003959970019381
+            },
+            "zero": {
+              "mae": 0.037043336301431994,
+              "rmse": 0.05557420949786489,
+              "n": 162
+            },
+            "constant_velocity": {
+              "mae": 0.035344994691647036,
+              "rmse": 0.05412071898440994,
+              "n": 162
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.022479233746904526,
+              "rmse": 0.04644000162063717,
+              "n": 162,
+              "coverage_2std": 0.845679012345679,
+              "mean_interval_width": 0.07963366828268191
+            },
+            "zero": {
+              "mae": 0.05119068084077223,
+              "rmse": 0.07698607431900241,
+              "n": 162
+            },
+            "constant_velocity": {
+              "mae": 0.05119068084077223,
+              "rmse": 0.07698607431900241,
+              "n": 162
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.0024990105992291887,
+              "rmse": 0.0029815143838293596,
+              "n": 162,
+              "coverage_2std": 1.0,
+              "mean_interval_width": 0.08715886026255219
+            },
+            "zero": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 162
+            },
+            "constant_velocity": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 162
+            }
+          }
+        },
+        "gap[0.8,1.6)": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.002127653000993555,
+              "rmse": 0.005736530546516158,
+              "n": 606,
+              "coverage_2std": 0.9323432343234324,
+              "mean_interval_width": 0.012005073010070106
+            },
+            "zero": {
+              "mae": 0.49238397021324903,
+              "rmse": 0.5096654906055939,
+              "n": 606
+            },
+            "constant_velocity": {
+              "mae": 0.011142515276055861,
+              "rmse": 0.02704485300304385,
+              "n": 606
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.004142478608114573,
+              "rmse": 0.01232670679391264,
+              "n": 606,
+              "coverage_2std": 0.9438943894389439,
+              "mean_interval_width": 0.019900870023114903
+            },
+            "zero": {
+              "mae": 0.035181168500375226,
+              "rmse": 0.05798920417415718,
+              "n": 606
+            },
+            "constant_velocity": {
+              "mae": 0.02225413279786609,
+              "rmse": 0.04032896030996284,
+              "n": 606
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.010444435041197917,
+              "rmse": 0.018696192382956143,
+              "n": 606,
+              "coverage_2std": 0.9471947194719472,
+              "mean_interval_width": 0.06474725988562699
+            },
+            "zero": {
+              "mae": 0.03257600219971625,
+              "rmse": 0.055618668064321565,
+              "n": 606
+            },
+            "constant_velocity": {
+              "mae": 0.03257600219971625,
+              "rmse": 0.055618668064321565,
+              "n": 606
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.007966255223969258,
+              "rmse": 0.0156676245031421,
+              "n": 606,
+              "coverage_2std": 0.9818481848184818,
+              "mean_interval_width": 0.07883395216360503
+            },
+            "zero": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 606
+            },
+            "constant_velocity": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 606
+            }
+          }
+        },
+        "gap[1.6,3)": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.005444749064180409,
+              "rmse": 0.010057557672821658,
+              "n": 88,
+              "coverage_2std": 0.8295454545454546,
+              "mean_interval_width": 0.022617935067657965
+            },
+            "zero": {
+              "mae": 0.5180846224200385,
+              "rmse": 0.5352592152801717,
+              "n": 88
+            },
+            "constant_velocity": {
+              "mae": 0.01891427961241228,
+              "rmse": 0.03531849824148138,
+              "n": 88
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.006886106370770431,
+              "rmse": 0.010583852994637774,
+              "n": 88,
+              "coverage_2std": 0.9545454545454546,
+              "mean_interval_width": 0.035249566056791054
+            },
+            "zero": {
+              "mae": 0.03359211362768704,
+              "rmse": 0.043279847939614334,
+              "n": 88
+            },
+            "constant_velocity": {
+              "mae": 0.02696476776020645,
+              "rmse": 0.040056352293741625,
+              "n": 88
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.016907206198311178,
+              "rmse": 0.02595074506108612,
+              "n": 88,
+              "coverage_2std": 0.9090909090909091,
+              "mean_interval_width": 0.08837748805848222
+            },
+            "zero": {
+              "mae": 0.03957754890726611,
+              "rmse": 0.05675187793899855,
+              "n": 88
+            },
+            "constant_velocity": {
+              "mae": 0.03957754890726611,
+              "rmse": 0.05675187793899855,
+              "n": 88
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.01424883720246114,
+              "rmse": 0.03451850718737624,
+              "n": 88,
+              "coverage_2std": 0.875,
+              "mean_interval_width": 0.08049396448639114
+            },
+            "zero": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 88
+            },
+            "constant_velocity": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 88
+            }
+          }
+        },
+        "paper_gap[0,2]": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.002143314822776821,
+              "rmse": 0.005674743533300306,
+              "n": 803,
+              "coverage_2std": 0.933997509339975,
+              "mean_interval_width": 0.012459209633400805
+            },
+            "zero": {
+              "mae": 0.4974765918731425,
+              "rmse": 0.5129291469218035,
+              "n": 803
+            },
+            "constant_velocity": {
+              "mae": 0.010287319775017638,
+              "rmse": 0.025524874723200173,
+              "n": 803
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.005019787596810457,
+              "rmse": 0.013201551130586148,
+              "n": 803,
+              "coverage_2std": 0.9202988792029888,
+              "mean_interval_width": 0.022555104343685062
+            },
+            "zero": {
+              "mae": 0.03553239358609981,
+              "rmse": 0.057011762357576205,
+              "n": 803
+            },
+            "constant_velocity": {
+              "mae": 0.025041368956672496,
+              "rmse": 0.04334222502684332,
+              "n": 803
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.013086578923184114,
+              "rmse": 0.026847510044903215,
+              "n": 803,
+              "coverage_2std": 0.925280199252802,
+              "mean_interval_width": 0.06857612097450166
+            },
+            "zero": {
+              "mae": 0.03651162179039014,
+              "rmse": 0.06039593392503234,
+              "n": 803
+            },
+            "constant_velocity": {
+              "mae": 0.03651162179039014,
+              "rmse": 0.06039593392503234,
+              "n": 803
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.007000230918151519,
+              "rmse": 0.01520360941184284,
+              "n": 803,
+              "coverage_2std": 0.9825653798256538,
+              "mean_interval_width": 0.08042698490818898
+            },
+            "zero": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 803
+            },
+            "constant_velocity": {
+              "mae": 0.0,
+              "rmse": 0.0,
+              "n": 803
+            }
+          }
+        }
+      }
+    },
+    "old_heldout": {
+      "episodes": [
+        "interaction-006",
+        "interaction-007",
+        "interaction-009",
+        "interaction-010",
+        "interaction-012",
+        "interaction-014",
+        "interaction-015",
+        "interaction-019"
+      ],
+      "groups": {
+        "all": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.003741432164843117,
+              "rmse": 0.010525275161988715,
+              "n": 1168,
+              "coverage_2std": 0.877568493150685,
+              "mean_interval_width": 0.01450392260798492
+            },
+            "zero": {
+              "mae": 0.4946498324244412,
+              "rmse": 0.5092537585376242,
+              "n": 1168
+            },
+            "constant_velocity": {
+              "mae": 0.010246723687679935,
+              "rmse": 0.023644441904130693,
+              "n": 1168
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.003140243847067451,
+              "rmse": 0.005941801727317125,
+              "n": 1168,
+              "coverage_2std": 0.9443493150684932,
+              "mean_interval_width": 0.02046403860971611
+            },
+            "zero": {
+              "mae": 0.022389342888123713,
+              "rmse": 0.03565692476076107,
+              "n": 1168
+            },
+            "constant_velocity": {
+              "mae": 0.01525785730290926,
+              "rmse": 0.022554081769689774,
+              "n": 1168
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.009933109769463403,
+              "rmse": 0.01673345229518472,
+              "n": 1168,
+              "coverage_2std": 0.9443493150684932,
+              "mean_interval_width": 0.0636803665896616
+            },
+            "zero": {
+              "mae": 0.02434719499091273,
+              "rmse": 0.034480561760756645,
+              "n": 1168
+            },
+            "constant_velocity": {
+              "mae": 0.02434719499091273,
+              "rmse": 0.034480561760756645,
+              "n": 1168
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.018130056408504333,
+              "rmse": 0.03170454249978492,
+              "n": 1168,
+              "coverage_2std": 0.7799657534246576,
+              "mean_interval_width": 0.06666322831936913
+            },
+            "zero": {
+              "mae": 0.011093039402998613,
+              "rmse": 0.053488840522132645,
+              "n": 1168
+            },
+            "constant_velocity": {
+              "mae": 0.011093039402998613,
+              "rmse": 0.053488840522132645,
+              "n": 1168
+            }
+          }
+        },
+        "straight": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.0008323122921404637,
+              "rmse": 0.0018022798919852428,
+              "n": 725,
+              "coverage_2std": 0.9641379310344828,
+              "mean_interval_width": 0.007657392525260091
+            },
+            "zero": {
+              "mae": 0.49981779773536406,
+              "rmse": 0.5138968245245669,
+              "n": 725
+            },
+            "constant_velocity": {
+              "mae": 0.0017757412756174034,
+              "rmse": 0.0036788200996052713,
+              "n": 725
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.0027691031465767167,
+              "rmse": 0.005814477984447209,
+              "n": 725,
+              "coverage_2std": 0.9379310344827586,
+              "mean_interval_width": 0.015824304605802603
+            },
+            "zero": {
+              "mae": 0.022174510791587745,
+              "rmse": 0.035609056982800855,
+              "n": 725
+            },
+            "constant_velocity": {
+              "mae": 0.015153971906521587,
+              "rmse": 0.02325378035016146,
+              "n": 725
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.007091816902912794,
+              "rmse": 0.014657568553379349,
+              "n": 725,
+              "coverage_2std": 0.9517241379310345,
+              "mean_interval_width": 0.055762157902637506
+            },
+            "zero": {
+              "mae": 0.021532535758560296,
+              "rmse": 0.032621267925228285,
+              "n": 725
+            },
+            "constant_velocity": {
+              "mae": 0.021532535758560296,
+              "rmse": 0.032621267925228285,
+              "n": 725
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.017285553710686324,
+              "rmse": 0.02958342175704496,
+              "n": 725,
+              "coverage_2std": 0.7779310344827586,
+              "mean_interval_width": 0.06668814278122621
+            },
+            "zero": {
+              "mae": 0.009320752673180721,
+              "rmse": 0.04776820766687669,
+              "n": 725
+            },
+            "constant_velocity": {
+              "mae": 0.009320752673180721,
+              "rmse": 0.04776820766687669,
+              "n": 725
+            }
+          }
+        },
+        "curve": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.008502407125812472,
+              "rmse": 0.016934193509204942,
+              "n": 443,
+              "coverage_2std": 0.7358916478555305,
+              "mean_interval_width": 0.025708740463460094
+            },
+            "zero": {
+              "mae": 0.48619210138512053,
+              "rmse": 0.5015623382572099,
+              "n": 443
+            },
+            "constant_velocity": {
+              "mae": 0.024110069621642315,
+              "rmse": 0.038103154103990976,
+              "n": 443
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.003747641155996982,
+              "rmse": 0.006144486279054776,
+              "n": 443,
+              "coverage_2std": 0.9548532731376975,
+              "mean_interval_width": 0.028057282747046344
+            },
+            "zero": {
+              "mae": 0.02274093040502795,
+              "rmse": 0.03573512533948466,
+              "n": 443
+            },
+            "constant_velocity": {
+              "mae": 0.015427872906478247,
+              "rmse": 0.02135958326108462,
+              "n": 443
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.014583081165059776,
+              "rmse": 0.019663518960266926,
+              "n": 443,
+              "coverage_2std": 0.9322799097065463,
+              "mean_interval_width": 0.0766390602648139
+            },
+            "zero": {
+              "mae": 0.02895357861045113,
+              "rmse": 0.037324131228676206,
+              "n": 443
+            },
+            "constant_velocity": {
+              "mae": 0.02895357861045113,
+              "rmse": 0.037324131228676206,
+              "n": 443
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.019512143216445777,
+              "rmse": 0.03489886260058795,
+              "n": 443,
+              "coverage_2std": 0.7832957110609481,
+              "mean_interval_width": 0.06662245408721028
+            },
+            "zero": {
+              "mae": 0.013993508656086583,
+              "rmse": 0.06171746723207014,
+              "n": 443
+            },
+            "constant_velocity": {
+              "mae": 0.013993508656086583,
+              "rmse": 0.06171746723207014,
+              "n": 443
+            }
+          }
+        },
+        "gap<-2": {
+          "front_delta_s": {
+            "gp": {
+              "n": 0
+            },
+            "zero": {
+              "n": 0
+            },
+            "constant_velocity": {
+              "n": 0
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "n": 0
+            },
+            "zero": {
+              "n": 0
+            },
+            "constant_velocity": {
+              "n": 0
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "n": 0
+            },
+            "zero": {
+              "n": 0
+            },
+            "constant_velocity": {
+              "n": 0
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "n": 0
+            },
+            "zero": {
+              "n": 0
+            },
+            "constant_velocity": {
+              "n": 0
+            }
+          }
+        },
+        "gap[-2,3)": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.003697721469795581,
+              "rmse": 0.010204403722255598,
+              "n": 744,
+              "coverage_2std": 0.8991935483870968,
+              "mean_interval_width": 0.015132634240489693
+            },
+            "zero": {
+              "mae": 0.47039816750844005,
+              "rmse": 0.48452622516209226,
+              "n": 744
+            },
+            "constant_velocity": {
+              "mae": 0.010878553103035569,
+              "rmse": 0.025333579976095207,
+              "n": 744
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.003145434075609242,
+              "rmse": 0.005663730962237888,
+              "n": 744,
+              "coverage_2std": 0.9475806451612904,
+              "mean_interval_width": 0.021099335620762893
+            },
+            "zero": {
+              "mae": 0.023644662906457888,
+              "rmse": 0.035848677143082014,
+              "n": 744
+            },
+            "constant_velocity": {
+              "mae": 0.015916820501553127,
+              "rmse": 0.02264616810287176,
+              "n": 744
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.010069995970843165,
+              "rmse": 0.016629193489744044,
+              "n": 744,
+              "coverage_2std": 0.9475806451612904,
+              "mean_interval_width": 0.06574305547283277
+            },
+            "zero": {
+              "mae": 0.026235178542525772,
+              "rmse": 0.035675918357199486,
+              "n": 744
+            },
+            "constant_velocity": {
+              "mae": 0.026235178542525772,
+              "rmse": 0.035675918357199486,
+              "n": 744
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.01712751784779458,
+              "rmse": 0.028105620608464842,
+              "n": 744,
+              "coverage_2std": 0.7258064516129032,
+              "mean_interval_width": 0.05952504038357549
+            },
+            "zero": {
+              "mae": 1.2522401720506796e-06,
+              "rmse": 8.06549223290198e-06,
+              "n": 744
+            },
+            "constant_velocity": {
+              "mae": 1.2522401720506796e-06,
+              "rmse": 8.06549223290198e-06,
+              "n": 744
+            }
+          }
+        },
+        "gap>=3": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.0038181320637001143,
+              "rmse": 0.011065849532141058,
+              "n": 424,
+              "coverage_2std": 0.839622641509434,
+              "mean_interval_width": 0.01340071163019353
+            },
+            "zero": {
+              "mae": 0.5372046406732736,
+              "rmse": 0.5499630241167999,
+              "n": 424
+            },
+            "constant_velocity": {
+              "mae": 0.009138041883376653,
+              "rmse": 0.020344305629588562,
+              "n": 424
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.0031311364649092136,
+              "rmse": 0.00640060614991046,
+              "n": 424,
+              "coverage_2std": 0.9386792452830188,
+              "mean_interval_width": 0.01934927215636987
+            },
+            "zero": {
+              "mae": 0.02018661153519771,
+              "rmse": 0.03531793751726112,
+              "n": 424
+            },
+            "constant_velocity": {
+              "mae": 0.014101563388307757,
+              "rmse": 0.022391581043824507,
+              "n": 424
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.009692913227419673,
+              "rmse": 0.016914843919392873,
+              "n": 424,
+              "coverage_2std": 0.9386792452830188,
+              "mean_interval_width": 0.06006093137956881
+            },
+            "zero": {
+              "mae": 0.021034318192799276,
+              "rmse": 0.032276230325907374,
+              "n": 424
+            },
+            "constant_velocity": {
+              "mae": 0.021034318192799276,
+              "rmse": 0.032276230325907374,
+              "n": 424
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.01988922784522145,
+              "rmse": 0.037187155572511184,
+              "n": 424,
+              "coverage_2std": 0.875,
+              "mean_interval_width": 0.07918872790481837
+            },
+            "zero": {
+              "mae": 0.030555986688713142,
+              "rmse": 0.0887772470817409,
+              "n": 424
+            },
+            "constant_velocity": {
+              "mae": 0.030555986688713142,
+              "rmse": 0.0887772470817409,
+              "n": 424
+            }
+          }
+        }
+      }
+    },
+    "speed06_test": {
+      "episodes": [
+        "speed06-004",
+        "speed06-005",
+        "speed06-006",
+        "speed06-007",
+        "speed06-008",
+        "speed06-009",
+        "speed06-010",
+        "speed06-011"
+      ],
+      "groups": {
+        "all": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.0034651933936386127,
+              "rmse": 0.008813433758254297,
+              "n": 2368,
+              "coverage_2std": 0.8804898648648649,
+              "mean_interval_width": 0.014983781619158656
+            },
+            "zero": {
+              "mae": 0.48860353157185854,
+              "rmse": 0.5045324247413365,
+              "n": 2368
+            },
+            "constant_velocity": {
+              "mae": 0.014846869182088256,
+              "rmse": 0.03405525283141977,
+              "n": 2368
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.0036309399858555757,
+              "rmse": 0.006855813293162534,
+              "n": 2368,
+              "coverage_2std": 0.8902027027027027,
+              "mean_interval_width": 0.017380217903831915
+            },
+            "zero": {
+              "mae": 0.027859433415679945,
+              "rmse": 0.04164488224225275,
+              "n": 2368
+            },
+            "constant_velocity": {
+              "mae": 0.017513706829777632,
+              "rmse": 0.025607944799096217,
+              "n": 2368
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.011381981287020244,
+              "rmse": 0.018710726006350095,
+              "n": 2368,
+              "coverage_2std": 0.9070945945945946,
+              "mean_interval_width": 0.05730789289210415
+            },
+            "zero": {
+              "mae": 0.02840579581949366,
+              "rmse": 0.039472202338583534,
+              "n": 2368
+            },
+            "constant_velocity": {
+              "mae": 0.02840579581949366,
+              "rmse": 0.039472202338583534,
+              "n": 2368
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.01934960954385786,
+              "rmse": 0.028062061227778896,
+              "n": 2368,
+              "coverage_2std": 0.9016047297297297,
+              "mean_interval_width": 0.08995925551305739
+            },
+            "zero": {
+              "mae": 0.00559902862795226,
+              "rmse": 0.03845992666122903,
+              "n": 2368
+            },
+            "constant_velocity": {
+              "mae": 0.00559902862795226,
+              "rmse": 0.03845992666122903,
+              "n": 2368
+            }
+          }
+        },
+        "straight": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.0009484161339764069,
+              "rmse": 0.002592213236581531,
+              "n": 1507,
+              "coverage_2std": 0.9727936297279363,
+              "mean_interval_width": 0.008589514553047635
+            },
+            "zero": {
+              "mae": 0.4864727765777349,
+              "rmse": 0.5016840809335088,
+              "n": 1507
+            },
+            "constant_velocity": {
+              "mae": 0.0023302040463996265,
+              "rmse": 0.004604019398590372,
+              "n": 1507
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.003549768316930159,
+              "rmse": 0.007268834737550079,
+              "n": 1507,
+              "coverage_2std": 0.8699402786994028,
+              "mean_interval_width": 0.014366625597146191
+            },
+            "zero": {
+              "mae": 0.029225229288104993,
+              "rmse": 0.04331081507617196,
+              "n": 1507
+            },
+            "constant_velocity": {
+              "mae": 0.017496431497275023,
+              "rmse": 0.025728712664367295,
+              "n": 1507
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.00931987068074788,
+              "rmse": 0.01700722117854879,
+              "n": 1507,
+              "coverage_2std": 0.9197080291970803,
+              "mean_interval_width": 0.052643214867374145
+            },
+            "zero": {
+              "mae": 0.026359409706627937,
+              "rmse": 0.038067304158643935,
+              "n": 1507
+            },
+            "constant_velocity": {
+              "mae": 0.026359409706627937,
+              "rmse": 0.038067304158643935,
+              "n": 1507
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.01845193702538536,
+              "rmse": 0.025648972963123406,
+              "n": 1507,
+              "coverage_2std": 0.9210351692103517,
+              "mean_interval_width": 0.08994626188704381
+            },
+            "zero": {
+              "mae": 0.007377367090193429,
+              "rmse": 0.045631018889361066,
+              "n": 1507
+            },
+            "constant_velocity": {
+              "mae": 0.007377367090193429,
+              "rmse": 0.045631018889361066,
+              "n": 1507
+            }
+          }
+        },
+        "curve": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.007870284369609511,
+              "rmse": 0.014208168309451812,
+              "n": 861,
+              "coverage_2std": 0.718931475029036,
+              "mean_interval_width": 0.026175605624535324
+            },
+            "zero": {
+              "mae": 0.4923329714976941,
+              "rmse": 0.5094795268410419,
+              "n": 861
+            },
+            "constant_velocity": {
+              "mae": 0.036754667509013655,
+              "rmse": 0.05614780964179852,
+              "n": 861
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.0037730139754846145,
+              "rmse": 0.006065588395522215,
+              "n": 861,
+              "coverage_2std": 0.9256678281068524,
+              "mean_interval_width": 0.0226548794673341
+            },
+            "zero": {
+              "mae": 0.02546889406638315,
+              "rmse": 0.03855615090213247,
+              "n": 861
+            },
+            "constant_velocity": {
+              "mae": 0.017543943677723547,
+              "rmse": 0.025395183681614433,
+              "n": 861
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.014991273602528317,
+              "rmse": 0.021367940984422584,
+              "n": 861,
+              "coverage_2std": 0.8850174216027874,
+              "mean_interval_width": 0.06547243387150962
+            },
+            "zero": {
+              "mae": 0.03198756570577549,
+              "rmse": 0.04181773347608677,
+              "n": 861
+            },
+            "constant_velocity": {
+              "mae": 0.03198756570577549,
+              "rmse": 0.04181773347608677,
+              "n": 861
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.020920797099418905,
+              "rmse": 0.03184860247746002,
+              "n": 861,
+              "coverage_2std": 0.867595818815331,
+              "mean_interval_width": 0.08998199813141099
+            },
+            "zero": {
+              "mae": 0.002486419960591701,
+              "rmse": 0.020583949914125436,
+              "n": 861
+            },
+            "constant_velocity": {
+              "mae": 0.002486419960591701,
+              "rmse": 0.020583949914125436,
+              "n": 861
+            }
+          }
+        },
+        "gap<-2": {
+          "front_delta_s": {
+            "gp": {
+              "n": 0
+            },
+            "zero": {
+              "n": 0
+            },
+            "constant_velocity": {
+              "n": 0
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "n": 0
+            },
+            "zero": {
+              "n": 0
+            },
+            "constant_velocity": {
+              "n": 0
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "n": 0
+            },
+            "zero": {
+              "n": 0
+            },
+            "constant_velocity": {
+              "n": 0
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "n": 0
+            },
+            "zero": {
+              "n": 0
+            },
+            "constant_velocity": {
+              "n": 0
+            }
+          }
+        },
+        "gap[-2,3)": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.003296528312878718,
+              "rmse": 0.00854679841597975,
+              "n": 1721,
+              "coverage_2std": 0.8965717606042998,
+              "mean_interval_width": 0.014929879821030266
+            },
+            "zero": {
+              "mae": 0.47835151883753,
+              "rmse": 0.4958116806435248,
+              "n": 1721
+            },
+            "constant_velocity": {
+              "mae": 0.013992882637755838,
+              "rmse": 0.032820763434183234,
+              "n": 1721
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.003680723989362876,
+              "rmse": 0.007064513480141899,
+              "n": 1721,
+              "coverage_2std": 0.8884369552585706,
+              "mean_interval_width": 0.01749758767919042
+            },
+            "zero": {
+              "mae": 0.027275893448734493,
+              "rmse": 0.04044552248755379,
+              "n": 1721
+            },
+            "constant_velocity": {
+              "mae": 0.017439912703644537,
+              "rmse": 0.025479393483162614,
+              "n": 1721
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.011584404451106306,
+              "rmse": 0.018722678740179386,
+              "n": 1721,
+              "coverage_2std": 0.9047065659500291,
+              "mean_interval_width": 0.057720714271067446
+            },
+            "zero": {
+              "mae": 0.02850198108199056,
+              "rmse": 0.039251328570588655,
+              "n": 1721
+            },
+            "constant_velocity": {
+              "mae": 0.02850198108199056,
+              "rmse": 0.039251328570588655,
+              "n": 1721
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.01677406022609637,
+              "rmse": 0.023904964732321815,
+              "n": 1721,
+              "coverage_2std": 0.9314352120859966,
+              "mean_interval_width": 0.09179235853659447
+            },
+            "zero": {
+              "mae": 1.5453391929676968e-05,
+              "rmse": 0.00017404133846993968,
+              "n": 1721
+            },
+            "constant_velocity": {
+              "mae": 1.5453391929676968e-05,
+              "rmse": 0.00017404133846993968,
+              "n": 1721
+            }
+          }
+        },
+        "gap>=3": {
+          "front_delta_s": {
+            "gp": {
+              "mae": 0.003913837294701641,
+              "rmse": 0.009486264616567118,
+              "n": 647,
+              "coverage_2std": 0.8377125193199382,
+              "mean_interval_width": 0.015127158735973123
+            },
+            "zero": {
+              "mae": 0.5158735685359691,
+              "rmse": 0.5270273802397001,
+              "n": 647
+            },
+            "constant_velocity": {
+              "mae": 0.017118446991664905,
+              "rmse": 0.03713975313865455,
+              "n": 647
+            }
+          },
+          "front_delta_d": {
+            "gp": {
+              "mae": 0.003498516075444349,
+              "rmse": 0.006266937110431978,
+              "n": 647,
+              "coverage_2std": 0.8948995363214838,
+              "mean_interval_width": 0.01706801792950117
+            },
+            "zero": {
+              "mae": 0.029411631689425108,
+              "rmse": 0.044678696726064865,
+              "n": 647
+            },
+            "constant_velocity": {
+              "mae": 0.017709996924174944,
+              "rmse": 0.025946787284054543,
+              "n": 647
+            }
+          },
+          "front_delta_heading_error": {
+            "gp": {
+              "mae": 0.01084354192783613,
+              "rmse": 0.0186788948726576,
+              "n": 647,
+              "coverage_2std": 0.9134466769706336,
+              "mean_interval_width": 0.056209800785155396
+            },
+            "zero": {
+              "mae": 0.028149945994521242,
+              "rmse": 0.04005379134715962,
+              "n": 647
+            },
+            "constant_velocity": {
+              "mae": 0.028149945994521242,
+              "rmse": 0.04005379134715962,
+              "n": 647
+            }
+          },
+          "front_delta_speed": {
+            "gp": {
+              "mae": 0.026200491113977684,
+              "rmse": 0.036906876957803536,
+              "n": 647,
+              "coverage_2std": 0.8222565687789799,
+              "mean_interval_width": 0.08508325813514807
+            },
+            "zero": {
+              "mae": 0.020451166156846955,
+              "rmse": 0.07357731385307997,
+              "n": 647
+            },
+            "constant_velocity": {
+              "mae": 0.020451166156846955,
+              "rmse": 0.07357731385307997,
+              "n": 647
+            }
+          }
+        }
+      }
+    }
+  }
+}

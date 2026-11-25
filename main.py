@@ -45,6 +45,7 @@ from strategy.responsibility import ResponsibilityConfig
 from strategy.gp_prediction import GpRoute, load_gp_routes
 from strategy.interaction_gp import InteractionGpModel
 from strategy.interaction_overtaking import InteractionOvertakingConfig, TRAINED_OFFSETS
+from strategy.rollout_overtaking import RolloutOvertakingConfig
 
 
 # =====================================================================
@@ -53,7 +54,7 @@ from strategy.interaction_overtaking import InteractionOvertakingConfig, TRAINED
 #   ② 車輛與控制器：模型、車身與碰撞框、Pure Pursuit、臨時路徑
 #   ③ 避撞責任約束：defend 與 relative_overtake 共用
 #   ④ 各策略參數：relative_overtake、defend、cost_overtake、progress、overtake
-#   ⑤ GP 對手預測；⑤-2 互動 GP 超車（interaction_overtake）
+#   ⑤ GP 對手預測；⑤-2 互動 GP 超車（interaction_overtake）；⑤-3 沿上一步軌跡推演（rollout_overtake）
 #   ⑥ 畫面顯示
 #   ⑦ --probe-follow 示範場景
 #   ⑧ --interaction-overtake 示範場景
@@ -85,13 +86,14 @@ VEHICLE_SPECS = (
 # 此次模擬的策略對照表：只改這裡，就能把策略換到另一台車。每台車都有自己的策略物件。
 # relative_overtake：比較預測終點的相對間距（可加安全距離與偏離中心線成本），保留碰撞篩選。
 # interaction_overtake：同 relative_overtake，但前車改用互動 GP 預測（設定見 ⑤-2；只在 GP 訓練範圍內啟用）。
+# rollout_overtake：沿自車上一步軌跡用互動 GP 逐步推演對手，再選候選（設定見 ⑤-3）。
 # cost_overtake：固定候選的成本進攻（進度與超車獎勵）；overtake：原本的規則式進攻。
 # progress：固定候選只比較自車進度，不預測其他車或篩選碰撞。
 # probe_follow：追蹤目標車距，並輪流左右試探前車。
 # defend：防守指定對象，例如 StrategyAssignment("defend", target_vehicle_id="vehicle-2")。
 # centerline：跟隨中心線；未列出的車也會自動使用 centerline。
 STRATEGY_ASSIGNMENTS = {
-    "vehicle-1": StrategyAssignment("interaction_overtake"),
+    "vehicle-1": StrategyAssignment("rollout_overtake"),
     "vehicle-2": StrategyAssignment("defend", target_vehicle_id="vehicle-1"),
  ##   "vehicle-3": StrategyAssignment("progress"),
 }
@@ -221,6 +223,14 @@ INTERACTION_OVERTAKING_CONFIG = InteractionOvertakingConfig(
     band_sigma=2.0,            # 另檢查前車在 平均 ± 2σ 的邊界軌跡；0 表示只用平均
 )
 
+# ===== ⑤-3 沿上一步軌跡推演對手（rollout_overtake，與 ⑤-2 共用同一個 GP）=====
+# 取上一步選中候選的預測軌跡，沿它每 rollout_step 秒查一次 GP 推出對手軌跡，所有候選再依這條對手軌跡選擇。
+ROLLOUT_OVERTAKING_CONFIG = RolloutOvertakingConfig(
+    relative=replace(RELATIVE_OVERTAKING_CONFIG, candidate_offsets=TRAINED_OFFSETS, transition_length=3.0),
+    rollout_step=0.1,  # 推演步長 s；每步用 GP 的 0.5 s Δd 換算增量（Δd×step/0.5），不可超過 0.5
+    band_sigma=2.0,    # 邊界軌跡＝平均 ± 2×累加 σ；0 表示只用平均
+)
+
 # ===== ⑥ 畫面顯示：True 顯示、False 隱藏 =====
 DISPLAY_OPTIONS = VisualizationConfig(
     # Track
@@ -317,6 +327,7 @@ def _strategy_configs() -> StrategyConfigs:
         relative_overtake=RELATIVE_OVERTAKING_CONFIG,
         probe_follow=PROBE_FOLLOWING_CONFIG,
         interaction_overtake=INTERACTION_OVERTAKING_CONFIG,
+        rollout_overtake=ROLLOUT_OVERTAKING_CONFIG,
     )
 
 
@@ -379,15 +390,20 @@ def _load_gp_routes(
 def _load_interaction_model(
     assignments: dict[str, StrategyAssignment], imported_track: bool,
 ) -> InteractionGpModel | None:
-    """有車指派 interaction_overtake 時才載入互動 GP。"""
-    if not any(assignment.name == "interaction_overtake" for assignment in assignments.values()):
+    """有車指派 interaction_overtake 或 rollout_overtake 時才載入互動 GP（兩者共用同一模型）。"""
+    names = {assignment.name for assignment in assignments.values()}
+    if not names & {"interaction_overtake", "rollout_overtake"}:
         return None
     if imported_track:
         print("Interaction GP was trained on the rounded rectangle only; inputs outside its range fall back.")
     model = InteractionGpModel.load(INTERACTION_GP_MODEL_PATH)
-    print(f"Interaction GP: {INTERACTION_GP_MODEL_PATH} "
-          f"(conditioning={INTERACTION_OVERTAKING_CONFIG.conditioning}, "
-          f"band={INTERACTION_OVERTAKING_CONFIG.band_sigma:g} sigma)")
+    print(f"Interaction GP: {INTERACTION_GP_MODEL_PATH}")
+    if "interaction_overtake" in names:
+        print(f"  interaction_overtake: conditioning={INTERACTION_OVERTAKING_CONFIG.conditioning}, "
+              f"band={INTERACTION_OVERTAKING_CONFIG.band_sigma:g} sigma")
+    if "rollout_overtake" in names:
+        print(f"  rollout_overtake: step={ROLLOUT_OVERTAKING_CONFIG.rollout_step:g} s, "
+              f"band={ROLLOUT_OVERTAKING_CONFIG.band_sigma:g} sigma")
     return model
 
 

@@ -1,0 +1,95 @@
+rollout_overtake: 334 decisions in 113.2 s
+interaction_overtake: 334 decisions in 91.9 s
+relative_overtake: 334 decisions in 57.1 s
+{
+  "rollout_overtake": {
+    "first_lead_s": null,
+    "final_gap_m": 0.7827988488294544,
+    "min_gap_m": 0.6897348387707432,
+    "collision_steps": 0,
+    "decisions": 334,
+    "target_switches": 146,
+    "gp_active_share": 0.9760479041916168,
+    "front_prediction_mae_m": {
+      "0.5s": 0.14686825767515516,
+      "1s": 0.19326469799316154
+    },
+    "front_prediction_n": {
+      "0.5s": 318,
+      "1s": 309
+    },
+    "episode_wall_seconds": 113.16287940001348,
+    "wall_ms_per_rear_decision": 338.811016167705,
+    "gp_off_and_hold_reasons": {
+      "gp=off(no_previous_plan)": 1,
+      "gp=off(no_history)": 6,
+      "hold(relative_speed)": 19,
+      "hold(rear_d)": 4,
+      "gp=off(out_of_range:front_d)": 1
+    }
+  },
+  "interaction_overtake": {
+    "first_lead_s": null,
+    "final_gap_m": 0.8917425416001805,
+    "min_gap_m": 0.8449199283303237,
+    "collision_steps": 0,
+    "decisions": 334,
+    "target_switches": 99,
+    "gp_active_share": 0.9790419161676647,
+    "front_prediction_mae_m": {
+      "0.5s": 0.10899840306465321,
+      "1s": 0.23696254517248622
+    },
+    "front_prediction_n": {
+      "0.5s": 319,
+      "1s": 310
+    },
+    "episode_wall_seconds": 91.89769449998857,
+    "wall_ms_per_rear_decision": 275.1427979041574
+  },
+  "relative_overtake": {
+    "first_lead_s": 7.58,
+    "final_gap_m": -18.39404498540098,
+    "min_gap_m": -18.39404498540098,
+    "collision_steps": 16,
+    "decisions": 334,
+    "target_switches": 16,
+    "gp_active_share": 0.0,
+    "front_prediction_mae_m": {
+      "0.5s": null,
+      "1s": null
+    },
+    "front_prediction_n": {
+      "0.5s": 0,
+      "1s": 0
+    },
+    "episode_wall_seconds": 57.08960740000475,
+    "wall_ms_per_rear_decision": 170.92696826348728
+  },
+  "scene": {
+    "vehicles": [
+      [
+        "rear",
+        0.0,
+        7.0
+      ],
+      [
+        "front",
+        6.0,
+        6.0
+      ]
+    ],
+    "seconds": 20.0,
+    "model": "models/compact/interaction_gp_v2_close.npz",
+    "rollout_step": 0.1,
+    "band_sigma": 2.0,
+    "deviation_weight": 0.0,
+    "decision_period": 0.05
+  },
+  "snapshot_times_s": [
+    7.8,
+    8.82,
+    10.8,
+    11.82
+  ]
+}
